@@ -1,0 +1,193 @@
+@import 'tailwindcss';
+@import './tokens.css';
+
+@layer base {
+  html {
+    background-color: var(--color-bg-canvas);
+    color: var(--color-text-primary);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.55;
+    color-scheme: light;
+    overflow-x: clip;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    scrollbar-color: var(--color-border-strong) var(--color-bg-canvas);
+    scrollbar-width: thin;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    background-color: var(--color-bg-canvas);
+    color: var(--color-text-primary);
+    overflow-x: clip;
+    caret-color: var(--color-text-primary);
+  }
+
+  ::selection {
+    background-color: var(--color-bg-inverse);
+    color: var(--color-text-on-inverse);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 3px;
+  }
+
+  .surface-inverse :focus-visible {
+    outline-color: var(--color-text-on-inverse);
+  }
+
+  .surface-inverse ::selection {
+    background-color: var(--color-text-on-inverse);
+    color: var(--color-bg-inverse);
+  }
+
+  a {
+    text-underline-offset: 0.22em;
+    text-decoration-thickness: 1px;
+  }
+
+  table {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Reusable semantic utility classes bound strictly to Tier-2 tokens */
+.font-editorial-mono {
+  font-family: var(--font-mono);
+}
+
+.font-editorial-sans {
+  font-family: var(--font-sans);
+}
+
+.tabular-data {
+  font-variant-numeric: tabular-nums;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.5rem 1.25rem;
+  border-radius: 4px;
+  border: 1px solid var(--color-action-solid);
+  background-color: var(--color-action-solid);
+  color: var(--color-action-text);
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.25;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    transform 150ms var(--ease-out),
+    background-color 150ms var(--ease-out),
+    border-color 150ms var(--ease-out);
+}
+
+@media (min-width: 640px) {
+  .btn-primary {
+    padding: 0.5rem 1.45rem;
+    white-space: nowrap;
+  }
+}
+
+@media (hover: hover) {
+  .btn-primary:hover {
+    background-color: var(--color-action-solid-hover);
+    border-color: var(--color-action-solid-hover);
+  }
+}
+
+.btn-primary:active {
+  transform: scale(0.975);
+}
+
+.link-quiet {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 44px;
+  max-width: 100%;
+  padding: 0.375rem 0.25rem;
+  color: var(--color-text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: 1.4;
+  text-decoration: none;
+  text-wrap: pretty;
+  transition: opacity 150ms var(--ease-out);
+}
+
+@media (min-width: 640px) {
+  .link-quiet {
+    font-size: 0.875rem;
+  }
+}
+
+.link-quiet svg {
+  flex-shrink: 0;
+  transition: transform 160ms var(--ease-out);
+}
+
+@media (hover: hover) {
+  .link-quiet:hover {
+    opacity: 0.72;
+  }
+
+  .link-quiet:hover svg {
+    transform: translateX(3px);
+  }
+}
+
+/* Single-baseline horizontal touch-scrollable tab rail */
+.tablist-scroll {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+  scrollbar-width: none;
+}
+
+.tablist-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* Deferred offscreen rendering for below-the-fold homepage sections */
+.cv-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 620px;
+}
+
+/* Entrance stagger for stepped-pixel glyphs (disabled under reduced-motion) */
+@media (prefers-reduced-motion: no-preference) {
+  .pixel-glyph-enter {
+    opacity: 0;
+    transform: translateY(8px);
+    animation: pixelGlyphReveal 460ms var(--ease-out) forwards;
+    animation-delay: calc(var(--glyph-index, 0) * 28ms + 20ms);
+  }
+}
+
+@keyframes pixelGlyphReveal {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

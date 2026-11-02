@@ -1,0 +1,24 @@
+node_modules/
+dist/
+.DS_Store
+*.local
+*.tsbuildinfo
+*.log
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# Editor / agent-local state
+.vscode/
+.idea/
+.agent/
+.agents/
+.claude/
+.codex/
+.devin/
+.gemini/
+.grok/
+.impeccable/
+.opencode/

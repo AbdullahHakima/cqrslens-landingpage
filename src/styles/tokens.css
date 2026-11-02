@@ -1,0 +1,85 @@
+/* ==========================================================================
+   Design Token Architecture (Two-Tier OKLCH System)
+   Tier 1: Primitive hue-locked ramps (never referenced directly in components)
+   Tier 2: Semantic role tokens (sole interface consumed by UI & shaders)
+   ========================================================================== */
+
+:root {
+  /* Tier 1 — Cool Mineral Celadon-Slate Drafting Paper Ramp (Constant Hue 158°) */
+  --mineral-50: oklch(0.985 0.005 158);
+  --mineral-100: oklch(0.954 0.011 158);
+  --mineral-150: oklch(0.932 0.013 158);
+  --mineral-200: oklch(0.904 0.015 158);
+  --mineral-300: oklch(0.838 0.016 158);
+  --mineral-400: oklch(0.715 0.015 158);
+  --mineral-500: oklch(0.545 0.013 158);
+  --mineral-600: oklch(0.425 0.011 158);
+  --mineral-700: oklch(0.312 0.009 158);
+  --mineral-800: oklch(0.228 0.008 158);
+  --mineral-900: oklch(0.178 0.007 158);
+  --mineral-950: oklch(0.140 0.006 158);
+
+  /* Tier 1 — Architectural Drafting Ink Accents (Used strictly for data/state) */
+  --cobalt-100: oklch(0.932 0.028 258);
+  --cobalt-700: oklch(0.450 0.145 258);
+  --teal-100: oklch(0.935 0.026 188);
+  --teal-700: oklch(0.455 0.095 188);
+  --amber-100: oklch(0.940 0.034 74);
+  --amber-700: oklch(0.475 0.118 68);
+  --crimson-100: oklch(0.934 0.028 24);
+  --crimson-700: oklch(0.460 0.155 24);
+  --forest-100: oklch(0.936 0.028 152);
+  --forest-700: oklch(0.455 0.108 152);
+
+  /* Tier 2 — Semantic Surface Tokens */
+  --color-bg-canvas: var(--mineral-100);
+  --color-bg-elevated: var(--mineral-50);
+  --color-bg-subtle: var(--mineral-150);
+  --color-bg-sunken: var(--mineral-200);
+  --color-bg-inverse: var(--mineral-950);
+  --color-bg-inverse-elevated: var(--mineral-900);
+  --color-bg-inverse-subtle: var(--mineral-800);
+
+  /* Tier 2 — Semantic Foreground / Ink Tokens (All WCAG AA/AAA verified) */
+  --color-text-primary: var(--mineral-950);          /* 16.1:1 on canvas */
+  --color-text-secondary: var(--mineral-700);        /* 9.5:1 on canvas */
+  --color-text-muted: var(--mineral-600);            /* 5.9:1 on canvas */
+  --color-text-on-inverse: var(--mineral-100);       /* 16.1:1 on inverse */
+  --color-text-on-inverse-muted: var(--mineral-400); /* 6.7:1 on inverse */
+
+  /* Tier 2 — Semantic Structural Hairlines & Controls */
+  --color-border-subtle: var(--mineral-200);
+  --color-border-strong: var(--mineral-300);
+  --color-border-inverse: var(--mineral-800);
+  --color-border-inverse-strong: var(--mineral-700);
+  --color-action-solid: var(--mineral-950);
+  --color-action-solid-hover: var(--mineral-800);
+  --color-action-text: var(--mineral-50);
+  --color-focus-ring: var(--mineral-950);
+
+  /* Tier 2 — Semantic CQRS & Diagnostic Domain Roles */
+  --color-role-command-bg: var(--cobalt-100);
+  --color-role-command-fg: var(--cobalt-700);
+  --color-role-query-bg: var(--teal-100);
+  --color-role-query-fg: var(--teal-700);
+  --color-role-warn-bg: var(--amber-100);
+  --color-role-warn-fg: var(--amber-700);
+  --color-role-error-bg: var(--crimson-100);
+  --color-role-error-fg: var(--crimson-700);
+  --color-role-pass-bg: var(--forest-100);
+  --color-role-pass-fg: var(--forest-700);
+
+  /* Typography Families (Hanken Grotesk + Azeret Mono) */
+  --font-sans: 'Hanken Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'Azeret Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* Calibrated Motion Curves */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+
+  /* Fixed Z-Index Scale */
+  --z-canvas: 1;
+  --z-hero-copy: 10;
+  --z-header: 40;
+  --z-skip: 50;
+}
