@@ -305,7 +305,7 @@ export const ArchitectureWorkbench: React.FC = () => {
                         </span>
                       </div>
                     ) : (
-                      <span className="font-editorial-sans text-[0.8125rem] text-[var(--color-role-warn-fg)]">
+                      <span className="font-editorial-sans text-[0.8125rem] text-[var(--color-role-warn-text)]">
                         None linked (FluentValidation or FastEndpoints)
                       </span>
                     )}

@@ -184,7 +184,7 @@ export const BenchmarksSection: React.FC = () => (
                   <td className="px-2 py-3.5 text-right font-editorial-sans text-[0.8125rem] text-[var(--color-text-secondary)] xl:px-4 xl:text-sm">
                     {row.dbContexts}
                   </td>
-                  <td className="px-3.5 py-3.5 text-right font-editorial-sans text-xs font-medium whitespace-nowrap text-[var(--color-role-pass-fg)] xl:px-5 xl:text-[0.8125rem]">
+                  <td className="px-3.5 py-3.5 text-right font-editorial-sans text-xs font-medium whitespace-nowrap text-[var(--color-role-pass-text)] xl:px-5 xl:text-[0.8125rem]">
                     {row.findings}
                   </td>
                 </tr>

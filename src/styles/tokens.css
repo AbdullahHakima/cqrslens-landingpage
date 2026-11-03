@@ -93,6 +93,9 @@
   --color-role-error-fg: var(--crimson-700);
   --color-role-pass-bg: var(--forest-100);
   --color-role-pass-fg: var(--forest-700);
+  /* Light on-dark text variants for bare status copy on the lapis plate */
+  --color-role-pass-text: var(--forest-100);
+  --color-role-warn-text: var(--amber-100);
 
   /* Typography Families (Hanken Grotesk + Azeret Mono) */
   --font-sans: 'Hanken Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;

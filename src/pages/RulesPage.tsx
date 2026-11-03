@@ -328,7 +328,7 @@ export const RulesPage: React.FC = () => {
                     {rule.rationale}
                   </p>
                   {rule.severityNote && (
-                    <p className="mt-3 mb-0 max-w-[42rem] border-l-2 border-[var(--color-role-warn-fg)] pl-3 font-editorial-sans text-sm leading-[1.55] text-[var(--color-text-secondary)]">
+                    <p className="mt-3 mb-0 max-w-[42rem] border-l-2 border-[var(--color-role-warn-text)] pl-3 font-editorial-sans text-sm leading-[1.55] text-[var(--color-text-secondary)]">
                       {rule.severityNote}
                     </p>
                   )}
