@@ -297,7 +297,7 @@ export const ClaudeIcon: React.FC<IconProps> = ({ className = 'size-4' }) => (
 export const CursorIcon: React.FC<IconProps> = ({ className = 'size-4' }) => (
   <svg
     viewBox="0 0 24 24"
-    fill="#000000"
+    fill="currentColor"
     aria-hidden="true"
     focusable="false"
     className={className}
