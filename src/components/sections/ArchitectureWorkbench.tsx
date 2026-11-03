@@ -480,7 +480,7 @@ Written: samples/SampleShop/ARCHITECTURE.html (zero-JS SVG)`}
                     x="247"
                     y="126"
                     textAnchor="middle"
-                    className="fill-[var(--color-text-primary)] font-editorial-mono text-[11px] font-medium"
+                    className="fill-[var(--color-role-command-fg)] font-editorial-mono text-[11px] font-medium"
                   >
                     SampleShop.Application
                   </text>
@@ -499,7 +499,7 @@ Written: samples/SampleShop/ARCHITECTURE.html (zero-JS SVG)`}
                     x="393"
                     y="190"
                     textAnchor="middle"
-                    className="fill-[var(--color-text-primary)] font-editorial-mono text-[11px] font-medium"
+                    className="fill-[var(--color-role-pass-fg)] font-editorial-mono text-[11px] font-medium"
                   >
                     SampleShop.Domain
                   </text>

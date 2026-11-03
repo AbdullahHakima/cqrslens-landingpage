@@ -5,20 +5,6 @@
    ========================================================================== */
 
 :root {
-  /* Tier 1 — Cool Mineral Celadon-Slate Drafting Paper Ramp (Constant Hue 158°) */
-  --mineral-50: oklch(0.985 0.005 158);
-  --mineral-100: oklch(0.954 0.011 158);
-  --mineral-150: oklch(0.932 0.013 158);
-  --mineral-200: oklch(0.904 0.015 158);
-  --mineral-300: oklch(0.838 0.016 158);
-  --mineral-400: oklch(0.715 0.015 158);
-  --mineral-500: oklch(0.545 0.013 158);
-  --mineral-600: oklch(0.425 0.011 158);
-  --mineral-700: oklch(0.312 0.009 158);
-  --mineral-800: oklch(0.228 0.008 158);
-  --mineral-900: oklch(0.178 0.007 158);
-  --mineral-950: oklch(0.140 0.006 158);
-
   /* Tier 1 — Architectural Drafting Ink Accents (Used strictly for data/state) */
   --cobalt-100: oklch(0.932 0.028 258);
   --cobalt-700: oklch(0.450 0.145 258);

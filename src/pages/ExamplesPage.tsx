@@ -19,21 +19,25 @@ export const ExamplesPage: React.FC = () => {
         return {
           fill: 'var(--color-role-command-bg)',
           stroke: 'var(--color-role-command-fg)',
+          text: 'var(--color-role-command-fg)',
         };
       case 'domain':
         return {
           fill: 'var(--color-role-pass-bg)',
           stroke: 'var(--color-role-pass-fg)',
+          text: 'var(--color-role-pass-fg)',
         };
       case 'infrastructure':
         return {
           fill: 'var(--color-role-query-bg)',
           stroke: 'var(--color-role-query-fg)',
+          text: 'var(--color-role-query-fg)',
         };
       default:
         return {
           fill: 'var(--color-bg-subtle)',
           stroke: 'var(--color-text-primary)',
+          text: 'var(--color-text-primary)',
         };
     }
   };
@@ -216,7 +220,8 @@ export const ExamplesPage: React.FC = () => {
                             x={node.x + node.w / 2}
                             y={node.y + 22}
                             textAnchor="middle"
-                            className="fill-[var(--color-text-primary)] font-editorial-mono text-[10.5px] font-medium"
+                            fill={st.text}
+                            className="font-editorial-mono text-[10.5px] font-medium"
                           >
                             {node.label}
                           </text>

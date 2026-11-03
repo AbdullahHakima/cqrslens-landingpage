@@ -325,7 +325,7 @@ export const FeaturesPage: React.FC = () => {
                     x="140"
                     y="91"
                     textAnchor="middle"
-                    className="fill-[var(--color-text-primary)] font-editorial-mono text-[11px] font-medium"
+                    className="fill-[var(--color-role-command-fg)] font-editorial-mono text-[11px] font-medium"
                   >
                     CreateOrderCommand
                   </text>
@@ -352,7 +352,7 @@ export const FeaturesPage: React.FC = () => {
                     x="140"
                     y="153"
                     textAnchor="middle"
-                    className="fill-[var(--color-text-primary)] font-editorial-mono text-[11px] font-medium"
+                    className="fill-[var(--color-role-pass-fg)] font-editorial-mono text-[11px] font-medium"
                   >
                     OrderCommandValidator
                   </text>
@@ -433,7 +433,7 @@ export const FeaturesPage: React.FC = () => {
                     x="140"
                     y="343"
                     textAnchor="middle"
-                    className="fill-[var(--color-text-primary)] font-editorial-mono text-[10.5px] font-medium"
+                    className="fill-[var(--color-role-query-fg)] font-editorial-mono text-[10.5px] font-medium"
                   >
                     ShopDbContext.Orders
                   </text>
@@ -535,7 +535,7 @@ export const FeaturesPage: React.FC = () => {
                     x="309"
                     y="51"
                     textAnchor="middle"
-                    className="fill-[var(--color-text-primary)] font-editorial-mono text-[12px] font-medium"
+                    className="fill-[var(--color-role-command-fg)] font-editorial-mono text-[12px] font-medium"
                   >
                     CreateOrderCommand
                   </text>
@@ -562,7 +562,7 @@ export const FeaturesPage: React.FC = () => {
                     x="521"
                     y="51"
                     textAnchor="middle"
-                    className="fill-[var(--color-text-primary)] font-editorial-mono text-[11.5px] font-medium"
+                    className="fill-[var(--color-role-pass-fg)] font-editorial-mono text-[11.5px] font-medium"
                   >
                     OrderCommandValidator
                   </text>
@@ -643,7 +643,7 @@ export const FeaturesPage: React.FC = () => {
                     x="150"
                     y="309"
                     textAnchor="middle"
-                    className="fill-[var(--color-text-primary)] font-editorial-mono text-[11.5px]"
+                    className="fill-[var(--color-role-query-fg)] font-editorial-mono text-[11.5px]"
                   >
                     ShopDbContext.Orders, OrderLines
                   </text>
