@@ -14,7 +14,7 @@ export const ROUTES: readonly RouteMeta[] = [
     label: 'Home',
     title: `${BRAND.name} — Static .NET & CQRS Architecture Cartography`,
     description:
-      'Map any MediatR, Mediator, or Wolverine .NET solution in milliseconds without building it. Generates ARCHITECTURE.md diagrams, interactive offline HTML explorers, CI guardrails, and MCP context for coding agents.',
+      'Map any MediatR, Mediator, or Wolverine .NET solution without building it. Generates ARCHITECTURE.md diagrams, interactive offline HTML explorers, CI guardrails, and MCP context for coding agents.',
   },
   {
     path: '/quickstart',

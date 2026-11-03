@@ -35,14 +35,14 @@ export const DOC_CHAPTERS: readonly DocChapter[] = [
     slug: 'overview',
     navTitle: 'Overview & Concepts',
     title: 'Overview & Core Concepts',
-    lead: `${BRAND.name} (${BRAND.cliBinary}) is a compiler-free static architecture cartographer for .NET solutions. It reads .csproj and .cs source files directly to map Clean Architecture layers, CQRS vertical slices, EF Core DbContexts, and architectural rule violations in milliseconds.`,
+    lead: `${BRAND.name} (${BRAND.cliBinary}) is a compiler-free static architecture cartographer for .NET solutions. It reads .csproj and .cs source files directly to map Clean Architecture layers, CQRS vertical slices, EF Core DbContexts, and architectural rule violations without invoking MSBuild.`,
     subsections: [
       {
         id: 'why-static-cartography',
         heading: 'Why compiler-free static cartography?',
         paragraphs: [
           'Traditional .NET architecture tools inspect compiled assemblies via reflection or MSBuild workspaces. That requires NuGet package restore, environment secrets, generated code, and a clean build before you can see a single diagram.',
-          'When you inherit an unfamiliar monorepo, review a broken pull request branch, or wire an AI coding agent over MCP, waiting 30 to 90 seconds for dotnet build breaks the feedback loop. Operating directly on source files maps a 4-project solution in ~10 ms and a 400-slice solution in ~300 ms.',
+          'When you inherit an unfamiliar monorepo, review a broken pull request branch, or wire an AI coding agent over MCP, a full restore and build is a slow prerequisite that can fail before analysis starts. CqrsLens operates directly on source files, so it can map the solution without invoking MSBuild or compiling assemblies. Actual timings vary by hardware, repository shape, and file-system cache warmth.',
         ],
       },
       {
@@ -82,7 +82,7 @@ export const DOC_CHAPTERS: readonly DocChapter[] = [
         heading: 'Six-stage deterministic pipeline',
         paragraphs: [
           'Every invocation executes six deterministic stages: (1) .csproj ProjectReference DAG discovery and layer classification, (2) multi-core source streaming, (3) CQRS/validator/DbContext marker extraction, (4) namespace, global-using, and generic-arity linking, (5) dispatch and EF Core ER modeling, and (6) byte-reproducible output rendering.',
-          'Because all collections are canonically sorted before rendering, committing ARCHITECTURE.md or ARCHITECTURE.json to git produces zero noisy diffs when nothing structural changed.',
+          'Because all collections are canonically sorted before rendering, pairing this with a fixed `--generated-at` timestamp keeps ARCHITECTURE.md or ARCHITECTURE.json free of run-specific noise when nothing structural changed.',
         ],
       },
     ],
@@ -91,7 +91,7 @@ export const DOC_CHAPTERS: readonly DocChapter[] = [
     slug: 'installation',
     navTitle: 'Installation',
     title: 'Installation & Requirements',
-    lead: `Distributed on NuGet as a self-contained .NET 8+ tool (${BRAND.nugetPackage} v${BRAND.version}). Runs identically on Windows, macOS, and Linux (x64 and ARM64) with zero telemetry and zero external runtime services.`,
+    lead: `Distributed on NuGet as a .NET 8+ tool (${BRAND.nugetPackage} v${BRAND.version}). Runs on Windows, macOS, and Linux (x64 and ARM64) with no external runtime services.`,
     subsections: [
       {
         id: 'global-tool',
@@ -144,7 +144,7 @@ dotnet ${BRAND.cliBinary} . --strict`,
     slug: 'cli-reference',
     navTitle: 'CLI Reference',
     title: 'CLI Flags & Arguments',
-    lead: `Invoke ${BRAND.cliBinary} against any directory containing a .sln, .slnx, or nested .csproj files. By default, scanning writes or prints a deterministic Markdown architecture report.`,
+    lead: `Invoke ${BRAND.cliBinary} against any directory containing a .sln, .slnx, or nested .csproj files. By default, scanning writes or prints a Markdown architecture report.`,
     subsections: [
       {
         id: 'synopsis',
@@ -159,8 +159,10 @@ dotnet ${BRAND.cliBinary} . --strict`,
 # Common invocations
 ${BRAND.cliBinary} .
 ${BRAND.cliBinary} ./src --format html --render svg -o ARCHITECTURE.html
+${BRAND.cliBinary} ./src --format html --render svg --cqrs-map-split feature --export-svg diagrams -o ARCHITECTURE.html
 ${BRAND.cliBinary} . --slice CreateOrderCommand
 ${BRAND.cliBinary} . --strict --baseline cqrslens-baseline.json
+${BRAND.cliBinary} . --strict --sarif results.sarif
 ${BRAND.cliBinary} . --mcp`,
         },
       },
@@ -174,59 +176,139 @@ ${BRAND.cliBinary} . --mcp`,
           headers: ['Flag', 'Values / Default', 'Purpose'],
           rows: [
             {
+              col1: '<path>',
+              col2: 'Folder containing .sln, .slnx, or .csproj',
+              col3: 'Recursively scans the target solution directory.',
+            },
+            {
               col1: '-f, --format <fmt>',
-              col2: 'md (default) | html | json | agent | sarif',
-              col3: 'Selects primary output representation.',
+              col2: 'md (default) | html | json | agent',
+              col3: 'Selects primary output representation. A .html, .json, or .agent.md -o path implies the matching format. SARIF is additive via --sarif, not a --format value.',
             },
             {
               col1: '-o, --output <file>',
-              col2: 'ARCHITECTURE.<ext>',
+              col2: 'ARCHITECTURE.md (or .html / .json)',
               col3: 'Writes rendered output to the specified file path.',
             },
             {
               col1: '--render <mode>',
-              col2: 'svg | mermaid',
+              col2: 'mermaid (default) | svg',
               col3: 'When paired with --format html, --render svg compiles zero-JS inline SVGs for offline viewing.',
             },
             {
-              col1: '--slice <query>',
-              col2: 'Substring or exact request name',
-              col3: 'Prints end-to-end vertical slice trace (endpoint, validator, behaviors, handler, DbSets, events).',
+              col1: '--cqrs-map-split <mode>',
+              col2: 'count (default) | feature | unsplit',
+              col3: 'Controls CQRS map splitting: by project then size, one diagram per feature, or one diagram per project. Reporting-only; does not change JSON output.',
+            },
+            {
+              col1: '--slice <filter>',
+              col2: 'Endpoint, request, handler, entity, or event name',
+              col3: 'Prints an end-to-end vertical slice trace. Streams to stdout when -o is omitted.',
             },
             {
               col1: '--analysis <engine>',
               col2: 'text (default) | roslyn',
-              col3: 'Selects ultra-fast lexical text scanner or no-build Roslyn syntax/symbol tree backend.',
+              col3: 'Selects the lexical text scanner or the no-build Roslyn syntax/symbol backend.',
+            },
+            {
+              col1: '--config <file>',
+              col2: '<path>/.cqrslens.json when present',
+              col3: 'Reads an explicit configuration file; CLI flags override matching values.',
+            },
+            {
+              col1: '--markers <list>',
+              col2: 'Comma-separated interface names',
+              col3: 'Adds custom request-root markers (for example ICommand,IQuery,IMessage).',
+            },
+            {
+              col1: '--handler-markers <list>',
+              col2: 'Comma-separated interface names',
+              col3: 'Adds handler roots supplied by external packages; source-declared wrappers are followed automatically.',
             },
             {
               col1: '--strict',
               col2: 'Boolean (false)',
-              col3: 'Exits with code 4 if any unbaselined error-severity rule fails on a complete scan.',
+              col3: 'Exits with code 4 when unbaselined error-severity findings exist and the scan is complete.',
             },
             {
-              col1: '--diff [baseRef]',
-              col2: 'Git ref (e.g. origin/main)',
-              col3: 'Computes added, modified, and removed slices plus new rule findings against a base branch.',
+              col1: '--diff <path-or-json>',
+              col2: 'Base ARCHITECTURE.json or solution folder',
+              col3: 'Compares the current scan against a base report or checkout to show CQRS and architecture changes.',
+            },
+            {
+              col1: '--diff-output <file>',
+              col2: '.md or .json',
+              col3: 'Writes the architecture diff report for PR comments or downstream tooling.',
             },
             {
               col1: '--baseline <file>',
-              col2: 'cqrslens-baseline.json',
-              col3: 'Suppresses pre-existing legacy findings matching rule + target + relative file.',
+              col2: 'Baseline JSON file',
+              col3: 'Suppresses pre-existing findings matching rule + target + relative file; --strict then fails only on new errors.',
             },
             {
               col1: '--write-baseline <file>',
-              col2: 'cqrslens-baseline.json',
-              col3: 'Records current findings into a deterministic baseline file for incremental adoption.',
+              col2: 'Baseline JSON file',
+              col3: 'Records current findings into a deterministic baseline for incremental adoption.',
             },
             {
-              col1: '--sarif-output <file>',
-              col2: 'cqrslens-results.sarif',
-              col3: 'Emits SARIF 2.1.0 diagnostics alongside normal output for GitHub Code Scanning or IDEs.',
+              col1: '--sarif <file>',
+              col2: 'results.sarif',
+              col3: 'Also writes SARIF 2.1.0 diagnostics alongside normal output for code scanning or IDE viewers.',
+            },
+            {
+              col1: '--summary <file>',
+              col2: 'Markdown summary file',
+              col3: 'Also writes a compact Markdown job summary for CI dashboards.',
+            },
+            {
+              col1: '--export-svg <dir>',
+              col2: 'Output directory (created if missing)',
+              col3: 'Writes every diagram as a standalone .svg file. Additive; does not change the primary report. SVG only, no PNG.',
+            },
+            {
+              col1: '--github-annotations',
+              col2: 'Boolean',
+              col3: 'Emits file/line GitHub Actions annotations.',
+            },
+            {
+              col1: '--ci-root <dir>',
+              col2: 'Repository root',
+              col3: 'Rebases annotation and SARIF paths against the CI checkout root.',
+            },
+            {
+              col1: '--profile',
+              col2: 'Boolean',
+              col3: 'Prints per-stage timing and allocation totals to stderr.',
+            },
+            {
+              col1: '--generated-at <ISO8601>',
+              col2: 'Fixed timestamp',
+              col3: 'Makes reports reproducible; timing is reported as 0 ms in this mode.',
+            },
+            {
+              col1: '--watermark <text>',
+              col2: 'Custom text',
+              col3: 'Renders a block ASCII watermark in the console and embeds it in reports.',
+            },
+            {
+              col1: '--banner | --no-banner',
+              col2: 'Automatic',
+              col3: 'Forces or suppresses the ASCII logo banner and summary card.',
+            },
+            {
+              col1: '--color | --no-color',
+              col2: 'Automatic (respects NO_COLOR)',
+              col3: 'Forces or disables ANSI 24-bit console colors.',
             },
             {
               col1: '--mcp',
               col2: 'stdio server mode',
-              col3: 'Starts the Model Context Protocol server over stdin/stdout for AI coding agents.',
+              col3: 'Starts the Model Context Protocol server over JSON-RPC 2.0 stdin/stdout.',
+            },
+            {
+              col1: '-h, --help | --version',
+              col2: 'Boolean',
+              col3: 'Prints the full option reference or tool version and exits.',
             },
           ],
         },
@@ -243,27 +325,29 @@ ${BRAND.cliBinary} . --mcp`,
         id: 'schema-example',
         heading: 'Full .cqrslens.json example',
         paragraphs: [
-          'The scanner automatically discovers .cqrslens.json in the target directory. Every field is optional and merges cleanly over built-in defaults:',
+          'The scanner automatically discovers .cqrslens.json in the target directory. Every field is optional; unknown keys or invalid values fail with exit code 1 instead of being silently ignored:',
         ],
         code: {
           label: '.cqrslens.json',
           snippet: `{
-  "excludeProjects": [
-    "**/*.Tests.csproj",
-    "**/*.Benchmarks.csproj",
-    "tools/**"
+  "$schema": "https://raw.githubusercontent.com/AbdullahHakima/cqrslens/main/cqrslens.schema.json",
+  "analysis": "text",
+  "render": "svg",
+  "cqrsMapSplit": "feature",
+  "watermark": "CONTOSO ARCHITECTURE",
+  "markers": ["ICommand", "IQuery", "IMessage"],
+  "handlerMarkers": ["ICommandHandler", "IQueryHandler"],
+  "include": ["src/**"],
+  "exclude": [
+    "**/Migrations/**",
+    "**/Generated/**",
+    "**/obj/**"
   ],
   "layers": {
-    "domain": ["*.Domain", "*.Core"],
-    "application": ["*.Application", "*.UseCases"],
-    "infrastructure": ["*.Infrastructure", "*.Persistence"],
-    "presentation": ["*.Api", "*.Web", "*.Endpoints"]
-  },
-  "customMarkers": {
-    "commands": ["ICommand", "ICommand<>", "ITransactionalCommand<>"],
-    "queries": ["IQuery<>"],
-    "handlers": ["ICommandHandler<>", "ICommandHandler<,>", "IQueryHandler<,>"],
-    "events": ["IDomainEvent", "IIntegrationEvent"]
+    "Contoso.Domain": "Domain",
+    "Contoso.Application": "Application",
+    "Contoso.Infrastructure": "Infrastructure",
+    "Contoso.Api": "Api"
   },
   "rules": {
     "MissingHandler": "error",
@@ -285,7 +369,8 @@ ${BRAND.cliBinary} . --mcp`,
         id: 'severity-levels',
         heading: 'Rule severity semantics',
         paragraphs: [
-          'Each of the 11 static checks accepts one of three values: "error" (fails --strict runs with exit code 4), "warning" (reported in Markdown, HTML, SARIF, and PR comments without failing the build), or "off" (completely silenced).',
+          'Each of the 11 static checks accepts one of three values: "error" (fails --strict runs with exit code 4 on a complete scan), "warning" (reported in Markdown, HTML, SARIF, and PR comments without failing the build), or "off" (removes the finding from reports and strict evaluation).',
+          'LayerViolation and ApplicationLayerViolation default to warning when no layer model is asserted. They escalate to error when you configure layers or the scanner finds a confident conventional layer layout; an explicit rules override always wins.',
           'Promoting CommandWithoutValidator or UnreachableRequest from "warning" to "error" is a common milestone once legacy debt is captured in a baseline.',
         ],
       },
@@ -295,7 +380,7 @@ ${BRAND.cliBinary} . --mcp`,
     slug: 'output-formats',
     navTitle: 'Output Formats',
     title: 'Output Formats & Artifacts',
-    lead: 'One static model drives five deterministic output representations so humans, pull requests, security dashboards, and LLM coding agents read the exact same architectural truth.',
+    lead: 'One static model drives Markdown, HTML, JSON, agent, SARIF, and standalone SVG outputs so humans, pull requests, security dashboards, and LLM coding agents read the same architectural truth.',
     subsections: [
       {
         id: 'format-comparison',
@@ -309,7 +394,7 @@ ${BRAND.cliBinary} . --mcp`,
             {
               col1: 'ARCHITECTURE.md',
               col2: '--format md',
-              col3: 'Committing to git; renders Mermaid layer, slice, and ER diagrams natively on GitHub, GitLab, and Azure DevOps.',
+              col3: 'Committing to git; renders layer, flow, behavior-chain, slice, and ER diagrams natively on GitHub, GitLab, and Azure DevOps.',
             },
             {
               col1: 'ARCHITECTURE.html',
@@ -319,7 +404,7 @@ ${BRAND.cliBinary} . --mcp`,
             {
               col1: 'ARCHITECTURE.json',
               col2: '--format json',
-              col3: 'Machine-readable schema containing projects, layer edges, slices, DbSets, and findings for custom dashboards.',
+              col3: 'Machine-readable schema containing projects, layer edges, slices, DbSets, flow edges, and findings for custom dashboards.',
             },
             {
               col1: 'ARCHITECTURE.agent.md',
@@ -328,8 +413,13 @@ ${BRAND.cliBinary} . --mcp`,
             },
             {
               col1: 'SARIF 2.1.0',
-              col2: '--sarif-output results.sarif',
-              col3: 'GitHub Code Scanning security tab annotations and IDE SARIF viewers with exact File:Line locations.',
+              col2: '--sarif results.sarif',
+              col3: 'GitHub Code Scanning security tab annotations and IDE SARIF viewers with exact File:Line locations. Additive to the primary report.',
+            },
+            {
+              col1: 'Standalone SVG diagrams',
+              col2: '--export-svg diagrams',
+              col3: 'Writes every diagram as its own .svg document for docs and READMEs. Additive; SVG only, no PNG.',
             },
           ],
         },
@@ -340,7 +430,7 @@ ${BRAND.cliBinary} . --mcp`,
     slug: 'analysis-engines',
     navTitle: 'Text vs. Roslyn Engines',
     title: 'Dual Analysis Engines (Text vs. Roslyn)',
-    lead: 'Both scanning backends operate purely on source files without invoking MSBuild or compiling assemblies, and are validated nightly for 100% contract-linking parity across 105 public projects.',
+    lead: 'Both scanning backends operate purely on source files without invoking MSBuild or compiling assemblies. The tool test suite compares text and Roslyn contract linking on SampleShop and adversarial fixtures; the public validation corpus remains informational rather than a release gate.',
     subsections: [
       {
         id: 'engine-tradeoffs',
@@ -352,19 +442,19 @@ ${BRAND.cliBinary} . --mcp`,
           headers: ['Dimension', '--analysis text (Default)', '--analysis roslyn'],
           rows: [
             {
-              col1: 'SampleShop Warm Time',
-              col2: '10.4 ms',
-              col3: '28.9 ms',
+              col1: 'Analysis model',
+              col2: 'Parallel lexical declaration scan',
+              col3: 'CSharpSyntaxTree + lightweight symbol tables',
             },
             {
-              col1: '400-Slice Monorepo Warm',
-              col2: '272 – 319 ms',
-              col3: '~780 ms',
+              col1: 'Relative scan cost',
+              col2: 'Lower',
+              col3: 'Higher',
             },
             {
-              col1: 'Managed Heap Allocation',
-              col2: '0.65 MB',
-              col3: '1.56 MB',
+              col1: 'Relative memory footprint',
+              col2: 'Lower',
+              col3: 'Higher',
             },
             {
               col1: 'Requires dotnet build?',
@@ -378,6 +468,7 @@ ${BRAND.cliBinary} . --mcp`,
             },
           ],
         },
+        note: 'Cost and memory comparisons are qualitative. Absolute timings vary by hardware, GC state, repository shape, and file-system cache warmth.',
       },
     ],
   },
@@ -398,28 +489,33 @@ ${BRAND.cliBinary} . --mcp`,
           rows: [
             {
               col1: '0',
-              col2: 'Scan succeeded (and in --strict mode, zero unbaselined error rules triggered).',
+              col2: 'Scan succeeded (and in --strict mode, zero unbaselined error findings triggered).',
               col3: 'Pass step.',
             },
             {
               col1: '1',
-              col2: 'Unexpected unhandled runtime or I/O failure.',
-              col3: 'Infrastructure/tool error.',
+              col2: 'Usage error: invalid CLI arguments, unknown config key, or malformed .cqrslens.json.',
+              col3: 'Configuration or invocation error.',
             },
             {
               col1: '2',
-              col2: 'Invalid CLI arguments or malformed .cqrslens.json configuration.',
-              col3: 'Configuration error.',
+              col2: 'Target path does not exist.',
+              col3: 'Checkout or path-scoping error.',
             },
             {
               col1: '3',
-              col2: 'Target directory contains no discoverable .sln, .slnx, or .csproj files.',
-              col3: 'Path / checkout scoping error.',
+              col2: 'Target path contains no discoverable .sln, .slnx, or .csproj files.',
+              col3: 'Wrong scan root or incomplete checkout.',
             },
             {
               col1: '4',
-              col2: '--strict mode detected one or more unbaselined architecture errors on a complete scan.',
+              col2: '--strict detected one or more unbaselined architecture errors on a complete scan.',
               col3: 'Block pull request merge.',
+            },
+            {
+              col1: '5',
+              col2: 'Unexpected unhandled runtime or I/O failure.',
+              col3: 'Infrastructure/tool error.',
             },
           ],
         },
@@ -452,14 +548,14 @@ ${BRAND.cliBinary} src --strict --baseline cqrslens-baseline.json`,
         id: 'custom-mediator-wrappers',
         heading: 'Custom base classes or wrapper interfaces are not detected',
         paragraphs: [
-          'If your team wraps MediatR or Wolverine behind custom interfaces beyond two levels of inheritance (for example IAuditableCommand<TResult>) declared in an external NuGet package whose source is not in the repository, declare the root names under customMarkers in .cqrslens.json.',
+          'If your team wraps MediatR or Wolverine behind custom interfaces beyond two levels of inheritance (for example IAuditableCommand<TResult>) declared in an external NuGet package whose source is not in the repository, declare request roots under markers and external handler wrappers under handlerMarkers in .cqrslens.json.',
         ],
       },
       {
         id: 'test-projects-false-handlers',
         heading: 'Fake test handlers trigger MultipleHandlers',
         paragraphs: [
-          'Integration test projects sometimes register stub or spy IRequestHandler implementations. Exclude test projects cleanly via excludeProjects in .cqrslens.json (e.g. "**/*.Tests.csproj", "**/*.IntegrationTests.csproj").',
+          'Integration test projects sometimes register stub or spy IRequestHandler implementations. include and exclude filter source files, not project discovery, so scan a src subdirectory or exclude test source globs such as "**/tests/**", "**/*.Tests/**", and "**/*.IntegrationTests/**" in .cqrslens.json.',
         ],
       },
       {

@@ -79,7 +79,7 @@ export const IntegrationsPage: React.FC = () => {
       <PageMasthead
         pixelLines={['INTEGRATIONS']}
         srTitle={`MCP Coding Agents & CI/CD Integrations — ${BRAND.name}`}
-        summary="Connect live static architecture DNA to Claude Code, Cursor, VS Code Copilot, and Antigravity over Model Context Protocol, or enforce sub-second pull-request gates in GitHub Actions, Azure DevOps, and GitLab CI."
+        summary="Connect live static architecture DNA to Claude Code, Cursor, VS Code Copilot, and Antigravity over Model Context Protocol, or enforce compiler-free pull-request gates in GitHub Actions, Azure DevOps, and GitLab CI."
         aside={
           <Link to="/docs/exit-codes" className="link-quiet">
             <span>Exit Codes &amp; Baselines</span>
@@ -186,7 +186,7 @@ export const IntegrationsPage: React.FC = () => {
               Four structural MCP tools exposed to your agent.
             </h2>
             <p className="mt-3 mb-0 font-editorial-sans text-base leading-[1.6] text-pretty text-[var(--color-text-secondary)]">
-              Inspect the exact structured responses returned to LLM tool calls in 10–18&nbsp;ms.
+              Inspect the structured responses returned to LLM tool calls over local stdio.
             </p>
           </div>
 

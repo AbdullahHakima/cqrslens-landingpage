@@ -11,11 +11,11 @@ const HORIZON_META: Record<
   { title: string; badge: string; badgeClass: string; description: string }
 > = {
   shipped: {
-    title: 'Shipped Foundation (v0.8.x)',
+    title: 'Shipped Foundation (v0.8.0 – v0.9.0)',
     badge: '[SHIPPED]',
     badgeClass: 'bg-[var(--color-role-pass-bg)] text-[var(--color-role-pass-fg)]',
     description:
-      'Production capabilities live today in the NuGet CLI package and verified nightly against the 105-project public corpus.',
+      'Production capabilities available in the published NuGet CLI. Public corpus scans are documented snapshots, not a nightly release gate.',
   },
   next: {
     title: 'Next Horizon — Active Engineering',

@@ -1,4 +1,4 @@
-import { ShaderMaterial, Vector2, Vector3 } from 'three';
+import { ShaderMaterial, Vector2, Vector3, Vector4 } from 'three';
 
 /**
  * Custom GLSL Post-Processing Shader implementing the 3-Regime Sculptural
@@ -30,6 +30,8 @@ export function createOwlHalftoneMaterial(): ShaderMaterial {
       uTime: { value: 0 },
       uScanWave: { value: -1.0 },
       uOwlScreenPos: { value: new Vector2(0.48, 0.48) },
+      uStageRect: { value: new Vector4(0, 0, 1, 1) },
+      uFootY: { value: 0.2 },
       uRowPitch: { value: 7.0 },
       uColPitch: { value: 4.5 },
     },
@@ -52,6 +54,8 @@ export function createOwlHalftoneMaterial(): ShaderMaterial {
       uniform float uTime;
       uniform float uScanWave;
       uniform vec2 uOwlScreenPos;
+      uniform vec4 uStageRect;
+      uniform float uFootY;
       uniform float uRowPitch;
       uniform float uColPitch;
 
@@ -95,10 +99,20 @@ export function createOwlHalftoneMaterial(): ShaderMaterial {
           (colIdx + 0.5) * uColPitch,
           uResolutionCss.y - (rowIdx + 0.5) * uRowPitch
         );
-        vec2 qUv = clamp(cellCssCenter / uResolutionCss, vec2(0.001), vec2(0.999));
+        vec2 cellUv = clamp(cellCssCenter / uResolutionCss, vec2(0.001), vec2(0.999));
 
-        vec4 smoothSample = texture2D(tScene, vUv);
-        vec4 cellSample = texture2D(tScene, qUv);
+        /* The shader paints the whole hero surface (one continuous paper field) while the
+           3D owl lives in a stage sub-rectangle. Remap hero UV -> stage UV and treat
+           everything outside the stage as empty paper, so there is no panel seam. */
+        vec2 stageUv = (vUv - uStageRect.xy) / uStageRect.zw;
+        vec2 qUv = (cellUv - uStageRect.xy) / uStageRect.zw;
+        bool inStage = all(greaterThanEqual(stageUv, vec2(0.0))) && all(lessThanEqual(stageUv, vec2(1.0)));
+        bool cellInStage = all(greaterThanEqual(qUv, vec2(0.0))) && all(lessThanEqual(qUv, vec2(1.0)));
+        qUv = clamp(qUv, vec2(0.001), vec2(0.999));
+        float stageAspect = (uResolutionCss.x * uStageRect.z) / max(uResolutionCss.y * uStageRect.w, 1.0);
+
+        vec4 smoothSample = inStage ? texture2D(tScene, stageUv) : vec4(0.0);
+        vec4 cellSample = cellInStage ? texture2D(tScene, qUv) : vec4(0.0);
 
         float smoothIsOwl = smoothstep(0.55, 0.85, smoothSample.a);
         float cellIsOwl = step(0.55, cellSample.a);
@@ -106,28 +120,17 @@ export function createOwlHalftoneMaterial(): ShaderMaterial {
         float smoothLum = dot(smoothSample.rgb, vec3(0.299, 0.587, 0.114));
         float cellLum = dot(cellSample.rgb, vec3(0.299, 0.587, 0.114));
 
-        /* Tactile 3D porcelain highlight & soft shading underneath the scanlines */
-        vec3 owlClayBase = mix(uClayShadeColor, uHighlightColor, smoothstep(0.32, 0.92, smoothLum));
-        vec3 baseColor = mix(uPaperColor, owlClayBase, smoothIsOwl);
-
-        float owlFootY = clamp(uOwlScreenPos.y - 0.30, 0.12, 0.24);
-        float darkness = 0.0;
-
-        if (cellIsOwl > 0.5) {
-          /* Lit left porcelain rim (cellLum > 0.885) drops to 0 darkness => zero lines */
-          darkness = smoothstep(0.885, 0.06, cellLum);
-        } else {
-          float floorShadow = (cellSample.a > 0.005 && cellSample.a <= 0.55)
-            ? clamp((1.0 - cellLum) * 1.05, 0.0, 0.44)
-            : 0.0;
-          float gobo = backdropGobo(qUv, uTime, owlFootY);
-          darkness = max(floorShadow, gobo);
-        }
+        float owlFootY = uFootY;
+        float floorShadow = (cellSample.a > 0.005 && cellSample.a <= 0.55)
+          ? clamp((1.0 - cellLum) * 1.05, 0.0, 0.44)
+          : 0.0;
+        float gobo = cellInStage ? backdropGobo(qUv, uTime, owlFootY) : 0.0;
 
         /* Active sonar scan wave ripple */
-        if (uScanWave >= 0.0 && uScanWave <= 1.25) {
+        float scanRipple = 0.0;
+        if (cellInStage && uScanWave >= 0.0 && uScanWave <= 1.25) {
           vec2 aspectVec = vec2(
-            (qUv.x - uOwlScreenPos.x) * (uResolutionCss.x / max(uResolutionCss.y, 1.0)),
+            (qUv.x - uOwlScreenPos.x) * stageAspect,
             qUv.y - uOwlScreenPos.y
           );
           float radialDist = length(aspectVec);
@@ -135,16 +138,27 @@ export function createOwlHalftoneMaterial(): ShaderMaterial {
           float ring = exp(-pow((radialDist - waveFront) / 0.052, 2.0));
           float fadeOut = 1.0 - smoothstep(0.75, 1.25, uScanWave);
           if (qUv.x > 0.20) {
-            darkness = max(darkness, ring * 0.32 * fadeOut);
+            scanRipple = ring * 0.32 * fadeOut;
           }
         }
+
+        /* Preserve crisp white corneal catchlights inside the obsidian eyes */
+        bool isEyeCatchlight = (cellIsOwl > 0.5 && max(cellLum, smoothLum) > 0.92);
+
+        /* Tactile 3D porcelain highlight & soft shading underneath the scanlines.
+           The dedicated owl palette keeps the body warm papyrus porcelain while
+           the surrounding hero field remains lapis. */
+        vec3 owlClayBase = mix(uClayShadeColor, uHighlightColor, smoothstep(0.32, 0.92, smoothLum));
+        vec3 baseColor = mix(uPaperColor, owlClayBase, smoothIsOwl);
+
+        float darkness = cellIsOwl > 0.5
+          ? smoothstep(0.885, 0.06, cellLum)
+          : max(floorShadow, gobo);
+        darkness = max(darkness, scanRipple);
 
         /* Stepped printer-tick edge breakup on faintest outer fringes */
         float jitter = (cellHash(vec2(colIdx, rowIdx)) - 0.5) * 0.065;
         float effDark = darkness + (darkness > 0.02 && darkness < 0.22 ? jitter : 0.0);
-
-        /* Preserve crisp white corneal catchlights inside the obsidian eyes */
-        bool isEyeCatchlight = (cellIsOwl > 0.5 && max(cellLum, smoothLum) > 0.92);
 
         float inkMask = 0.0;
 

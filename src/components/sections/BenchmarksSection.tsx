@@ -13,7 +13,7 @@ const CORPUS = [
     validators: 6,
     behaviors: 4,
     dbContexts: 1,
-    findings: '0 errors / 3 warnings',
+    findings: '0 errors / 6 warnings',
   },
   {
     owner: 'ardalis/',
@@ -25,19 +25,19 @@ const CORPUS = [
     validators: 21,
     behaviors: 3,
     dbContexts: 3,
-    findings: '0 errors / 13 warnings',
+    findings: '0 errors / 38 warnings',
   },
   {
     owner: 'kgrzybek/',
     repo: 'modular-monolith-with-ddd',
     url: 'https://github.com/kgrzybek/modular-monolith-with-ddd',
-    projects: 46,
+    projects: 47,
     requests: 105,
     handlers: 105,
     validators: 5,
     behaviors: 0,
     dbContexts: 4,
-    findings: '0 errors / 71 warnings',
+    findings: '0 errors / 205 warnings',
   },
   {
     owner: 'martinothamar/',
@@ -49,7 +49,7 @@ const CORPUS = [
     validators: 1,
     behaviors: 9,
     dbContexts: 0,
-    findings: '0 errors / 3 warnings',
+    findings: '0 errors / 12 warnings',
   },
 ] as const;
 
@@ -65,12 +65,13 @@ export const BenchmarksSection: React.FC = () => (
           id="benchmarks-heading"
           className="m-0 text-[clamp(1.7rem,3.2vw,2.65rem)] font-medium tracking-[-0.025em] leading-[1.16] text-balance text-[var(--color-text-primary)]"
         >
-          Validated nightly against public .NET repositories.
+          Measured on public .NET repositories.
         </h2>
         <p className="mt-3 mb-0 max-w-[31rem] text-base leading-[1.6] text-pretty text-[var(--color-text-secondary)]">
-          Covers 105 projects, 154 requests, and 154 handlers across four canonical open-source
-          solutions with 100% parity between the text and Roslyn scanners. On a 400-slice synthetic
-          solution, warm text scans finish in 272 to 319&nbsp;ms.
+          A 0.9.0 snapshot taken on 2 November 2026 across 106 projects, 154 requests, and 154
+          handlers in four canonical open-source solutions. All four complete with zero
+          error-severity findings; the remaining warnings expose real validation, reachability, and
+          notification hygiene debt.
         </p>
       </div>
 
@@ -195,7 +196,7 @@ export const BenchmarksSection: React.FC = () => (
 
       <div className="mt-5 flex justify-start sm:justify-end">
         <Link to="/examples" className="link-quiet">
-          <span>Inspect generated SVG topologies &amp; slice maps for all 4 repositories</span>
+          <span>Inspect corpus snapshots &amp; real vertical-slice traces</span>
           <ChevronRightIcon className="size-3.5" />
         </Link>
       </div>

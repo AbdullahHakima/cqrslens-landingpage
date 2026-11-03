@@ -239,7 +239,9 @@ export const Link: React.FC<LinkProps> = ({
   replace,
   onClick,
   onPointerEnter,
+  onPointerDown,
   onFocus,
+  onTouchStart,
   target,
   children,
   ...rest
@@ -248,14 +250,28 @@ export const Link: React.FC<LinkProps> = ({
   const href = resolveHref(to);
   const isExternal = /^https?:\/\//i.test(to) || to.startsWith('mailto:');
 
+  const primeRoute = () => {
+    if (!isExternal) preload(to);
+  };
+
   const handlePointerEnter = (e: React.PointerEvent<HTMLAnchorElement>) => {
     onPointerEnter?.(e);
-    if (!isExternal) preload(to);
+    primeRoute();
+  };
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLAnchorElement>) => {
+    onPointerDown?.(e);
+    primeRoute();
+  };
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLAnchorElement>) => {
+    onTouchStart?.(e);
+    primeRoute();
   };
 
   const handleFocus = (e: React.FocusEvent<HTMLAnchorElement>) => {
     onFocus?.(e);
-    if (!isExternal) preload(to);
+    primeRoute();
   };
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -282,7 +298,9 @@ export const Link: React.FC<LinkProps> = ({
       target={target}
       onClick={handleClick}
       onPointerEnter={handlePointerEnter}
+      onPointerDown={handlePointerDown}
       onFocus={handleFocus}
+      onTouchStart={handleTouchStart}
       {...rest}
     >
       {children}

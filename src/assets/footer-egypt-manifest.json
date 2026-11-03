@@ -1,0 +1,60 @@
+{
+  "note": "Optimized, warm-cream transparent engraving plates derived from the three supplied Egypt panorama masks. RGB is multiplied toward #F5ECD6 while preserving the original alpha channel.",
+  "ink": "#F5ECD6",
+  "variants": {
+    "desktop": [
+      {
+        "file": "footer-egypt-desktop-1080.webp",
+        "width": 1080,
+        "height": 199,
+        "bytes": 104582
+      },
+      {
+        "file": "footer-egypt-desktop-1440.webp",
+        "width": 1440,
+        "height": 265,
+        "bytes": 185198
+      },
+      {
+        "file": "footer-egypt-desktop-2172.webp",
+        "width": 2172,
+        "height": 400,
+        "bytes": 384662
+      }
+    ],
+    "tablet": [
+      {
+        "file": "footer-egypt-tablet-640.webp",
+        "width": 640,
+        "height": 179,
+        "bytes": 54542
+      },
+      {
+        "file": "footer-egypt-tablet-1024.webp",
+        "width": 1024,
+        "height": 286,
+        "bytes": 125340
+      },
+      {
+        "file": "footer-egypt-tablet-1536.webp",
+        "width": 1536,
+        "height": 429,
+        "bytes": 194612
+      }
+    ],
+    "mobile": [
+      {
+        "file": "footer-egypt-mobile-560.webp",
+        "width": 560,
+        "height": 187,
+        "bytes": 52396
+      },
+      {
+        "file": "footer-egypt-mobile-1122.webp",
+        "width": 1122,
+        "height": 375,
+        "bytes": 172154
+      }
+    ]
+  }
+}

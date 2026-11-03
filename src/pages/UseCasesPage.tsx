@@ -25,7 +25,7 @@ const USE_CASES: readonly UseCaseBlueprint[] = [
     problem:
       'You clone a 50-project enterprise repository with private NuGet feeds, missing local certificates, and unconfigured connection strings. Running dotnet build fails immediately, leaving IDE diagramming tools and reflection tests completely dark.',
     outcome:
-      'Generate a self-contained offline SVG explorer and full CQRS slice inventory in under half a second directly from raw .csproj and .cs files—spotting cyclic project dependencies and layer leaks before configuring a single secret.',
+      'Generate a self-contained offline SVG explorer and full CQRS slice inventory directly from raw .csproj and .cs files—spotting cyclic project dependencies and layer leaks before configuring a single secret.',
     commandLabel: 'Day-1 Zero-Build Audit',
     commandSnippet: `# Works even when NuGet restore and dotnet build fail
 ${BRAND.cliBinary} . --format html --render svg -o ARCHITECTURE.html
@@ -33,21 +33,21 @@ ${BRAND.cliBinary} . --format html --render svg -o ARCHITECTURE.html
 # Inspect any suspicious request chain immediately
 ${BRAND.cliBinary} . --slice ProcessSettlementCommand`,
     linkTo: '/examples',
-    linkLabel: 'See 46-project modular monolith map',
+    linkLabel: 'See 47-project modular monolith map',
   },
   {
     id: 'ai-coding-agents',
     title: 'Replacing blind file-grepping in AI coding agents with live MCP DNA',
     persona: 'Teams Using Claude Code, Cursor, VS Code Copilot & Antigravity',
     problem:
-      'When asked to modify a vertical slice, LLM coding agents spend thousands of tokens running 25 sequential grep and file-read calls across Controllers, Application folders, Validators, and DbContexts—and frequently forget pipeline validators or domain event subscribers.',
+      'When asked to modify a vertical slice, LLM coding agents spend thousands of tokens running sequential grep and file-read calls across Controllers, Application folders, Validators, and DbContexts—and frequently forget pipeline validators or domain event subscribers.',
     outcome:
       'Serving cqrslens over stdio (--mcp) gives the agent four deterministic structural tools. One trace_slice call returns exact File:Line coordinates for the entire chain, and check_architecture verifies all 11 static rules before the agent finishes its turn.',
     commandLabel: 'MCP Agent Loop',
     commandSnippet: `# Register stdio server once at repo root
 claude mcp add cqrslens -- ${BRAND.cliBinary} . --mcp
 
-# Agent executes in <20 ms per call:
+# Agent workflow:
 1. get_architecture_dna()          -> learns layers & conventions
 2. trace_slice("CreateOrder")      -> gets exact File:Line slice map
 3. check_architecture(strict=true) -> catches missing validator pre-commit`,
@@ -66,10 +66,10 @@ claude mcp add cqrslens -- ${BRAND.cliBinary} . --mcp
     commandSnippet: `# Commit existing findings once (matched by rule + contract + file, not line #)
 ${BRAND.cliBinary} src --write-baseline cqrslens-baseline.json
 
-# Gate every PR in ~2 seconds without compiling
-${BRAND.cliBinary} src --strict --baseline cqrslens-baseline.json --diff origin/main`,
+# Gate every PR without compiling
+${BRAND.cliBinary} src --strict --baseline cqrslens-baseline.json`,
     linkTo: '/rules',
-    linkLabel: 'Browse all 11 enforced rules',
+    linkLabel: 'Browse all 11 static rules',
   },
   {
     id: 'ef-core-blast-radius',
@@ -95,7 +95,7 @@ export const UseCasesPage: React.FC = () => (
     <PageMasthead
       pixelLines={['USE CASES']}
       srTitle={`Use Cases & Engineering Workflows — ${BRAND.name}`}
-      summary="Four concrete workflows where sub-second, compiler-free architectural cartography replaces manual diagramming, fragile reflection tests, and token-heavy LLM grepping."
+      summary="Four concrete workflows where fast, compiler-free architectural cartography replaces manual diagramming, fragile reflection tests, and token-heavy LLM grepping."
       aside={
         <Link to="/quickstart" className="btn-primary">
           <span>Try on Your Repo</span>

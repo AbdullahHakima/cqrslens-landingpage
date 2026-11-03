@@ -15,13 +15,10 @@ export const ProjectStats: React.FC<ProjectStatsProps> = ({
   className = '',
   tone = 'default',
 }) => {
-  const { githubStars, nugetDownloads, isLoading } = useProjectStats();
+  const { githubStars, nugetDownloads } = useProjectStats();
   const inverse = tone === 'inverse';
 
-  const showGithub = githubStars !== null || isLoading;
-  const showNuget = nugetDownloads !== null || isLoading;
-
-  if (!showGithub && !showNuget) return null;
+  if (githubStars === null && nugetDownloads === null) return null;
 
   const linkTone = inverse
     ? 'hover:text-[var(--color-text-on-inverse)]'
@@ -43,21 +40,19 @@ export const ProjectStats: React.FC<ProjectStatsProps> = ({
     <div
       className={`flex flex-wrap items-center gap-x-3 gap-y-0.5 font-editorial-mono text-xs leading-none ${containerTone} ${className}`}
     >
-      {showGithub && (
+      {githubStars !== null && (
         <a
           href={BRAND.githubUrl}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label={
-            githubStars === null
-              ? `View ${BRAND.nugetPackage} on GitHub`
-              : `${formatProjectStat(githubStars)} GitHub ${githubStars === 1 ? 'star' : 'stars'}`
-          }
+          aria-label={`${formatProjectStat(githubStars)} GitHub ${
+            githubStars === 1 ? 'star' : 'stars'
+          }`}
           className={`${statLinkClass} ${linkTone}`}
         >
           <GitHubIcon className={`size-3.5 shrink-0 ${iconTone}`} />
           <span className={`font-medium tabular-nums ${countTone}`}>
-            {githubStars === null ? '—' : formatProjectStat(githubStars)}
+            {formatProjectStat(githubStars)}
           </span>
           <span className="whitespace-nowrap">
             {githubStars === 1 ? 'GitHub star' : 'GitHub stars'}
@@ -65,27 +60,23 @@ export const ProjectStats: React.FC<ProjectStatsProps> = ({
         </a>
       )}
 
-      {showGithub && showNuget && (
+      {githubStars !== null && nugetDownloads !== null && (
         <span aria-hidden="true" className={`h-3 w-px ${separatorTone}`} />
       )}
 
-      {showNuget && (
+      {nugetDownloads !== null && (
         <a
           href={BRAND.nugetUrl}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label={
-            nugetDownloads === null
-              ? `View ${BRAND.nugetPackage} on NuGet`
-              : `${formatProjectStat(nugetDownloads)} NuGet ${
-                  nugetDownloads === 1 ? 'download' : 'downloads'
-                }`
-          }
+          aria-label={`${formatProjectStat(nugetDownloads)} NuGet ${
+            nugetDownloads === 1 ? 'download' : 'downloads'
+          }`}
           className={`${statLinkClass} ${linkTone}`}
         >
           <NuGetIcon className={`size-3.5 shrink-0 ${iconTone}`} />
           <span className={`font-medium tabular-nums ${countTone}`}>
-            {nugetDownloads === null ? '—' : formatProjectStat(nugetDownloads)}
+            {formatProjectStat(nugetDownloads)}
           </span>
           <span className="whitespace-nowrap">
             {nugetDownloads === 1 ? 'NuGet download' : 'NuGet downloads'}

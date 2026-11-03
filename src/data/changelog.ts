@@ -1,7 +1,7 @@
 /**
  * Editable Changelog Ledger for Noctua / CqrsLens CLI.
  *
- * Grounded in verified CqrsLens v0.8.0 capabilities.
+ * Grounded in the tagged CqrsLens v0.9.0 CHANGELOG and its historical releases.
  * Update release dates or historical version groupings below to match exact GitHub tags.
  */
 
@@ -25,128 +25,221 @@ export interface ReleaseEntry {
 
 export const CHANGELOG_RELEASES: readonly ReleaseEntry[] = [
   {
-    version: '0.8.0',
-    dateLabel: 'Current Release · NuGet v0.8.0',
+    version: '0.9.0',
+    dateLabel: '2026-11-02',
     isLatest: true,
-    headline: 'MCP Agent Server, Zero-JS SVG Explorer & 11-Rule Strict CI Gates',
+    headline: 'Flow Diagrams, Behavior Chains & Standalone SVG Export',
     summary:
-      'Brings live Model Context Protocol stdio tooling for AI coding agents, compiled zero-JavaScript SVG HTML reports, line-independent legacy baselines, and full text/Roslyn parity across 105 public corpus projects.',
+      'The reporting release: flow and behavior-chain diagrams now visualize dispatch data the scanner already collected, CQRS maps can be split by feature or project, and every diagram can be exported as its own SVG. JSON output is unchanged from 0.8.0.',
+    changes: [
+      {
+        tag: 'ADDED',
+        category: 'Outputs',
+        text: 'Endpoint → request → handler → DbContext flow diagrams in Markdown and HTML, rendered as Mermaid or inline SVG. Unresolved dispatches are counted in the caption, never drawn as guessed edges.',
+      },
+      {
+        tag: 'ADDED',
+        category: 'Outputs',
+        text: 'Pipeline behavior-chain visual showing the behaviors around a request in the order they were found in source.',
+      },
+      {
+        tag: 'ADDED',
+        category: 'Outputs',
+        text: 'CQRS map splitting via `--cqrs-map-split count|feature|unsplit` or the `cqrsMapSplit` config key. The flag overrides the config file; unknown values fail with an error.',
+      },
+      {
+        tag: 'ADDED',
+        category: 'Outputs',
+        text: 'Standalone SVG export with `--export-svg <directory>`: one complete .svg per diagram, additive to the primary report, with no PNG output.',
+      },
+      {
+        tag: 'IMPROVED',
+        category: 'Outputs',
+        text: 'Report diagrams now carry captions explaining what to look at, and labels use full request and handler names instead of shortened forms.',
+      },
+    ],
+  },
+  {
+    version: '0.8.0',
+    dateLabel: '2026-10-31',
+    headline: 'MCP Server, Reachability Checks & Deep Vertical-Slice Tracing',
+    summary:
+      'First NuGet release since 0.6.0, including the 0.7.0 diff work. Adds a live Model Context Protocol server, dispatch call-site tracking, notifications, reachability checks, deep slice tracing, and a token-packed agent report.',
     changes: [
       {
         tag: 'ADDED',
         category: 'MCP',
-        text: 'Built-in MCP server (`cqrslens <path> --mcp`) exposing `get_architecture_dna`, `trace_slice`, `trace_entity_impact`, and `check_architecture` over stdio.',
+        text: 'Built-in MCP server (`cqrslens <path> --mcp`) speaking JSON-RPC 2.0 over stdio with `get_architecture_dna`, `trace_slice`, `trace_entity_impact`, and `check_architecture`.',
+      },
+      {
+        tag: 'ADDED',
+        category: 'Rules',
+        text: '`UnreachableRequest` and `UnpublishedNotification` warning checks backed by production `Send()` and `Publish()` call-site tracking. Test-project dispatches do not count as reachable.',
       },
       {
         tag: 'ADDED',
         category: 'Outputs',
-        text: 'Token-packed `--format agent` (`ARCHITECTURE.agent.md`) output designed for single-shot LLM context windows.',
+        text: 'Deep vertical-slice tracing across controllers, minimal APIs, and FastEndpoints, plus token-packed `--format agent` output for LLM context windows.',
       },
       {
         tag: 'ADDED',
         category: 'Outputs',
-        text: 'Offline zero-JS HTML report compilation (`--format html --render svg`) embedding pre-laid-out Clean Architecture and CQRS SVG graphs.',
-      },
-      {
-        tag: 'ADDED',
-        category: 'CI',
-        text: 'Pull request architectural delta mode (`--diff`) with sticky PR Mermaid summaries, SARIF 2.1.0 export, and `--write-baseline` support.',
+        text: 'Notification and domain-event discovery with fan-out diagrams, expanded rules, and an interactive HTML CQRS explorer with per-request inspector cards.',
       },
       {
         tag: 'IMPROVED',
         category: 'Engine',
-        text: 'Achieved 100% contract-linking parity between `--analysis text` (10.4 ms warm on SampleShop) and `--analysis roslyn` (28.9 ms warm without build).',
+        text: 'Added per-phase profiling and shared source workspaces, reduced synthetic-scan memory and time through source masking and prechecks, and hardened long-line handling.',
       },
       {
         tag: 'FIXED',
-        category: 'Engine',
-        text: 'Namespace and generic arity disambiguation when two bounded contexts declare identically named commands (e.g. `TogglePostLikeCommand`).',
+        category: 'Rules',
+        text: 'Open-generic request wrappers no longer produce false MultipleHandlers errors, OrphanValidator no longer fires without a CQRS request model, and guessed layer models now produce warnings instead of errors.',
       },
     ],
   },
   {
     version: '0.7.0',
-    dateLabel: 'Milestone Release · v0.7',
-    headline: 'Vertical-Slice Tracer (`--slice`) & EF Core DbContext ER Modeling',
+    dateLabel: '2026-10-25',
+    headline: 'Architecture Diffing, Sticky PR Diffs & Mediator/Wolverine Conventions',
     summary:
-      'Expanded static analysis beyond request-to-handler edges to trace full vertical slices from endpoint dispatch down to EF Core DbSet touches and domain event fan-out.',
+      'Adds report-to-report architecture diffing, a GitHub Action that posts a sticky pull-request comment, and automatic conventions for martinothamar/Mediator and Wolverine.',
     changes: [
       {
         tag: 'ADDED',
-        category: 'Outputs',
-        text: 'Targeted vertical-slice query mode (`--slice <name>`) printing dispatch file:line, validator, pipeline behaviors, handler, DbSets, and notifications.',
+        category: 'CI',
+        text: 'Architecture diffing via `--diff <PATH_OR_JSON>` and `--diff-output`, tracking project, request, handler, validator, behavior, DbContext, and finding changes.',
+      },
+      {
+        tag: 'ADDED',
+        category: 'CI',
+        text: 'GitHub Action pull-request comments with `comment-pr`, `diff-base`, `diff-output`, and `github-token` inputs, plus automatic base-branch worktree comparison.',
       },
       {
         tag: 'ADDED',
         category: 'Engine',
-        text: 'Static EF Core `DbContext` entity-relationship extraction from `DbSet<T>` properties, data annotations, and `OnModelCreating` Fluent API configurations.',
+        text: 'Automatic martinothamar/Mediator conventions for `ICommand`, `IQuery`, `IStream*` requests and their handlers, without custom markers.',
       },
       {
         tag: 'ADDED',
-        category: 'Rules',
-        text: 'Reachability checks `UnreachableRequest`, `OrphanNotification`, and `UnpublishedNotification` backed by `Send()` and `Publish()` call-site tracking.',
+        category: 'Engine',
+        text: 'Wolverine conventions for `*Handler` and `*Consumer` classes with `Handle`, `HandleAsync`, `Consume`, or `ConsumeAsync` methods.',
       },
       {
         tag: 'IMPROVED',
-        category: 'Engine',
-        text: 'Read-only `AsNoTracking()` query detection on `DbSet<T>` accesses inside query handlers.',
+        category: 'Outputs',
+        text: 'Detected conventions are listed in the Markdown report header and the JSON `conventions` field.',
       },
     ],
   },
   {
     version: '0.6.0',
-    dateLabel: 'Milestone Release · v0.6',
-    headline: 'Multi-Mediator Support (Mediator & Wolverine) + `.cqrslens.json`',
+    dateLabel: '2026-10-25',
+    headline: 'EF Core ER Diagrams, Pre-rendered SVG & Deterministic JSON',
     summary:
-      'Generalized CQRS contract discovery beyond MediatR to support source-generated Mediator, Wolverine conventions, FastEndpoints validators, and per-repo rule configuration.',
+      'Adds first-class EF Core entity-relationship modeling, zero-JavaScript inline SVG reports, schema-versioned JSON output, and console artwork with watermarks.',
     changes: [
       {
         tag: 'ADDED',
-        category: 'Engine',
-        text: 'Automatic convention detection for `martinothamar/Mediator`, `Wolverine` message handlers, `FastEndpoints` validators, and custom marker interface hierarchies.',
-      },
-      {
-        tag: 'ADDED',
-        category: 'Rules',
-        text: 'Repository-level `.cqrslens.json` configuration to tune each rule between `error`, `warning`, and `off`, plus custom ignore globs.',
+        category: 'Outputs',
+        text: 'EF Core `DbContext` ER diagrams derived from `DbSet<T>` roots, navigation properties, data annotations, and Fluent API configuration.',
       },
       {
         tag: 'ADDED',
         category: 'Outputs',
-        text: 'Deterministic schema-versioned `ARCHITECTURE.json` output for custom internal developer portals and CI scripts.',
+        text: 'Pre-rendered SVG diagrams with `--render svg` for offline HTML reports with no browser-side Mermaid dependency.',
+      },
+      {
+        tag: 'ADDED',
+        category: 'Outputs',
+        text: 'Schema-versioned `--format json` output covering projects, requests, handlers, validators, behaviors, DbContexts, findings, and diagnostics.',
+      },
+      {
+        tag: 'ADDED',
+        category: 'Outputs',
+        text: 'Console ASCII artwork, TrueColor gradients, progress, and custom watermarks for terminal, Markdown, HTML, and JSON output.',
+      },
+      {
+        tag: 'IMPROVED',
+        category: 'Engine',
+        text: 'Expanded MSBuild `<Using>` evaluation, per-project global using scopes, and Roslyn base-class/generic-response propagation.',
       },
     ],
   },
   {
     version: '0.5.0',
-    dateLabel: 'Milestone Release · v0.5',
-    headline: 'No-Build Roslyn Backend & Nightly Public Corpus Suite',
+    dateLabel: '2026-10-22',
+    headline: 'FastEndpoints Validators, External Handler Wrappers & Module-Aware Linking',
     summary:
-      'Introduced the optional Roslyn syntax/symbol backend alongside the ultra-fast parallel text scanner, verified nightly against canonical open-source Clean Architecture solutions.',
+      'Broadens convention coverage to FastEndpoints validators and package-supplied handler wrappers, and resolves same-named contracts through namespaces and using directives.',
     changes: [
       {
         tag: 'ADDED',
         category: 'Engine',
-        text: 'Dual-backend `--analysis text|roslyn` flag allowing symbol-tree verification without running `dotnet restore` or `dotnet build`.',
+        text: 'FastEndpoints `Validator<T>` roots are linked to CQRS requests, avoiding false CommandWithoutValidator warnings.',
       },
       {
         tag: 'ADDED',
-        category: 'Rules',
-        text: 'Clean Architecture structural checks: `LayerViolation`, `ApplicationLayerViolation`, `CircularProjectDependency`, and `AmbiguousProjectName`.',
+        category: 'Engine',
+        text: 'External handler wrappers via `--handler-markers` and the `handlerMarkers` config key for interfaces supplied by packages.',
+      },
+      {
+        tag: 'ADDED',
+        category: 'Engine',
+        text: 'Module-aware contract resolution through namespaces, global usings, and aliases, with genuine ambiguity reported as a diagnostic.',
+      },
+      {
+        tag: 'ADDED',
+        category: 'Engine',
+        text: 'Source-declared request base classes such as `CommandBase` and `QueryBase<T>` are followed transitively with generic response substitution.',
       },
       {
         tag: 'IMPROVED',
         category: 'Engine',
-        text: 'MSBuild `<Using>` item, `global using`, type alias, and base-class generic response substitution support.',
+        text: 'The public validation corpus records request and handler roots separately; the ardalis row links 23/23 handlers and recognizes 21 FastEndpoints validators while retaining 13 genuine warnings.',
       },
     ],
   },
   {
     version: '0.4.0',
-    dateLabel: 'Initial Public Foundation · v0.4',
+    dateLabel: '2026-10-22',
+    headline: 'Project Configuration, Baselines & CI-Native Outputs',
+    summary:
+      'Makes CqrsLens practical in existing repositories with `.cqrslens.json`, line-independent baselines, SARIF and job summaries, and broader runtime compatibility.',
+    changes: [
+      {
+        tag: 'ADDED',
+        category: 'Engine',
+        text: '`.cqrslens.json` configuration for analysis mode, custom markers, source include/exclude globs, project layers, and per-rule severities. Unknown keys and invalid values are usage errors.',
+      },
+      {
+        tag: 'ADDED',
+        category: 'CI',
+        text: '`--write-baseline` and `--baseline` match findings by rule, target identity, and root-relative file, so `--strict` fails only on new errors.',
+      },
+      {
+        tag: 'ADDED',
+        category: 'CI',
+        text: 'SARIF 2.1.0, Markdown job summaries, GitHub annotations, and `--ci-root` path rebasing for subfolder scans.',
+      },
+      {
+        tag: 'ADDED',
+        category: 'CI',
+        text: 'The composite Action exposes config, baseline, SARIF, and annotation inputs; CI verifies the installed package on .NET 8, 9, and 10.',
+      },
+      {
+        tag: 'ADDED',
+        category: 'Engine',
+        text: 'A pinned public validation corpus with local runner and non-blocking report workflow, documented as informational rather than a release gate.',
+      },
+    ],
+  },
+  {
+    version: '0.1.0',
+    dateLabel: '2026-10-21',
     headline: 'Zero-Build .NET Project Graph & ARCHITECTURE.md Mermaid Generator',
     summary:
-      'First NuGet global tool release scanning `.csproj` and `.cs` files directly to emit deterministic Markdown architecture maps.',
+      'First NuGet global tool release scanning `.csproj` and `.cs` files directly to emit Markdown architecture maps.',
     changes: [
       {
         tag: 'ADDED',
@@ -155,8 +248,13 @@ export const CHANGELOG_RELEASES: readonly ReleaseEntry[] = [
       },
       {
         tag: 'ADDED',
+        category: 'Engine',
+        text: 'MediatR request and handler discovery, FluentValidation links, pipeline behavior detection, and DbContext/DbSet inventory.',
+      },
+      {
+        tag: 'ADDED',
         category: 'Rules',
-        text: 'Core CQRS hygiene rules: `MissingHandler`, `MultipleHandlers`, `CommandWithoutValidator`, and `OrphanValidator`.',
+        text: 'Core architecture checks for missing handlers, layer violations, and commands without validators, with `--strict` failing on errors.',
       },
     ],
   },

@@ -16,15 +16,19 @@ export const BRAND = {
 
   /** Concise hero value proposition */
   heroSummary:
-    'Maps your .NET and CQRS codebase in milliseconds without building it. Every command, handler, validator, and layer drawn.',
+    'Maps your .NET and CQRS codebase without building it. Every command, handler, validator, and layer drawn.',
 
   /** Concise footer architectural tagline */
   footerTagline: 'See the architecture behind your .NET code.',
 
+  /** Footer origin, tying the tool to its home */
+  footerOrigin: 'Egypt',
+  footerCoordinates: 'Cairo · 30.0444° N / 31.2357° E',
+
   /** Active CLI & package coordinates from github.com/AbdullahHakima/cqrslens */
   cliBinary: 'cqrslens',
   nugetPackage: 'CqrsLens',
-  version: '0.8.0',
+  version: '0.9.0',
   installCommand: 'dotnet tool install -g CqrsLens',
 
   /** External & canonical links */

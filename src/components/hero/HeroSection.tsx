@@ -11,6 +11,7 @@ const OwlHeroCanvas = React.lazy(() => import('./OwlHeroCanvas'));
 
 export const HeroSection: React.FC = () => {
   const owlRef = useRef<OwlHeroCanvasHandle>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
   const [inspectingCta, setInspectingCta] = useState(false);
   const [stageReady, setStageReady] = useState(false);
 
@@ -25,10 +26,19 @@ export const HeroSection: React.FC = () => {
     <section
       id="top"
       aria-labelledby="hero-heading"
-      className="relative flex flex-col overflow-hidden bg-[var(--color-bg-canvas)] lg:block lg:min-h-dvh"
+      className="relative isolate flex min-h-dvh flex-col overflow-hidden bg-[var(--color-bg-canvas)]"
     >
-      {/* Editorial Copy & CTAs (Left Half on Desktop, Top on Mobile & Portrait Tablet) */}
-      <div className="pointer-events-none relative z-[var(--z-hero-copy)] mx-auto flex w-full max-w-[1440px] flex-col px-4 pt-22 pb-5 sm:px-8 sm:pt-26 sm:pb-7 lg:min-h-dvh lg:px-8 lg:pt-[19dvh] lg:pb-[8.5dvh] xl:px-12">
+      {/* Layer 0 - the owl is the hero: one full-bleed halftone surface behind all the copy. */}
+      <div className="absolute inset-0 z-[var(--z-canvas)]">
+        {stageReady && (
+          <Suspense fallback={null}>
+            <OwlHeroCanvas ref={owlRef} inspectingCta={inspectingCta} stageRef={stageRef} />
+          </Suspense>
+        )}
+      </div>
+
+      {/* Layer 1 - wordmark, copy and CTAs overlaid on the owl: headline top, actions bottom */}
+      <div className="pointer-events-none relative z-[var(--z-hero-copy)] mx-auto flex min-h-dvh lg:static w-full max-w-[1440px] flex-1 flex-col px-4 pt-22 pb-5 sm:px-8 sm:pt-26 sm:pb-7 lg:px-8 lg:pt-[19dvh] lg:pb-[8.5dvh] xl:px-12">
         <h1 id="hero-heading" className="pointer-events-auto m-0 w-full max-w-full lg:max-w-[43vw] xl:max-w-[48vw]">
           <span className="sr-only">
             {BRAND.name} Code Map: {BRAND.heroSummary}
@@ -41,7 +51,17 @@ export const HeroSection: React.FC = () => {
           />
         </h1>
 
-        <div className="pointer-events-auto mt-7 sm:mt-10 lg:mt-auto lg:pt-12">
+        {/* Owl stage anchor - invisible box that tells the canvas where the owl stands.
+            Stacked: it takes the space between headline and actions and overlaps both by a
+            few rem, so the owl is the centrepiece and the copy sits on top of it.
+            Desktop (lg): the wrapper is static, so this resolves against the whole hero and
+            lets the owl reach under the right end of the wordmark. */}
+        <div
+          ref={stageRef}
+          aria-hidden="true"
+          className="pointer-events-none relative -my-8 min-h-[250px] flex-1 lg:absolute lg:inset-y-0 lg:right-0 lg:left-[15vw] lg:m-0 lg:min-h-0 lg:flex-none"
+        />
+        <div className="pointer-events-auto mt-auto pt-10 lg:pt-12">
           <p className="m-0 max-w-[36ch] font-editorial-mono text-sm leading-[1.6] text-pretty text-[var(--color-text-primary)] sm:max-w-[39ch] sm:text-base lg:max-w-[36ch] xl:max-w-[39ch]">
             {BRAND.heroSummary}
           </p>
@@ -80,15 +100,6 @@ export const HeroSection: React.FC = () => {
 
           <ProjectStats className="mt-2 sm:mt-3" />
         </div>
-      </div>
-
-      {/* Real-Time 3D Sculptural Owl + 3-Regime Scanline Halftone Stage */}
-      <div className="relative z-[var(--z-canvas)] h-[38dvh] min-h-[260px] max-h-[340px] w-full sm:h-[44dvh] sm:min-h-[320px] sm:max-h-[430px] lg:absolute lg:inset-y-0 lg:right-0 lg:h-full lg:max-h-none lg:w-[60vw] xl:w-[62vw]">
-        {stageReady && (
-          <Suspense fallback={null}>
-            <OwlHeroCanvas ref={owlRef} inspectingCta={inspectingCta} />
-          </Suspense>
-        )}
       </div>
     </section>
   );

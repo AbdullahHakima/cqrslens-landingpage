@@ -24,6 +24,40 @@ const CATEGORIES: readonly ('All' | RuleCategory)[] = [
   'Reachability & Events',
 ];
 
+const SEVERITY_STYLES: Record<RuleSeverity, string> = {
+  error: 'bg-[var(--color-role-error-bg)] text-[var(--color-role-error-fg)]',
+  warning: 'bg-[var(--color-role-warn-bg)] text-[var(--color-role-warn-fg)]',
+  conditional: 'bg-[var(--color-role-query-bg)] text-[var(--color-role-query-fg)]',
+};
+
+const SEVERITY_SYMBOLS: Record<RuleSeverity, string> = {
+  error: '[!]',
+  warning: '[~]',
+  conditional: '[?]',
+};
+
+const SEVERITY_ABBREVIATIONS: Record<RuleSeverity, string> = {
+  error: 'ERR',
+  warning: 'WARN',
+  conditional: 'COND',
+};
+
+const SEVERITY_OPTIONS = [
+  { id: 'all', label: `All (${ARCHITECTURE_RULES.length})` },
+  {
+    id: 'error',
+    label: `Errors (${ARCHITECTURE_RULES.filter((rule) => rule.severity === 'error').length})`,
+  },
+  {
+    id: 'conditional',
+    label: `Conditional (${ARCHITECTURE_RULES.filter((rule) => rule.severity === 'conditional').length})`,
+  },
+  {
+    id: 'warning',
+    label: `Warnings (${ARCHITECTURE_RULES.filter((rule) => rule.severity === 'warning').length})`,
+  },
+] as const;
+
 export const RulesPage: React.FC = () => {
   const [severityFilter, setSeverityFilter] = useState<'all' | RuleSeverity>('all');
   const [categoryFilter, setCategoryFilter] = useState<'All' | RuleCategory>('All');
@@ -101,13 +135,7 @@ export const RulesPage: React.FC = () => {
               aria-label="Filter by default severity"
               className="flex flex-wrap items-center gap-2"
             >
-              {(
-                [
-                  { id: 'all', label: 'All (11)' },
-                  { id: 'error', label: 'Errors (5)' },
-                  { id: 'warning', label: 'Warnings (6)' },
-                ] as const
-              ).map((btn) => {
+              {SEVERITY_OPTIONS.map((btn) => {
                 const active = severityFilter === btn.id;
                 return (
                   <button
@@ -206,7 +234,7 @@ export const RulesPage: React.FC = () => {
                   </option>
                   {filteredRules.map((rule) => (
                     <option key={rule.id} value={rule.id}>
-                      {rule.id} [{rule.severity === 'error' ? 'ERR' : 'WARN'}]
+                      {rule.id} [{SEVERITY_ABBREVIATIONS[rule.severity]}]
                     </option>
                   ))}
                 </select>
@@ -232,13 +260,9 @@ export const RulesPage: React.FC = () => {
                       >
                         <span className="truncate">{rule.id}</span>
                         <span
-                          className={`shrink-0 rounded-[3px] px-1.5 py-0.5 text-[0.65rem] ${
-                            rule.severity === 'error'
-                              ? 'bg-[var(--color-role-error-bg)] text-[var(--color-role-error-fg)]'
-                              : 'bg-[var(--color-role-warn-bg)] text-[var(--color-role-warn-fg)]'
-                          }`}
+                          className={`shrink-0 rounded-[3px] px-1.5 py-0.5 text-[0.65rem] ${SEVERITY_STYLES[rule.severity]}`}
                         >
-                          {rule.severity === 'error' ? 'ERR' : 'WARN'}
+                          {SEVERITY_ABBREVIATIONS[rule.severity]}
                         </span>
                       </Link>
                     </li>
@@ -266,15 +290,9 @@ export const RulesPage: React.FC = () => {
                       </h2>
 
                       <span
-                        className={`inline-flex items-center gap-1.5 rounded-[3px] px-2.5 py-1 font-editorial-mono text-xs font-medium ${
-                          rule.severity === 'error'
-                            ? 'bg-[var(--color-role-error-bg)] text-[var(--color-role-error-fg)]'
-                            : 'bg-[var(--color-role-warn-bg)] text-[var(--color-role-warn-fg)]'
-                        }`}
+                        className={`inline-flex items-center gap-1.5 rounded-[3px] px-2.5 py-1 font-editorial-mono text-xs font-medium ${SEVERITY_STYLES[rule.severity]}`}
                       >
-                        <span aria-hidden="true">
-                          {rule.severity === 'error' ? '[!]' : '[~]'}
-                        </span>
+                        <span aria-hidden="true">{SEVERITY_SYMBOLS[rule.severity]}</span>
                         <span>default: {rule.severity}</span>
                       </span>
 
@@ -309,6 +327,11 @@ export const RulesPage: React.FC = () => {
                   <p className="mt-2 mb-0 max-w-[42rem] font-editorial-sans text-[0.9375rem] leading-[1.62] text-pretty text-[var(--color-text-secondary)]">
                     {rule.rationale}
                   </p>
+                  {rule.severityNote && (
+                    <p className="mt-3 mb-0 max-w-[42rem] border-l-2 border-[var(--color-role-warn-fg)] pl-3 font-editorial-sans text-sm leading-[1.55] text-[var(--color-text-secondary)]">
+                      {rule.severityNote}
+                    </p>
+                  )}
 
                   {/* Side-by-Side Violation vs. Clean Resolution */}
                   <div className="mt-6 grid grid-cols-1 gap-5 xl:grid-cols-2">

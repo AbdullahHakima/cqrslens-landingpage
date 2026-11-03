@@ -17,7 +17,25 @@ export interface RoadmapItem {
 }
 
 export const ROADMAP_ITEMS: readonly RoadmapItem[] = [
-  // Shipped Foundation (v0.8.0)
+  // Shipped Foundation (v0.8.0 – v0.9.0)
+  {
+    id: 'flow-behavior-diagrams',
+    horizon: 'shipped',
+    area: 'Visualization',
+    title: 'Endpoint Flow & Pipeline Behavior-Chain Diagrams',
+    summary:
+      'Markdown and HTML reports now draw endpoint → request → handler → DbContext flows plus a behavior-chain view in source scan order, with unresolved dispatches counted rather than guessed.',
+    deliverable: 'Shipped in v0.9.0',
+  },
+  {
+    id: 'standalone-svg-export',
+    horizon: 'shipped',
+    area: 'Visualization',
+    title: 'Standalone SVG Export & Feature-Split CQRS Maps',
+    summary:
+      '`--export-svg <dir>` writes one complete .svg per diagram, while `--cqrs-map-split feature|unsplit|count` controls how large CQRS maps are divided.',
+    deliverable: 'Shipped in v0.9.0',
+  },
   {
     id: 'mcp-stdio-server',
     horizon: 'shipped',
@@ -51,7 +69,7 @@ export const ROADMAP_ITEMS: readonly RoadmapItem[] = [
     id: 'incremental-watch-daemon',
     horizon: 'next',
     area: 'Engine',
-    title: 'Sub-5 ms Incremental File-Watcher & Live MCP Cache',
+    title: 'Incremental File-Watcher & Live MCP Cache',
     summary:
       'Re-index only touched `.cs` and `.csproj` files on save so long-running MCP agent sessions and live HTML previews reflect edits instantaneously.',
     deliverable: '--watch flag & live MCP invalidation',

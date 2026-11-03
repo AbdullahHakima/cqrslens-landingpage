@@ -76,20 +76,25 @@ export const QuickstartPage: React.FC = () => {
   const generated = useMemo(() => {
     const needsConfig = mediator === 'custom' || validation === 'none';
 
-    const configJson = `{
-  "excludeProjects": ["**/*.Tests.csproj", "**/*.Benchmarks.csproj"],${
-    mediator === 'custom'
-      ? `
-  "customMarkers": {
-    "commands": ["ICommand", "ICommand<>"],
-    "queries": ["IQuery<>"],
-    "handlers": ["ICommandHandler<>", "ICommandHandler<,>", "IQueryHandler<,>"],
-    "events": ["IDomainEvent"]
+    const customConfig =
+      mediator === 'custom'
+        ? `
+  "markers": ["ICommand", "IQuery"],
+  "handlerMarkers": ["ICommandHandler", "IQueryHandler"],
+  "layers": {
+    "Contoso.Domain": "Domain",
+    "Contoso.Application": "Application",
+    "Contoso.Infrastructure": "Infrastructure",
+    "Contoso.Api": "Api"
   },`
-      : ''
-  }
+        : '';
+
+    const configJson = `{
+  "analysis": "text",
+  "exclude": ["**/Migrations/**", "**/Generated/**", "**/obj/**"],${customConfig}
   "rules": {
     "MissingHandler": "error",
+    "MultipleHandlers": "error",
     "LayerViolation": "error",
     "ApplicationLayerViolation": "error",
     "CommandWithoutValidator": "${validation === 'none' ? 'off' : 'warning'}"
@@ -98,7 +103,7 @@ export const QuickstartPage: React.FC = () => {
 
     if (workflow === 'local-map') {
       return {
-        primaryLabel: 'Terminal · Map Your Solution in ~15 ms',
+        primaryLabel: 'Terminal · Map Your Solution Without a Build',
         primaryCode: `# 1. Install global .NET 8+ tool once
 ${BRAND.installCommand}
 
@@ -120,7 +125,7 @@ ${BRAND.cliBinary} . --slice CreateOrder`,
               MEDIATOR_OPTIONS.find((m) => m.id === mediator)?.label
             } auto-detected)
 ------------------------------------------------------
-Scanner / Timing      text · 14 ms · zero MSBuild calls
+Scanner               text · zero MSBuild calls
 Artifacts Written     ARCHITECTURE.md, ARCHITECTURE.html (inline SVG)
 Checks Evaluated      11 static rules (exit code 0)`,
       };
@@ -164,7 +169,7 @@ dotnet ${BRAND.cliBinary} src --write-baseline cqrslens-baseline.json
 git add .config/dotnet-tools.json cqrslens-baseline.json
 
 # 3. Run strict check locally or in CI (exits 4 only on NEW errors)
-dotnet ${BRAND.cliBinary} src --strict --baseline cqrslens-baseline.json --diff origin/main`,
+dotnet ${BRAND.cliBinary} src --strict --baseline cqrslens-baseline.json`,
       secondaryLabel: needsConfig
         ? '.cqrslens.json (Commit alongside baseline)'
         : '.github/workflows/architecture.yml',

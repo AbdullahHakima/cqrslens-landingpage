@@ -23,87 +23,92 @@ interface SliceTrace {
 
 const SLICES: readonly SliceTrace[] = [
   {
-    id: 'create-order',
-    name: 'CreateOrderCommand',
+    id: 'create-todo-item',
+    name: 'CreateTodoItemCommand',
     kind: 'Command',
-    project: 'SampleShop.Application',
-    endpoint: 'POST /api/orders  (OrdersEndpoints.cs:24)',
-    requestLoc: 'Orders/Commands/CreateOrder/CreateOrderCommand.cs:9',
-    responseType: 'Guid',
-    validator: 'CreateOrderCommandValidator',
-    validatorLoc: 'Orders/Commands/CreateOrder/CreateOrderCommandValidator.cs:7',
-    behaviors: ['ValidationBehavior<TRequest, TResponse>'],
-    handler: 'CreateOrderCommandHandler',
-    handlerLoc: 'Orders/Commands/CreateOrder/CreateOrderCommandHandler.cs:14',
-    dbSets: ['ShopDbContext.Orders', 'ShopDbContext.OrderLines', 'ShopDbContext.Customers'],
-    publishedEvents: ['OrderPlacedNotification -> SendOrderConfirmationHandler'],
-    finding: {
-      rule: 'AllChecksPassed',
-      severity: 'pass',
-      message: 'Reachable dispatch site, single handler, FluentValidation guard linked.',
-    },
-  },
-  {
-    id: 'delete-order',
-    name: 'DeleteOrderCommand',
-    kind: 'Command',
-    project: 'SampleShop.Application',
-    endpoint: 'DELETE /api/orders/{id:guid}  (OrdersEndpoints.cs:41)',
-    requestLoc: 'Orders/Commands/DeleteOrder/DeleteOrderCommand.cs:6',
-    responseType: 'Unit',
-    validator: 'DeleteOrderCommandValidator',
-    validatorLoc: 'Orders/Commands/DeleteOrder/DeleteOrderCommandValidator.cs:5',
-    behaviors: ['ValidationBehavior<TRequest, TResponse>'],
-    handler: 'DeleteOrderCommandHandler',
-    handlerLoc: 'Orders/Commands/DeleteOrder/DeleteOrderCommandHandler.cs:11',
-    dbSets: ['ShopDbContext.Orders'],
+    project: 'CleanArchitecture.Application',
+    endpoint: 'POST /api/TodoItems (route inferred)  (TodoItems.cs:23)',
+    requestLoc: 'TodoItems/Commands/CreateTodoItem/CreateTodoItem.cs:6',
+    responseType: 'int',
+    validator: 'CreateTodoItemCommandValidator',
+    validatorLoc: 'TodoItems/Commands/CreateTodoItem/CreateTodoItemCommandValidator.cs:3',
+    behaviors: ['4 project behaviors recorded in scan order'],
+    handler: 'CreateTodoItemCommandHandler',
+    handlerLoc: 'TodoItems/Commands/CreateTodoItem/CreateTodoItem.cs:13',
+    dbSets: ['ApplicationDbContext.TodoItems (TodoItem)'],
     publishedEvents: [],
     finding: {
-      rule: 'AllChecksPassed',
+      rule: 'NO FINDINGS',
       severity: 'pass',
-      message: 'Verified end-to-end command slice with zero layer violations.',
+      message:
+        'Endpoint route inferred; handler, validator, and EF Core DbSet linked for this slice.',
     },
   },
   {
-    id: 'toggle-like',
-    name: 'TogglePostLikeCommand',
-    kind: 'Command',
-    project: 'ElHakim.Application',
-    endpoint: 'POST /api/posts/{id}/like  (LikesController.cs:32)',
-    requestLoc: 'Features/Likes/Commands/TogglePostLikeCommand.cs:8',
-    responseType: 'LikeStatusDto',
+    id: 'get-todos',
+    name: 'GetTodosQuery',
+    kind: 'Query',
+    project: 'CleanArchitecture.Application',
+    endpoint: 'GET /api/TodoLists (route inferred)  (TodoLists.cs:23)',
+    requestLoc: 'TodoLists/Queries/GetTodos/GetTodos.cs:10',
+    responseType: 'TodosVm',
     validator: null,
     validatorLoc: null,
-    behaviors: ['LoggingBehavior<TRequest, TResponse>'],
-    handler: 'TogglePostLikeCommandHandler',
-    handlerLoc: 'Features/Likes/Commands/TogglePostLikeCommandHandler.cs:16',
-    dbSets: ['AppDbContext.PostLikes', 'AppDbContext.Posts'],
+    behaviors: ['4 project behaviors recorded in scan order'],
+    handler: 'GetTodosQueryHandler',
+    handlerLoc: 'TodoLists/Queries/GetTodos/GetTodos.cs:12',
+    dbSets: ['ApplicationDbContext.TodoLists (TodoList)'],
     publishedEvents: [],
+    finding: {
+      rule: 'NO FINDINGS',
+      severity: 'pass',
+      message: 'Query handler linked; no validator is required for a read-only query by default.',
+    },
+  },
+  {
+    id: 'create-meeting',
+    name: 'CreateMeetingCommand',
+    kind: 'Command',
+    project: 'CompanyName.MyMeetings.Modules.Meetings.Application',
+    endpoint: 'POST /api/meetings/meetings  (MeetingsController.cs:52)',
+    requestLoc: 'Meetings/CreateMeeting/CreateMeetingCommand.cs:5',
+    responseType: 'Guid',
+    validator: null,
+    validatorLoc: null,
+    behaviors: ['No pipeline behaviors registered'],
+    handler: 'CreateMeetingCommandHandler',
+    handlerLoc: 'Meetings/CreateMeeting/CreateMeetingCommandHandler.cs:8',
+    dbSets: ['MeetingsContext.Meetings (Meeting)', 'MeetingsContext.MeetingGroups (MeetingGroup)'],
+    publishedEvents: [
+      'MeetingCreatedDomainEvent -> MeetingCreatedEventHandler',
+      'MemberCreatedNotification -> MemberCratedNotificationHandler',
+    ],
     finding: {
       rule: 'CommandWithoutValidator',
       severity: 'warning',
-      message: 'Disambiguated from Posts.TogglePostLikeCommand by namespace; missing validator.',
+      message: 'Custom CommandBase marker resolved; no validator is linked to this command.',
     },
   },
   {
-    id: 'get-products',
-    name: 'GetProductListQuery',
-    kind: 'Query',
-    project: 'SampleShop.Application',
-    endpoint: 'GET /api/products  (ProductsEndpoints.cs:18)',
-    requestLoc: 'Products/Queries/GetProductList/GetProductListQuery.cs:6',
-    responseType: 'List<ProductDto>',
-    validator: null,
-    validatorLoc: null,
-    behaviors: ['ValidationBehavior<TRequest, TResponse>'],
-    handler: 'GetProductListQueryHandler',
-    handlerLoc: 'Products/Queries/GetProductList/GetProductListQueryHandler.cs:12',
-    dbSets: ['ShopDbContext.Products (AsNoTracking)'],
+    id: 'add-todo-item',
+    name: 'AddTodoItem',
+    kind: 'Command',
+    project: 'AspNetCoreSample.Application',
+    endpoint: 'POST /api/todos  (TodoApi.cs:25-30; mapped local)',
+    requestLoc: 'Todos/AddTodoItem.cs:17',
+    responseType: 'TodoItem',
+    validator: 'AddTodoItemValidator',
+    validatorLoc: 'Todos/AddTodoItem.cs:8',
+    behaviors: ['9 sample behaviors recorded globally in scan order'],
+    handler: 'TodoItemCommandHandler',
+    handlerLoc: 'Todos/AddTodoItem.cs:32',
+    dbSets: ['ITodoItemRepository (no DbContext discovered)'],
     publishedEvents: [],
     finding: {
-      rule: 'AllChecksPassed',
-      severity: 'pass',
-      message: 'Read-only query slice; validator optional under default rule set.',
+      rule: 'UnreachableRequest',
+      severity: 'warning',
+      message:
+        'Handler and validator linked; Send(addTodo) passes a mapped local, so no production call site is proven.',
     },
   },
 ];
@@ -380,13 +385,18 @@ Projects                      4  (Api, App, Infra, Domain)
 Requests (Commands/Queries)   4  (2 Commands, 2 Queries)
 Handlers                      4  (100% linked)
 Validators                    2  (FluentValidation)
-Pipeline Behaviors            1  (ValidationBehavior)
+Pipeline Behaviors            1  (LoggingBehavior)
 EF Core DbContexts            1  (ShopDbContext · 4 entities)
-Scanner / Timing              text · 18 ms · 0.65 MB
-Architecture Checks           PASSED (0 errors, 0 warnings)
+Scanner                       text · source-only (no build)
+Architecture Checks           0 errors, 4 warnings
 ------------------------------------------------------
 Written: samples/SampleShop/ARCHITECTURE.html (zero-JS SVG)`}
                 </pre>
+                <p className="mt-4 mb-0 max-w-[34rem] font-editorial-sans text-[0.8125rem] leading-[1.55] text-[var(--color-text-on-inverse-muted)]">
+                  The bundled SampleShop fixture intentionally contains no production dispatch
+                  sites, so all four requests report UnreachableRequest. The layer graph still
+                  resolves without a build.
+                </p>
               </div>
 
               <div className="min-w-0 p-4 sm:p-7 lg:col-span-6">
@@ -584,7 +594,7 @@ $ cqrslens . --format agent -o ARCHITECTURE.agent.md`}
                   .github/workflows/architecture.yml
                 </div>
                 <pre className="mt-4 overflow-x-auto font-editorial-mono text-[0.71875rem] leading-[1.65] sm:text-xs">
-{`- uses: AbdullahHakima/cqrslens@v0.8.0
+{`- uses: AbdullahHakima/cqrslens@v0.9.0
   with:
     path: src
     strict: 'true'

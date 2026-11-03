@@ -1,21 +1,25 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { BRAND } from '../../config/brand';
 import { Link } from '../../lib/router';
-import nileEtchingSrc from '../../assets/footer-nile-etching.webp';
-import nileEtchingSmSrc from '../../assets/footer-nile-etching-sm.webp';
+import footerEgyptDesktop1080 from '../../assets/footer-egypt-desktop-1080.webp';
+import footerEgyptDesktop1440 from '../../assets/footer-egypt-desktop-1440.webp';
+import footerEgyptDesktop2172 from '../../assets/footer-egypt-desktop-2172.webp';
+import footerEgyptTablet640 from '../../assets/footer-egypt-tablet-640.webp';
+import footerEgyptTablet1024 from '../../assets/footer-egypt-tablet-1024.webp';
+import footerEgyptTablet1536 from '../../assets/footer-egypt-tablet-1536.webp';
+import footerEgyptMobile560 from '../../assets/footer-egypt-mobile-560.webp';
+import footerEgyptMobile1122 from '../../assets/footer-egypt-mobile-1122.webp';
 import { BrandMark } from '../brand/BrandMark';
 import { PixelWordmark } from '../brand/PixelWordmark';
 import {
   ArrowUpRightIcon,
-  BookOpenIcon,
   CheckIcon,
+  ChevronDownIcon,
   CopyIcon,
   GitHubIcon,
-  IssueSignalIcon,
   NuGetIcon,
   ReleaseTagIcon,
 } from '../ui/Icons';
-import { ProjectStats } from '../ui/ProjectStats';
 
 interface FooterLink {
   label: string;
@@ -34,7 +38,6 @@ const FOOTER_COLUMNS: readonly FooterColumn[] = [
     id: 'footer-nav-product',
     title: 'Product',
     links: [
-      { label: 'Overview', to: '/' },
       { label: 'Features & Comparison', to: '/features' },
       { label: 'Use Cases', to: '/use-cases' },
       { label: 'Sample Reports', to: '/examples' },
@@ -46,9 +49,9 @@ const FOOTER_COLUMNS: readonly FooterColumn[] = [
     title: 'Documentation',
     links: [
       { label: '60-Second Quickstart', to: '/quickstart' },
-      { label: 'CLI Reference Manual', to: '/docs/cli-reference' },
+      { label: 'CLI Reference', to: '/docs/cli-reference' },
       { label: '.cqrslens.json Config', to: '/docs/configuration' },
-      { label: 'Static Rules Catalog (11)', to: '/rules' },
+      { label: 'Rules Catalog', to: '/rules' },
       { label: 'Exit Codes & Baselines', to: '/docs/exit-codes' },
     ],
   },
@@ -58,49 +61,20 @@ const FOOTER_COLUMNS: readonly FooterColumn[] = [
     links: [
       { label: 'Changelog', to: '/changelog' },
       { label: 'Roadmap', to: '/roadmap' },
-      { label: 'GitHub Repository', to: BRAND.githubUrl, external: true },
-      { label: 'NuGet Package', to: BRAND.nugetUrl, external: true },
       { label: 'Request a Check', to: BRAND.githubNewIssueUrl, external: true },
     ],
   },
 ] as const;
 
-const COORDINATES = [
+const SOCIAL_LINKS = [
   {
     icon: GitHubIcon,
-    label: BRAND.githubDisplay,
-    to: BRAND.githubUrl,
-    external: true,
-  },
-  {
-    icon: NuGetIcon,
-    label: BRAND.nugetDisplay,
-    to: BRAND.nugetUrl,
-    external: true,
-  },
-  {
-    icon: BookOpenIcon,
-    label: 'CLI Reference & Docs',
-    to: '/docs',
-    external: false,
-  },
-  {
-    icon: IssueSignalIcon,
-    label: 'Roadmap & Feature Requests',
-    to: '/roadmap',
-    external: false,
-  },
-] as const;
-
-const ICON_LINKS = [
-  {
-    icon: GitHubIcon,
-    label: `${BRAND.name} repository on GitHub`,
+    label: `${BRAND.name} on GitHub`,
     href: BRAND.githubUrl,
   },
   {
     icon: NuGetIcon,
-    label: `${BRAND.nugetPackage} package on NuGet`,
+    label: `${BRAND.nugetPackage} on NuGet`,
     href: BRAND.nugetUrl,
   },
   {
@@ -110,8 +84,64 @@ const ICON_LINKS = [
   },
 ] as const;
 
+type CopyStatus = 'idle' | 'copied' | 'error';
+
+const FOOTER_LINK_CLASS =
+  'group inline-flex min-h-[44px] max-w-full items-center gap-1.5 py-1.5 font-editorial-sans text-[0.875rem] leading-[1.45] text-pretty text-[var(--color-text-footer-muted)] no-underline transition-colors duration-150 ease-[var(--ease-out)] hover:text-[var(--color-text-footer)]';
+
+const FOOTER_SOCIAL_CLASS =
+  'inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-[2px] border border-[var(--color-border-footer)] text-[var(--color-text-footer-muted)] no-underline transition-[border-color,background-color,color,transform] duration-150 ease-[var(--ease-out)] hover:border-[var(--color-footer-accent)] hover:bg-[var(--color-bg-footer-raised)] hover:text-[var(--color-text-footer)] active:scale-[0.96]';
+
+async function copyText(text: string): Promise<void> {
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return;
+    } catch {
+      // Fall through to the selection-based fallback when permission is denied.
+    }
+  }
+
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.setAttribute('readonly', '');
+  textarea.style.position = 'fixed';
+  textarea.style.top = '0';
+  textarea.style.left = '0';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  textarea.select();
+
+  try {
+    if (!document.execCommand('copy')) {
+      throw new Error('Copy command was rejected');
+    }
+  } finally {
+    document.body.removeChild(textarea);
+  }
+}
+
+const FooterExternalArrow: React.FC = () => (
+  <ArrowUpRightIcon className="size-3 shrink-0 opacity-60 transition-[transform,opacity] duration-150 ease-[var(--ease-out)] group-hover:translate-x-[1px] group-hover:-translate-y-[1px] group-hover:opacity-100" />
+);
+
+const FooterLinkItem: React.FC<{ link: FooterLink }> = ({ link }) => (
+  <li>
+    {link.external ? (
+      <a href={link.to} target="_blank" rel="noopener noreferrer" className={FOOTER_LINK_CLASS}>
+        <span>{link.label}</span>
+        <FooterExternalArrow />
+      </a>
+    ) : (
+      <Link to={link.to} className={FOOTER_LINK_CLASS}>
+        <span>{link.label}</span>
+      </Link>
+    )}
+  </li>
+);
+
 export const SiteFooter: React.FC = () => {
-  const [copied, setCopied] = useState(false);
+  const [copyStatus, setCopyStatus] = useState<CopyStatus>('idle');
   const timerRef = useRef<number>(0);
 
   useEffect(() => {
@@ -120,77 +150,59 @@ export const SiteFooter: React.FC = () => {
 
   const handleCopyInstall = async () => {
     try {
-      await navigator.clipboard.writeText(BRAND.installCommand);
+      await copyText(BRAND.installCommand);
+      setCopyStatus('copied');
+      window.clearTimeout(timerRef.current);
+      timerRef.current = window.setTimeout(() => setCopyStatus('idle'), 2200);
     } catch {
-      const textarea = document.createElement('textarea');
-      textarea.value = BRAND.installCommand;
-      textarea.setAttribute('readonly', '');
-      textarea.style.position = 'fixed';
-      textarea.style.opacity = '0';
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
+      setCopyStatus('error');
+      window.clearTimeout(timerRef.current);
+      timerRef.current = window.setTimeout(() => setCopyStatus('idle'), 4200);
     }
-    setCopied(true);
-    window.clearTimeout(timerRef.current);
-    timerRef.current = window.setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleBackToTop = () => {
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.scrollTo({ top: 0, left: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
   };
 
   return (
-    <footer className="surface-inverse relative overflow-hidden border-t border-[var(--color-border-strong)] bg-[var(--color-bg-inverse)] text-[var(--color-text-on-inverse)]">
-      {/* Upper 12-Column Swiss Architectural Footer Grid */}
-      <div className="relative z-10 mx-auto max-w-[1440px] px-4 pt-14 pb-6 sm:px-8 sm:pt-18 md:pt-22 md:pb-8 lg:px-12">
-        <div className="grid grid-cols-2 gap-x-5 gap-y-10 sm:grid-cols-6 sm:gap-x-8 md:gap-y-12 lg:grid-cols-12">
-          {/* Column 1: Brand Lockup, Tagline, Coordinates & Package Icons */}
-          <div className="col-span-2 min-w-0 sm:col-span-6 lg:col-span-3">
+    <footer className="surface-footer relative isolate overflow-hidden border-t border-[var(--color-border-footer)] bg-[var(--color-bg-footer)] text-[var(--color-text-footer)]">
+      <div className="relative z-10 mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-12">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-12 pt-14 pb-12 sm:grid-cols-6 sm:gap-x-8 sm:gap-y-14 sm:pt-20 xl:grid-cols-12 xl:gap-x-8 xl:gap-y-0 xl:pt-24 xl:pb-16">
+          {/* Brand, origin, and social coordinates */}
+          <div className="col-span-2 min-w-0 sm:col-span-6 xl:col-span-3">
             <Link
               to="/"
               aria-label={`${BRAND.name} home`}
-              className="inline-flex min-h-[44px] items-center gap-3 text-[var(--color-text-on-inverse)] no-underline transition-opacity duration-150 ease-[var(--ease-out)] hover:opacity-80"
+              className="inline-flex min-h-[44px] items-center gap-3 text-[var(--color-text-footer)] no-underline transition-opacity duration-150 ease-[var(--ease-out)] hover:opacity-80"
             >
               <BrandMark className="size-7 shrink-0" />
               <PixelWordmark
                 text={BRAND.name.toUpperCase()}
-                className="h-[1.15rem] text-[var(--color-text-on-inverse)]"
+                className="h-[1.15rem] text-[var(--color-text-footer)]"
               />
             </Link>
 
-            <p className="mt-3.5 mb-0 max-w-[26ch] font-editorial-sans text-[0.9375rem] leading-[1.55] text-pretty text-[var(--color-text-on-inverse-muted)]">
+            <p className="mt-4 mb-0 max-w-[30ch] font-editorial-sans text-[0.9375rem] leading-[1.6] text-pretty text-[var(--color-text-footer-muted)]">
               {BRAND.footerTagline}
             </p>
 
-            <ul className="mt-5 mb-0 flex list-none flex-col p-0">
-              {COORDINATES.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <li key={item.label}>
-                    {item.external ? (
-                      <a
-                        href={item.to}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex min-h-[44px] max-w-full items-center gap-2.5 font-editorial-mono text-xs text-[var(--color-text-on-inverse-muted)] no-underline transition-colors duration-150 ease-[var(--ease-out)] hover:text-[var(--color-text-on-inverse)] xl:min-h-[40px]"
-                      >
-                        <Icon className="size-3.5 shrink-0 text-[var(--color-text-on-inverse)]" />
-                        <span className="truncate">{item.label}</span>
-                      </a>
-                    ) : (
-                      <Link
-                        to={item.to}
-                        className="inline-flex min-h-[44px] max-w-full items-center gap-2.5 font-editorial-mono text-xs text-[var(--color-text-on-inverse-muted)] no-underline transition-colors duration-150 ease-[var(--ease-out)] hover:text-[var(--color-text-on-inverse)] xl:min-h-[40px]"
-                      >
-                        <Icon className="size-3.5 shrink-0 text-[var(--color-text-on-inverse)]" />
-                        <span className="truncate">{item.label}</span>
-                      </Link>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
+            <div className="mt-6 flex items-center gap-2.5">
+              <span
+                aria-hidden="true"
+                className="size-1.5 shrink-0 rounded-full bg-[var(--color-footer-accent)]"
+              />
+              <p className="m-0 font-editorial-mono text-[0.6875rem] leading-[1.4] tracking-[0.12em] text-[var(--color-text-footer)] uppercase">
+                Built in {BRAND.footerOrigin}
+              </p>
+            </div>
+            <p className="mt-1.5 mb-0 ml-4 font-editorial-mono text-[0.625rem] leading-[1.5] tracking-[0.08em] text-[var(--color-text-footer-muted)] tabular-nums">
+              {BRAND.footerCoordinates}
+            </p>
 
-            <div className="mt-5 flex items-center gap-2.5">
-              {ICON_LINKS.map((item) => {
+            <div className="mt-6 flex flex-wrap items-center gap-2">
+              {SOCIAL_LINKS.map((item) => {
                 const Icon = item.icon;
                 return (
                   <a
@@ -199,7 +211,8 @@ export const SiteFooter: React.FC = () => {
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={item.label}
-                    className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-[4px] border border-[var(--color-border-inverse-strong)] bg-[var(--color-bg-inverse-elevated)] text-[var(--color-text-on-inverse-muted)] no-underline transition-[border-color,color,transform] duration-150 ease-[var(--ease-out)] hover:border-[var(--color-text-on-inverse)] hover:text-[var(--color-text-on-inverse)] active:scale-[0.96] xl:min-h-[40px] xl:min-w-[40px]"
+                    title={item.label}
+                    className={FOOTER_SOCIAL_CLASS}
                   >
                     <Icon className="size-4" />
                   </a>
@@ -208,196 +221,180 @@ export const SiteFooter: React.FC = () => {
             </div>
           </div>
 
-          {/* Columns 2–4: Structured Architectural Wayfinding */}
-          {FOOTER_COLUMNS.map((col, colIdx) => (
+          {/* Product, documentation, and project wayfinding */}
+          {FOOTER_COLUMNS.map((col, colIndex) => (
             <nav
               key={col.id}
               aria-labelledby={col.id}
-              className={`min-w-0 sm:col-span-2 lg:col-span-2 ${
-                colIdx === FOOTER_COLUMNS.length - 1 ? 'col-span-2' : 'col-span-1'
-              }`}
+              className={`min-w-0 ${
+                colIndex === FOOTER_COLUMNS.length - 1
+                  ? 'col-span-2 sm:col-span-2'
+                  : 'col-span-1 sm:col-span-2'
+              } xl:col-span-2`}
             >
-              <h3
+              <h2
                 id={col.id}
-                className="m-0 font-editorial-mono text-xs font-medium tracking-[0.06em] uppercase text-[var(--color-text-on-inverse)]"
+                className="m-0 font-editorial-mono text-[0.6875rem] font-medium leading-[1.4] tracking-[0.14em] text-[var(--color-text-footer)] uppercase"
               >
                 {col.title}
-              </h3>
+              </h2>
               <div
                 aria-hidden="true"
-                className="mt-3 h-px w-7 bg-[var(--color-border-inverse-strong)]"
+                className="mt-3 h-px w-6 bg-[var(--color-footer-accent)]"
               />
-              <ul className="mt-3.5 mb-0 flex list-none flex-col p-0">
+              <ul className="mt-2 mb-0 flex list-none flex-col p-0">
                 {col.links.map((link) => (
-                  <li key={link.label}>
-                    {link.external ? (
-                      <a
-                        href={link.to}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="group inline-flex min-h-[44px] items-center gap-1.5 font-editorial-sans text-sm leading-snug text-[var(--color-text-on-inverse-muted)] no-underline transition-colors duration-150 ease-[var(--ease-out)] hover:text-[var(--color-text-on-inverse)] xl:min-h-[40px]"
-                      >
-                        <span>{link.label}</span>
-                        <ArrowUpRightIcon className="size-3 shrink-0 opacity-60 transition-[transform,opacity] duration-150 ease-[var(--ease-out)] group-hover:translate-x-[1px] group-hover:-translate-y-[1px] group-hover:opacity-100" />
-                      </a>
-                    ) : (
-                      <Link
-                        to={link.to}
-                        className="inline-flex min-h-[44px] items-center gap-1.5 font-editorial-sans text-sm leading-snug text-[var(--color-text-on-inverse-muted)] no-underline transition-colors duration-150 ease-[var(--ease-out)] hover:text-[var(--color-text-on-inverse)] xl:min-h-[40px]"
-                      >
-                        <span>{link.label}</span>
-                      </Link>
-                    )}
-                  </li>
+                  <FooterLinkItem key={link.label} link={link} />
                 ))}
               </ul>
             </nav>
           ))}
 
-          {/* Column 5: Quick Install & Release Watch */}
-          <div className="col-span-2 min-w-0 sm:col-span-6 lg:col-span-3">
-            <h3 className="m-0 font-editorial-mono text-xs font-medium tracking-[0.06em] uppercase text-[var(--color-text-on-inverse)]">
-              Quick Install
-            </h3>
+          {/* Primary conversion: copyable install command */}
+          <div className="col-span-2 min-w-0 sm:col-span-6 xl:col-span-3">
+            <h2 className="m-0 font-editorial-mono text-[0.6875rem] font-medium leading-[1.4] tracking-[0.14em] text-[var(--color-text-footer)] uppercase">
+              Get the tool
+            </h2>
             <div
               aria-hidden="true"
-              className="mt-3 h-px w-7 bg-[var(--color-border-inverse-strong)]"
+              className="mt-3 h-px w-6 bg-[var(--color-footer-accent)]"
             />
 
-            <p className="mt-4 mb-0 max-w-[32ch] font-editorial-sans text-sm leading-[1.55] text-pretty text-[var(--color-text-on-inverse-muted)]">
-              Install the global .NET 8+ CLI in one command, or inspect recent releases and roadmap
-              milestones.
+            <p className="mt-4 mb-0 max-w-[32ch] font-editorial-sans text-[0.875rem] leading-[1.6] text-pretty text-[var(--color-text-footer-muted)]">
+              Install the global CLI, point it at any solution, and get a map without a build.
             </p>
 
-            {/* Compound CLI Field + High-Contrast Action Cap */}
             <button
               type="button"
               onClick={handleCopyInstall}
               aria-label={`Copy install command: ${BRAND.installCommand}`}
-              className="group mt-4 flex min-h-[44px] w-full max-w-[23rem] cursor-pointer items-stretch overflow-hidden rounded-[4px] border border-[var(--color-border-inverse-strong)] bg-[var(--color-bg-inverse-elevated)] p-0 text-left transition-[border-color,transform] duration-150 ease-[var(--ease-out)] hover:border-[var(--color-text-on-inverse-muted)] active:scale-[0.98]"
+              className="group mt-4 flex min-h-[64px] w-full max-w-[23rem] cursor-pointer items-stretch overflow-hidden rounded-[3px] border border-[var(--color-border-footer)] bg-[var(--color-bg-footer-raised)] p-0 text-left transition-[border-color,background-color] duration-150 ease-[var(--ease-out)] hover:border-[var(--color-text-footer-muted)] active:scale-[0.99]"
             >
-              <span className="flex min-w-0 flex-1 items-center gap-2 px-3 py-2 font-editorial-mono text-xs text-[var(--color-text-on-inverse)] sm:px-3.5">
-                <span
-                  aria-hidden="true"
-                  className="select-none text-[var(--color-text-on-inverse-muted)]"
-                >
-                  $
+              <span className="flex min-w-0 flex-1 flex-col justify-center gap-1 px-3.5 py-2.5">
+                <span className="font-editorial-mono text-[0.625rem] leading-[1.4] tracking-[0.14em] text-[var(--color-text-footer-muted)] uppercase">
+                  Install command
                 </span>
-                <code className="truncate font-editorial-mono">{BRAND.installCommand}</code>
+                <code className="min-w-0 font-editorial-mono text-[0.71875rem] leading-[1.55] break-words text-[var(--color-text-footer)] [overflow-wrap:anywhere]">
+                  <span aria-hidden="true" className="select-none opacity-60">
+                    ${' '}
+                  </span>
+                  dotnet tool install{' '}
+                  <span className="whitespace-nowrap">-g {BRAND.nugetPackage}</span>
+                </code>
               </span>
 
               <span
                 aria-hidden="true"
-                className="relative flex w-11 shrink-0 items-center justify-center bg-[var(--color-text-on-inverse)] text-[var(--color-bg-inverse)] transition-colors duration-150 ease-[var(--ease-out)] group-hover:bg-[var(--color-action-text)]"
+                className="relative flex w-12 shrink-0 items-center justify-center bg-[var(--color-footer-engraving)] text-[var(--color-bg-footer-deep)] transition-[background-color,color] duration-150 ease-[var(--ease-out)] group-hover:bg-[var(--color-footer-accent)]"
               >
                 <span
-                  className={`flex items-center justify-center transition-[opacity,transform,filter] duration-250 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none ${
-                    copied
-                      ? 'scale-[0.25] opacity-0 blur-[4px]'
+                  className={`flex items-center justify-center transition-[opacity,transform,filter] duration-200 ease-[var(--ease-out)] motion-reduce:transition-none ${
+                    copyStatus === 'copied'
+                      ? 'scale-[0.5] opacity-0 blur-[3px]'
                       : 'scale-100 opacity-100 blur-none'
                   }`}
                 >
-                  <CopyIcon className="size-3.5" />
+                  <CopyIcon className="size-4" />
                 </span>
                 <span
-                  className={`absolute inset-0 flex items-center justify-center transition-[opacity,transform,filter] duration-250 ease-[cubic-bezier(0.2,0,0,1)] motion-reduce:transition-none ${
-                    copied
+                  className={`absolute inset-0 flex items-center justify-center transition-[opacity,transform,filter] duration-200 ease-[var(--ease-out)] motion-reduce:transition-none ${
+                    copyStatus === 'copied'
                       ? 'scale-100 opacity-100 blur-none'
-                      : 'scale-[0.25] opacity-0 blur-[4px]'
+                      : 'scale-[0.5] opacity-0 blur-[3px]'
                   }`}
                 >
-                  <CheckIcon className="size-3.5" />
+                  <CheckIcon className="size-4" />
                 </span>
               </span>
             </button>
 
-            <div className="mt-2.5 flex max-w-[23rem] flex-wrap items-center justify-between gap-2 font-editorial-mono text-xs">
-              <span aria-live="polite" className="text-[var(--color-text-on-inverse-muted)]">
-                {copied ? 'Copied to clipboard' : `Latest: v${BRAND.version}`}
-              </span>
-              <Link
-                to="/changelog"
-                className="inline-flex min-h-[44px] items-center gap-1 text-[var(--color-text-on-inverse)] no-underline transition-opacity duration-150 ease-[var(--ease-out)] hover:opacity-75 xl:min-h-[38px]"
-              >
-                <span>View changelog</span>
-              </Link>
-            </div>
-
-            <ProjectStats tone="inverse" className="mt-4" />
+            <p
+              aria-live="polite"
+              className={`mt-2 mb-0 min-h-[1.25rem] max-w-[23rem] font-editorial-mono text-[0.6875rem] leading-[1.4] transition-colors duration-150 ${
+                copyStatus === 'error'
+                  ? 'text-[var(--color-footer-accent)]'
+                  : 'text-[var(--color-text-footer-muted)]'
+              }`}
+            >
+              {copyStatus === 'copied'
+                ? 'Copied to clipboard'
+                : copyStatus === 'error'
+                  ? 'Copy blocked — select the command above.'
+                  : `Latest release v${BRAND.version}`}
+            </p>
           </div>
         </div>
-      </div>
 
-      {/* Lower Full-Bleed Egyptian Nile Copperplate Etching Panorama + Colophon */}
-      <div className="relative w-full">
-        <img
-          src={nileEtchingSrc}
-          srcSet={`${nileEtchingSmSrc} 1086w, ${nileEtchingSrc} 2172w`}
-          sizes="100vw"
-          alt=""
-          aria-hidden="true"
-          width={2172}
-          height={607}
-          loading="lazy"
-          decoding="async"
-          fetchPriority="low"
-          className="pointer-events-none block h-[155px] w-full select-none object-cover object-[50%_bottom] sm:h-[240px] md:h-auto md:max-h-[480px] md:object-cover md:object-bottom"
-        />
+        <div className="border-t border-[var(--color-border-footer-faint)] py-5 sm:py-6">
+          <div className="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+            <p className="m-0 font-editorial-sans text-[0.75rem] leading-[1.6] text-[var(--color-text-footer-muted)]">
+              © {BRAND.year} {BRAND.name}. Built by{' '}
+              <a
+                href={BRAND.authorUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-[32px] items-center text-[var(--color-text-footer)] no-underline underline-offset-[0.22em] transition-colors duration-150 hover:text-[var(--color-footer-accent)] hover:underline"
+              >
+                {BRAND.authorName}
+              </a>
+              .
+            </p>
 
-        <div className="border-t border-[var(--color-border-inverse)] bg-[var(--color-bg-inverse)] pb-[env(safe-area-inset-bottom)] lg:pointer-events-none lg:absolute lg:inset-x-0 lg:bottom-2.5 lg:border-t-0 lg:bg-transparent lg:pb-0">
-          <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 py-2.5 sm:px-8 lg:justify-end lg:px-12 lg:py-0">
-            <div className="pointer-events-auto flex flex-wrap items-center gap-x-3.5 gap-y-0.5 font-editorial-sans text-[0.8125rem] text-[var(--color-text-on-inverse-muted)]">
-              <span>
-                Built by{' '}
-                <a
-                  href={BRAND.authorUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex min-h-[44px] items-center text-[var(--color-text-on-inverse)] no-underline transition-opacity duration-150 hover:underline xl:min-h-[40px]"
-                >
-                  {BRAND.authorName}
-                </a>
-              </span>
-
-              <span aria-hidden="true" className="text-[var(--color-border-inverse-strong)]">
-                |
-              </span>
-
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-0 font-editorial-mono text-[0.6875rem] leading-[1.5] text-[var(--color-text-footer-muted)]">
               <a
                 href={BRAND.githubLicenseUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex min-h-[44px] items-center text-[var(--color-text-on-inverse-muted)] no-underline transition-colors duration-150 hover:text-[var(--color-text-on-inverse)] xl:min-h-[40px]"
+                className="inline-flex min-h-[44px] items-center text-[var(--color-text-footer-muted)] no-underline transition-colors duration-150 hover:text-[var(--color-text-footer)]"
               >
-                {BRAND.license} License
+                MIT License
               </a>
-
-              <span aria-hidden="true" className="text-[var(--color-border-inverse-strong)]">
-                |
-              </span>
-
-              <a
-                href={BRAND.nugetUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex min-h-[44px] items-center font-editorial-mono text-xs text-[var(--color-text-on-inverse-muted)] no-underline transition-colors duration-150 hover:text-[var(--color-text-on-inverse)] xl:min-h-[40px]"
+              <span aria-hidden="true" className="h-3 w-px bg-[var(--color-border-footer)]" />
+              <span>No telemetry</span>
+              <span aria-hidden="true" className="h-3 w-px bg-[var(--color-border-footer)]" />
+              <button
+                type="button"
+                onClick={handleBackToTop}
+                className="inline-flex min-h-[44px] cursor-pointer items-center gap-1.5 border-0 bg-transparent p-0 font-editorial-mono text-[0.6875rem] text-[var(--color-text-footer-muted)] transition-colors duration-150 hover:text-[var(--color-text-footer)]"
               >
-                NuGet v{BRAND.version}
-              </a>
-
-              <span aria-hidden="true" className="text-[var(--color-border-inverse-strong)]">
-                |
-              </span>
-
-              <Link
-                to="/changelog"
-                className="inline-flex min-h-[44px] items-center text-[var(--color-text-on-inverse-muted)] no-underline transition-colors duration-150 hover:text-[var(--color-text-on-inverse)] xl:min-h-[40px]"
-              >
-                Changelog
-              </Link>
+                <span>Back to top</span>
+                <ChevronDownIcon className="size-3 rotate-180" />
+              </button>
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Full-bleed Nile horizon: transparent engraved plate selected by art direction */}
+      <div
+        aria-hidden="true"
+        className="relative mt-7 aspect-[1122/375] w-full select-none overflow-hidden sm:mt-9 md:aspect-[1536/429] xl:aspect-[2172/400]"
+      >
+        <picture>
+          <source
+            media="(min-width: 1280px)"
+            type="image/webp"
+            sizes="100vw"
+            srcSet={`${footerEgyptDesktop1080} 1080w, ${footerEgyptDesktop1440} 1440w, ${footerEgyptDesktop2172} 2172w`}
+          />
+          <source
+            media="(min-width: 768px)"
+            type="image/webp"
+            sizes="100vw"
+            srcSet={`${footerEgyptTablet640} 640w, ${footerEgyptTablet1024} 1024w, ${footerEgyptTablet1536} 1536w`}
+          />
+          <img
+            src={footerEgyptMobile1122}
+            srcSet={`${footerEgyptMobile560} 560w, ${footerEgyptMobile1122} 1122w`}
+            sizes="100vw"
+            alt=""
+            width={1122}
+            height={375}
+            loading="lazy"
+            decoding="async"
+            className="absolute inset-0 block h-full w-full object-contain object-bottom"
+          />
+        </picture>
       </div>
     </footer>
   );

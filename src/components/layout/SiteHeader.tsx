@@ -70,15 +70,12 @@ export const SiteHeader: React.FC = () => {
         <div
           aria-hidden="true"
           onClick={() => setMenuOpen(false)}
-          className="fixed inset-0 z-[calc(var(--z-header)-1)] bg-[var(--color-bg-inverse)]/25 lg:hidden"
+          className="fixed inset-0 z-[calc(var(--z-header)-1)] bg-[var(--color-bg-inverse)]/55 backdrop-blur-[2px] lg:hidden"
         />
       )}
       <header
-        className={`fixed inset-x-0 top-0 z-[var(--z-header)] pt-[env(safe-area-inset-top)] transition-[background-color,border-color] duration-200 ease-[var(--ease-out)] ${
-          !isHome || scrolled || menuOpen
-            ? 'border-b border-[var(--color-border-subtle)] bg-[var(--color-bg-canvas)]'
-            : 'border-b border-transparent bg-transparent'
-        }`}
+        data-scrolled={scrolled ? 'true' : 'false'}
+        className="site-header fixed inset-x-0 top-0 z-[var(--z-header)] pt-[env(safe-area-inset-top)]"
       >
         <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between gap-3 px-4 sm:h-18 sm:gap-4 sm:px-8 xl:px-12">
           <Link
@@ -103,10 +100,10 @@ export const SiteHeader: React.FC = () => {
                   key={item.path}
                   to={item.path}
                   aria-current={active ? 'page' : undefined}
-                  className={`inline-flex min-h-[44px] min-w-[44px] items-center justify-center border-b-2 px-1.5 font-editorial-mono text-xs xl:text-[0.8125rem] whitespace-nowrap no-underline transition-colors duration-150 ${
+                  className={`inline-flex min-h-[44px] min-w-[44px] items-center justify-center border-b-2 px-1.5 font-editorial-mono text-xs whitespace-nowrap no-underline transition-[color,border-color] duration-150 xl:text-[0.8125rem] ${
                     active
-                      ? 'border-[var(--color-text-primary)] font-medium text-[var(--color-text-primary)]'
-                      : 'border-transparent text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
+                      ? 'border-[var(--color-footer-accent)] font-medium text-[var(--color-text-primary)]'
+                      : 'border-transparent text-[var(--color-text-secondary)] hover:border-[var(--color-border-strong)] hover:text-[var(--color-text-primary)]'
                   }`}
                 >
                   {item.label}
@@ -116,7 +113,7 @@ export const SiteHeader: React.FC = () => {
 
             <div
               aria-hidden="true"
-              className="mx-0.5 h-4 w-px bg-[var(--color-border-strong)] xl:mx-1"
+              className="mx-0.5 h-4 w-px bg-[var(--color-border-strong)] opacity-70 xl:mx-1"
             />
 
             <a
@@ -142,7 +139,7 @@ export const SiteHeader: React.FC = () => {
             <Link
               to="/quickstart"
               aria-current={pathname === '/quickstart' ? 'page' : undefined}
-              className="inline-flex min-h-[44px] items-center rounded-[4px] border border-[var(--color-action-solid)] bg-[var(--color-action-solid)] px-3.5 font-editorial-mono text-xs text-[var(--color-action-text)] no-underline transition-[background-color,transform] duration-150 hover:bg-[var(--color-action-solid-hover)] active:scale-[0.97]"
+              className="inline-flex min-h-[44px] items-center rounded-[4px] border border-[var(--color-action-solid)] bg-[var(--color-action-solid)] px-3.5 font-editorial-mono text-xs text-[var(--color-action-text)] no-underline shadow-[0_1px_0_rgba(255,255,255,0.28)_inset,0_10px_24px_-18px_rgba(0,0,0,0.9)] transition-[background-color,transform,box-shadow] duration-150 hover:-translate-y-px hover:bg-[var(--color-action-solid-hover)] active:translate-y-0 active:scale-[0.97]"
             >
               Quickstart
             </Link>
@@ -151,7 +148,7 @@ export const SiteHeader: React.FC = () => {
           <div className="flex items-center gap-2 lg:hidden">
             <Link
               to="/quickstart"
-              className="inline-flex min-h-[44px] items-center rounded-[4px] border border-[var(--color-action-solid)] bg-[var(--color-action-solid)] px-3 font-editorial-mono text-xs text-[var(--color-action-text)] no-underline"
+              className="inline-flex min-h-[44px] items-center rounded-[4px] border border-[var(--color-action-solid)] bg-[var(--color-action-solid)] px-3 font-editorial-mono text-xs text-[var(--color-action-text)] no-underline shadow-[0_1px_0_rgba(255,255,255,0.28)_inset,0_10px_24px_-18px_rgba(0,0,0,0.9)] transition-[background-color,transform] duration-150 hover:bg-[var(--color-action-solid-hover)] active:scale-[0.97]"
             >
               Quickstart
             </Link>
@@ -162,7 +159,7 @@ export const SiteHeader: React.FC = () => {
               aria-controls="mobile-nav-panel"
               aria-label={menuOpen ? 'Close navigation menu' : 'Open navigation menu'}
               onClick={() => setMenuOpen((prev) => !prev)}
-              className="inline-flex min-h-[44px] min-w-[44px] cursor-pointer items-center justify-center rounded-[4px] border border-[var(--color-border-strong)] bg-[var(--color-bg-canvas)] text-[var(--color-text-primary)]"
+              className="inline-flex min-h-[44px] min-w-[44px] cursor-pointer items-center justify-center rounded-[4px] border border-[var(--color-border-strong)] bg-transparent text-[var(--color-text-primary)] transition-colors duration-150 hover:border-[var(--color-text-muted)] hover:bg-[var(--color-bg-elevated)]"
             >
               {menuOpen ? <CloseIcon className="size-4" /> : <MenuIcon className="size-4" />}
             </button>
@@ -172,7 +169,7 @@ export const SiteHeader: React.FC = () => {
         {menuOpen && (
           <div
             id="mobile-nav-panel"
-            className="max-h-[calc(100dvh-4rem)] overflow-y-auto border-t border-[var(--color-border-subtle)] bg-[var(--color-bg-canvas)] px-4 pt-3 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:max-h-[calc(100dvh-4.5rem)] sm:px-8 lg:hidden"
+            className="site-header-panel max-h-[calc(100dvh-4rem)] overflow-y-auto border-t border-[var(--color-border-subtle)] px-4 pt-3 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:max-h-[calc(100dvh-4.5rem)] sm:px-8 lg:hidden"
           >
             <nav aria-label="Mobile navigation" className="grid grid-cols-1 sm:grid-cols-2 sm:gap-x-6">
               <Link
@@ -186,7 +183,9 @@ export const SiteHeader: React.FC = () => {
                 }`}
               >
                 <span>Home</span>
-                {pathname === '/' && <span className="text-xs">[active]</span>}
+                {pathname === '/' && (
+                  <span className="text-xs text-[var(--color-footer-accent)]">[active]</span>
+                )}
               </Link>
               <Link
                 to="/quickstart"
@@ -199,7 +198,9 @@ export const SiteHeader: React.FC = () => {
                 }`}
               >
                 <span>Quickstart</span>
-                {pathname === '/quickstart' && <span className="text-xs">[active]</span>}
+                {pathname === '/quickstart' && (
+                  <span className="text-xs text-[var(--color-footer-accent)]">[active]</span>
+                )}
               </Link>
               {HEADER_ROUTES.map((item) => {
                 const active = isRouteActive(item.path);
@@ -216,7 +217,9 @@ export const SiteHeader: React.FC = () => {
                     }`}
                   >
                     <span>{item.label}</span>
-                    {active && <span className="text-xs">[active]</span>}
+                    {active && (
+                      <span className="text-xs text-[var(--color-footer-accent)]">[active]</span>
+                    )}
                   </Link>
                 );
               })}

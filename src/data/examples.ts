@@ -28,7 +28,7 @@ export interface CorpusExampleReport {
   behaviors: number;
   dbContexts: number;
   findingsSummary: string;
-  parityNote: string;
+  reportNote: string;
   nodes: readonly GraphNode[];
   edges: readonly GraphEdge[];
   featuredSlice: {
@@ -40,6 +40,7 @@ export interface CorpusExampleReport {
     handler: string;
     persistence: string;
     diagnostic: string;
+    diagnosticTone: 'pass' | 'warning';
   };
   markdownExcerpt: string;
 }
@@ -58,8 +59,8 @@ export const CORPUS_EXAMPLES: readonly CorpusExampleReport[] = [
     validators: 6,
     behaviors: 4,
     dbContexts: 1,
-    findingsSummary: '0 errors / 3 warnings',
-    parityNote: '100% parity between --analysis text and --analysis roslyn',
+    findingsSummary: '0 errors / 6 warnings',
+    reportNote: 'Warning mix: validation gaps, template reachability, and one unpublished event',
     nodes: [
       { id: 'web', label: 'CleanArchitecture.Web', role: 'presentation', x: 40, y: 24, w: 185 },
       { id: 'infra', label: 'CleanArchitecture.Infrastructure', role: 'infrastructure', x: 295, y: 24, w: 225 },
@@ -76,19 +77,26 @@ export const CORPUS_EXAMPLES: readonly CorpusExampleReport[] = [
     featuredSlice: {
       contract: 'CreateTodoItemCommand : IRequest<int>',
       kind: 'Command',
-      dispatch: 'TodoItems.cs (Minimal API EndpointGroupBase)',
-      validator: 'CreateTodoItemCommandValidator (FluentValidation)',
-      pipeline: 'UnhandledExceptionBehaviour -> AuthorizationBehaviour -> ValidationBehaviour -> PerformanceBehaviour',
-      handler: 'CreateTodoItemCommandHandler',
-      persistence: 'IApplicationDbContext.TodoItems + TodoItemCreatedEvent',
-      diagnostic: '[PASS] Reachable endpoint, 1:1 handler, validator & domain event wired.',
+      dispatch: 'POST /api/TodoItems (inferred route) · Web/Endpoints/TodoItems.cs:23',
+      validator:
+        'CreateTodoItemCommandValidator · Application/TodoItems/Commands/CreateTodoItem/CreateTodoItemCommandValidator.cs:3',
+      pipeline: 'ValidationBehaviour + 3 more in scan order (not execution order)',
+      handler:
+        'CreateTodoItemCommandHandler · Application/TodoItems/Commands/CreateTodoItem/CreateTodoItem.cs:13',
+      persistence: 'IApplicationDbContext.TodoItems → TodoItem',
+      diagnostic:
+        '[PASS] Handler, validator, and EF Core DbSet linked. Six project-level warnings remain.',
+      diagnosticTone: 'pass',
     },
-    markdownExcerpt: `# CleanArchitecture — Static Cartography
-- **Projects Scanned**: 13 (4 src + 9 test/build)
-- **CQRS Requests**: 11 (7 Commands, 4 Queries · 100% handler coverage)
-- **Pipeline Behaviors**: 4 registered open-generic behaviors
-- **EF Core Contexts**: ApplicationDbContext (TodoLists, TodoItems)
-- **Findings**: 0 Errors · 3 Warnings (Commands intentionally without validator: DeleteTodoItem, DeleteTodoList, PurgeTodoLists)`,
+    markdownExcerpt: `# CleanArchitecture — CqrsLens 0.9.0 Snapshot
+- **Projects Scanned**: 13
+- **CQRS Requests**: 11 (11 handlers linked, 6 validators)
+- **Pipeline Behaviors**: 4 (recorded in scan order)
+- **EF Core Contexts**: ApplicationDbContext (TodoItems → TodoItem)
+- **Architecture Checks**: 0 errors / 6 warnings
+- **Warnings**: 3 CommandWithoutValidator · 2 UnreachableRequest · 1 UnpublishedNotification
+- **Reachability Note**: both UnreachableRequest findings are template requests with no production call site
+- **Snapshot**: text scanner · 2026-11-02`,
   },
   {
     id: 'kgrzybek-modular-monolith',
@@ -97,14 +105,14 @@ export const CORPUS_EXAMPLES: readonly CorpusExampleReport[] = [
     githubUrl: 'https://github.com/kgrzybek/modular-monolith-with-ddd',
     architectureStyle: 'DDD Modular Monolith (5 Bounded Contexts)',
     mediatorStack: 'MediatR + Custom ICommand / IQuery Markers + EF Core',
-    projects: 46,
+    projects: 47,
     requests: 105,
     handlers: 105,
     validators: 5,
     behaviors: 0,
     dbContexts: 4,
-    findingsSummary: '0 errors / 71 warnings',
-    parityNote: 'Resolves custom ICommand<T> / IQuery<T> hierarchy across 46 projects without build',
+    findingsSummary: '0 errors / 205 warnings',
+    reportNote: 'Custom CommandBase hierarchy resolved across 47 projects without a build',
     nodes: [
       { id: 'api', label: 'CompanyMeetings.API', role: 'presentation', x: 185, y: 20, w: 180 },
       { id: 'meetings', label: 'Module: Meetings', role: 'application', x: 25, y: 104, w: 150 },
@@ -121,20 +129,26 @@ export const CORPUS_EXAMPLES: readonly CorpusExampleReport[] = [
       { fromX: 445, fromY: 140, toX: 325, toY: 184 },
     ],
     featuredSlice: {
-      contract: 'CreateMeetingCommand : CommandBase<Guid>',
+      contract: 'CreateMeetingCommand : CommandBase',
       kind: 'Command',
-      dispatch: 'MeetingsController.CreateMeeting (POST /api/meetings/meetings)',
-      validator: 'CreateMeetingCommandValidator',
-      pipeline: 'UnitOfWorkCommandHandlerDecorator -> ValidationCommandHandlerDecorator',
-      handler: 'CreateMeetingCommandHandler (Meetings.Application)',
-      persistence: 'MeetingsContext.Meetings + MeetingCreatedDomainEvent',
-      diagnostic: '[PASS] Custom CommandBase<TResult> inheritance chain resolved statically.',
+      dispatch: 'POST /api/meetings/meetings · MeetingsController.CreateNewMeeting (line 52)',
+      validator: 'None linked (1 of 71 CommandWithoutValidator warnings)',
+      pipeline: 'No pipeline behaviors registered',
+      handler:
+        'CreateMeetingCommandHandler · Meetings/Application/Meetings/CreateMeeting/CreateMeetingCommandHandler.cs:8',
+      persistence: 'MeetingsContext.Meetings + MeetingGroups',
+      diagnostic:
+        '[WARN] Custom CommandBase marker resolved; CommandWithoutValidator remains project debt.',
+      diagnosticTone: 'warning',
     },
-    markdownExcerpt: `# modular-monolith-with-ddd — Static Cartography
-- **Projects Scanned**: 46 across Meetings, Administration, Payments, Registrations & UserAccess
-- **CQRS Requests**: 105 discovered via custom ICommand / IQuery base types (105/105 handlers linked)
-- **EF Core Contexts**: 4 isolated module DbContexts (MeetingsContext, AdministrationContext, PaymentsContext, UserAccessContext)
-- **Findings**: 0 Layer Errors · 71 Warnings (primarily internal module commands validated inside DDD aggregates rather than FluentValidation)`,
+    markdownExcerpt: `# modular-monolith-with-ddd — CqrsLens 0.9.0 Snapshot
+- **Projects Scanned**: 47
+- **CQRS Requests**: 105 (105 handlers linked via custom command/query markers)
+- **Pipeline Behaviors**: 0 registered
+- **EF Core Contexts**: 4 module DbContexts
+- **Architecture Checks**: 0 errors / 205 warnings
+- **Warnings**: 71 CommandWithoutValidator · 62 OrphanNotification · 54 UnreachableRequest · 18 UnpublishedNotification
+- **Snapshot**: text scanner · 2026-11-02`,
   },
   {
     id: 'ardalis-clean-arch',
@@ -149,8 +163,8 @@ export const CORPUS_EXAMPLES: readonly CorpusExampleReport[] = [
     validators: 21,
     behaviors: 3,
     dbContexts: 3,
-    findingsSummary: '0 errors / 13 warnings',
-    parityNote: 'Links FastEndpoints Validator<T> alongside Ardalis.SharedKernel ICommand<T>',
+    findingsSummary: '0 errors / 38 warnings',
+    reportNote: 'FastEndpoints validators are visible but report as orphan relative to CQRS contracts',
     nodes: [
       { id: 'web', label: 'NimblePros.Sample.Web (FastEndpoints)', role: 'presentation', x: 30, y: 24, w: 240 },
       { id: 'infra', label: 'NimblePros.Sample.Infrastructure', role: 'infrastructure', x: 300, y: 24, w: 230 },
@@ -165,21 +179,27 @@ export const CORPUS_EXAMPLES: readonly CorpusExampleReport[] = [
       { fromX: 272, fromY: 142, toX: 272, toY: 184 },
     ],
     featuredSlice: {
-      contract: 'CreateContributorCommand : Ardalis.SharedKernel.ICommand<Result<int>>',
+      contract: 'CreateContributorCommand : ICommand<Result<ContributorId>>',
       kind: 'Command',
-      dispatch: 'Create.cs (FastEndpoints POST /Contributors)',
-      validator: 'CreateContributorValidator (FastEndpoints Validator<T>)',
-      pipeline: 'LoggingBehavior<TRequest, TResponse>',
-      handler: 'CreateContributorHandler (UseCases/Contributors/Create)',
-      persistence: 'AppDbContext.Contributors (via IRepository<Contributor>)',
-      diagnostic: '[PASS] Ardalis.SharedKernel marker & FastEndpoints validator matched.',
+      dispatch: 'POST /Contributors · Web/Contributors/Create.cs:15',
+      validator:
+        'None linked — 21 FastEndpoints validators target request DTOs and report OrphanValidator',
+      pipeline: '3 behaviors in scan order (LoggingBehavior, CachingBehavior)',
+      handler: 'CreateContributorHandler · UseCases/Contributors/Create/CreateContributorHandler.cs:5',
+      persistence: 'IRepository<Contributor> → AppDbContext.Contributors',
+      diagnostic:
+        '[WARN] Handler and dispatch linked. FastEndpoints validators target request DTOs, not the CQRS contract.',
+      diagnosticTone: 'warning',
     },
-    markdownExcerpt: `# ardalis/CleanArchitecture — Static Cartography
-- **Projects Scanned**: 22 (Template + Sample Core/UseCases/Infrastructure/Web)
-- **CQRS Requests**: 23 (100% linked to UseCases handlers)
-- **Validators**: 21 (FastEndpoints & FluentValidation conventions)
-- **EF Core Contexts**: 3 DbContexts mapped
-- **Findings**: 0 Errors · 13 Warnings`,
+    markdownExcerpt: `# ardalis/CleanArchitecture — CqrsLens 0.9.0 Snapshot
+- **Projects Scanned**: 22
+- **CQRS Requests**: 23 (23 handlers linked)
+- **Validators**: 21 discovered — all 21 report OrphanValidator against CQRS contracts
+- **Pipeline Behaviors**: 3 (recorded in scan order)
+- **EF Core Contexts**: 3
+- **Architecture Checks**: 0 errors / 38 warnings
+- **Warnings**: 21 OrphanValidator · 13 CommandWithoutValidator · 4 UnpublishedNotification
+- **Snapshot**: text scanner · 2026-11-02`,
   },
   {
     id: 'martinothamar-mediator',
@@ -194,8 +214,8 @@ export const CORPUS_EXAMPLES: readonly CorpusExampleReport[] = [
     validators: 1,
     behaviors: 9,
     dbContexts: 0,
-    findingsSummary: '0 errors / 3 warnings',
-    parityNote: 'Maps source-generated Mediator contracts without running C# source generators!',
+    findingsSummary: '0 errors / 12 warnings',
+    reportNote: 'Source-generated contracts mapped without running the C# source generator',
     nodes: [
       { id: 'asp', label: 'ASPNET_Core_CleanArchitecture.Api', role: 'presentation', x: 35, y: 26, w: 235 },
       { id: 'infra', label: 'ASPNET_Core_CleanArchitecture.Infra', role: 'infrastructure', x: 300, y: 26, w: 230 },
@@ -208,19 +228,26 @@ export const CORPUS_EXAMPLES: readonly CorpusExampleReport[] = [
       { fromX: 272, fromY: 144, toX: 272, toY: 184 },
     ],
     featuredSlice: {
-      contract: 'AddTodo : Mediator.ICommand<TodoItemDto>',
+      contract: 'AddTodoItem : ICommand<TodoItem>',
       kind: 'Command',
-      dispatch: 'TodosController.Post (POST /api/todos)',
-      validator: 'TodoValidator : IPipelineBehavior<AddTodo, TodoItemDto>',
-      pipeline: 'ErrorLoggingBehaviour -> MessageValidatorBehaviour (9 sample behaviors)',
-      handler: 'AddTodoHandler : ICommandHandler<AddTodo, TodoItemDto>',
-      persistence: 'ITodoRepository (In-memory sample store)',
-      diagnostic: '[PASS] ValueTask source-generated Mediator handler linked statically.',
+      dispatch:
+        'POST /api/todos · TodoApi.cs:25-30 (passes a mapped local, so dispatch is not proven)',
+      validator: 'AddTodoItemValidator (invoked inside the request via IValidate)',
+      pipeline: '9 sample behaviors recorded globally in scan order',
+      handler: 'TodoItemCommandHandler · AspNetCoreSample.Application/Todos/AddTodoItem.cs:32',
+      persistence: 'ITodoItemRepository (sample repository; no DbContext discovered)',
+      diagnostic:
+        '[WARN] Handler and validator linked; Send(addTodo) uses a mapped local, so UnreachableRequest is reported.',
+      diagnosticTone: 'warning',
     },
-    markdownExcerpt: `# martinothamar/Mediator (samples) — Static Cartography
-- **Projects Scanned**: 24 sample applications (Clean Architecture, Minimal APIs, AOT, WPF)
-- **CQRS Requests**: 15 (ICommand<T>, IQuery<T>, IStreamQuery<T>)
-- **Pipeline Behaviors**: 9 IPipelineBehavior & StreamPipelineBehavior implementations
-- **Zero-Build Note**: Maps Mediator.SourceGenerator contracts directly from .cs declarations without invoking source generation.`,
+    markdownExcerpt: `# martinothamar/Mediator (samples) — CqrsLens 0.9.0 Snapshot
+- **Projects Scanned**: 24 sample applications
+- **CQRS Requests**: 15 (15 handlers linked, 1 validator)
+- **Pipeline Behaviors**: 9 (recorded in scan order)
+- **EF Core Contexts**: 0 discovered
+- **Architecture Checks**: 0 errors / 12 warnings
+- **Warnings**: 5 UnreachableRequest · 4 UnpublishedNotification · 2 CommandWithoutValidator · 1 OrphanNotification
+- **Reachability Note**: mapped locals passed to Send/Publish are not treated as proven dispatch call sites
+- **Snapshot**: text scanner · 2026-11-02`,
   },
 ] as const;

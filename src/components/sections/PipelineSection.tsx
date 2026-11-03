@@ -79,14 +79,18 @@ export const PipelineSection: React.FC = () => (
                     Default, ultra-fast
                   </span>
                 </div>
-                <div className="mt-2 flex items-center gap-4 font-editorial-mono text-xs">
+                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 font-editorial-mono text-xs">
                   <span className="text-[var(--color-text-primary)]">
-                    <span className="font-editorial-sans text-[var(--color-text-muted)]">Warm: </span>
-                    10.4 ms
+                    <span className="font-editorial-sans text-[var(--color-text-muted)]">
+                      Analysis:{' '}
+                    </span>
+                    Parallel lexical
                   </span>
                   <span className="text-[var(--color-text-secondary)]">
-                    <span className="font-editorial-sans text-[var(--color-text-muted)]">Memory: </span>
-                    0.65 MB
+                    <span className="font-editorial-sans text-[var(--color-text-muted)]">
+                      Relative cost:{' '}
+                    </span>
+                    Lowest
                   </span>
                 </div>
               </div>
@@ -96,17 +100,21 @@ export const PipelineSection: React.FC = () => (
                     --analysis roslyn
                   </code>
                   <span className="font-editorial-sans text-xs text-[var(--color-text-secondary)]">
-                    Symbol tree, no build
+                    Symbol-aware, no build
                   </span>
                 </div>
-                <div className="mt-2 flex items-center gap-4 font-editorial-mono text-xs">
+                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 font-editorial-mono text-xs">
                   <span className="text-[var(--color-text-primary)]">
-                    <span className="font-editorial-sans text-[var(--color-text-muted)]">Warm: </span>
-                    28.9 ms
+                    <span className="font-editorial-sans text-[var(--color-text-muted)]">
+                      Analysis:{' '}
+                    </span>
+                    Syntax & symbol trees
                   </span>
                   <span className="text-[var(--color-text-secondary)]">
-                    <span className="font-editorial-sans text-[var(--color-text-muted)]">Memory: </span>
-                    1.56 MB
+                    <span className="font-editorial-sans text-[var(--color-text-muted)]">
+                      Relative cost:{' '}
+                    </span>
+                    Higher
                   </span>
                 </div>
               </div>
@@ -120,10 +128,10 @@ export const PipelineSection: React.FC = () => (
                       Backend
                     </th>
                     <th scope="col" className="px-3 py-2.5 font-medium xl:px-4 xl:py-3">
-                      Warm
+                      Analysis
                     </th>
                     <th scope="col" className="px-3 py-2.5 font-medium xl:px-4 xl:py-3">
-                      Memory
+                      Relative cost
                     </th>
                     <th scope="col" className="px-3 py-2.5 font-medium xl:px-4 xl:py-3">
                       Resolution
@@ -135,11 +143,11 @@ export const PipelineSection: React.FC = () => (
                     <td className="px-3 py-2.5 font-medium whitespace-nowrap text-[var(--color-text-primary)] xl:px-4 xl:py-3">
                       <code className="font-editorial-mono">--analysis text</code>
                     </td>
-                    <td className="px-3 py-2.5 font-editorial-mono whitespace-nowrap text-[var(--color-text-primary)] xl:px-4 xl:py-3">
-                      10.4 ms
+                    <td className="px-3 py-2.5 font-editorial-sans text-xs text-[var(--color-text-secondary)] xl:px-4 xl:py-3 xl:text-[0.8125rem]">
+                      Parallel lexical scan
                     </td>
-                    <td className="px-3 py-2.5 font-editorial-mono whitespace-nowrap text-[var(--color-text-secondary)] xl:px-4 xl:py-3">
-                      0.65 MB
+                    <td className="px-3 py-2.5 font-editorial-mono whitespace-nowrap text-[var(--color-text-primary)] xl:px-4 xl:py-3">
+                      Lowest
                     </td>
                     <td className="px-3 py-2.5 font-editorial-sans text-xs text-[var(--color-text-secondary)] xl:px-4 xl:py-3 xl:text-[0.8125rem]">
                       Default, ultra-fast
@@ -149,14 +157,14 @@ export const PipelineSection: React.FC = () => (
                     <td className="px-3 py-2.5 font-medium whitespace-nowrap text-[var(--color-text-primary)] xl:px-4 xl:py-3">
                       <code className="font-editorial-mono">--analysis roslyn</code>
                     </td>
-                    <td className="px-3 py-2.5 font-editorial-mono whitespace-nowrap text-[var(--color-text-primary)] xl:px-4 xl:py-3">
-                      28.9 ms
+                    <td className="px-3 py-2.5 font-editorial-sans text-xs text-[var(--color-text-secondary)] xl:px-4 xl:py-3 xl:text-[0.8125rem]">
+                      Syntax &amp; symbol trees
                     </td>
                     <td className="px-3 py-2.5 font-editorial-mono whitespace-nowrap text-[var(--color-text-secondary)] xl:px-4 xl:py-3">
-                      1.56 MB
+                      Higher
                     </td>
                     <td className="px-3 py-2.5 font-editorial-sans text-xs text-[var(--color-text-secondary)] xl:px-4 xl:py-3 xl:text-[0.8125rem]">
-                      Symbol tree, no build
+                      Symbol-aware, no build
                     </td>
                   </tr>
                 </tbody>

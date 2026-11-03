@@ -2,11 +2,25 @@ import React, { useState } from 'react';
 import { Link } from '../../lib/router';
 import { ChevronRightIcon } from '../ui/Icons';
 
+type LedgerSeverity = 'error' | 'warning' | 'conditional';
+
 interface RuleSpec {
   id: string;
-  severity: 'error' | 'warning';
+  severity: LedgerSeverity;
   summary: string;
 }
+
+const SEVERITY_STYLES: Record<LedgerSeverity, string> = {
+  error: 'bg-[var(--color-role-error-bg)] text-[var(--color-role-error-fg)]',
+  warning: 'bg-[var(--color-role-warn-bg)] text-[var(--color-role-warn-fg)]',
+  conditional: 'bg-[var(--color-role-query-bg)] text-[var(--color-role-query-fg)]',
+};
+
+const SEVERITY_SYMBOLS: Record<LedgerSeverity, string> = {
+  error: '[!]',
+  warning: '[~]',
+  conditional: '[?]',
+};
 
 const RULES: readonly RuleSpec[] = [
   {
@@ -21,13 +35,15 @@ const RULES: readonly RuleSpec[] = [
   },
   {
     id: 'LayerViolation',
-    severity: 'error',
-    summary: 'A Domain project references Infrastructure, Api, Web, or UI.',
+    severity: 'conditional',
+    summary:
+      'A Domain project references Infrastructure, Api, Web, or UI. Warning by default; error when a layer model is asserted.',
   },
   {
     id: 'ApplicationLayerViolation',
-    severity: 'error',
-    summary: 'An Application project references Infrastructure, Api, Web, or UI.',
+    severity: 'conditional',
+    summary:
+      'An Application project references Infrastructure, Api, Web, or UI. Warning by default; error when a layer model is asserted.',
   },
   {
     id: 'CircularProjectDependency',
@@ -66,8 +82,21 @@ const RULES: readonly RuleSpec[] = [
   },
 ];
 
+const FILTERS = [
+  { key: 'all', label: `All (${RULES.length})` },
+  { key: 'error', label: `Errors (${RULES.filter((rule) => rule.severity === 'error').length})` },
+  {
+    key: 'conditional',
+    label: `Conditional (${RULES.filter((rule) => rule.severity === 'conditional').length})`,
+  },
+  {
+    key: 'warning',
+    label: `Warnings (${RULES.filter((rule) => rule.severity === 'warning').length})`,
+  },
+] as const;
+
 export const ChecksLedgerSection: React.FC = () => {
-  const [filter, setFilter] = useState<'all' | 'error' | 'warning'>('all');
+  const [filter, setFilter] = useState<'all' | LedgerSeverity>('all');
 
   const visibleRules =
     filter === 'all' ? RULES : RULES.filter((rule) => rule.severity === filter);
@@ -104,13 +133,7 @@ export const ChecksLedgerSection: React.FC = () => {
             aria-label="Filter architecture checks by severity"
             className="flex flex-wrap gap-2"
           >
-            {(
-              [
-                { key: 'all', label: 'All (11)' },
-                { key: 'error', label: 'Errors (5)' },
-                { key: 'warning', label: 'Warnings (6)' },
-              ] as const
-            ).map((btn) => {
+            {FILTERS.map((btn) => {
               const active = filter === btn.key;
               return (
                 <button
@@ -144,15 +167,9 @@ export const ChecksLedgerSection: React.FC = () => {
                     {rule.id}
                   </Link>
                   <span
-                    className={`inline-flex shrink-0 items-center gap-1.5 rounded-[3px] px-2 py-0.5 font-editorial-mono text-xs font-medium ${
-                      rule.severity === 'error'
-                        ? 'bg-[var(--color-role-error-bg)] text-[var(--color-role-error-fg)]'
-                        : 'bg-[var(--color-role-warn-bg)] text-[var(--color-role-warn-fg)]'
-                    }`}
+                    className={`inline-flex shrink-0 items-center gap-1.5 rounded-[3px] px-2 py-0.5 font-editorial-mono text-xs font-medium ${SEVERITY_STYLES[rule.severity]}`}
                   >
-                    <span aria-hidden="true">
-                      {rule.severity === 'error' ? '[!]' : '[~]'}
-                    </span>
+                    <span aria-hidden="true">{SEVERITY_SYMBOLS[rule.severity]}</span>
                     <span>{rule.severity}</span>
                   </span>
                 </div>
@@ -191,15 +208,9 @@ export const ChecksLedgerSection: React.FC = () => {
                     </td>
                     <td className="px-5 py-3.5">
                       <span
-                        className={`inline-flex items-center gap-1.5 rounded-[3px] px-2 py-0.5 font-editorial-mono text-xs font-medium ${
-                          rule.severity === 'error'
-                            ? 'bg-[var(--color-role-error-bg)] text-[var(--color-role-error-fg)]'
-                            : 'bg-[var(--color-role-warn-bg)] text-[var(--color-role-warn-fg)]'
-                        }`}
+                        className={`inline-flex items-center gap-1.5 rounded-[3px] px-2 py-0.5 font-editorial-mono text-xs font-medium ${SEVERITY_STYLES[rule.severity]}`}
                       >
-                        <span aria-hidden="true">
-                          {rule.severity === 'error' ? '[!]' : '[~]'}
-                        </span>
+                        <span aria-hidden="true">{SEVERITY_SYMBOLS[rule.severity]}</span>
                         <span>{rule.severity}</span>
                       </span>
                     </td>

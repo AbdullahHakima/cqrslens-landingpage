@@ -1,6 +1,7 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import { SiteHeader } from './components/layout/SiteHeader';
 import { SiteFooter } from './components/layout/SiteFooter';
+import { PageSkeleton } from './components/layout/PageSkeleton';
 import { DOC_SECTION_ROUTES } from './config/routes';
 import { RouterProvider, useRouter } from './lib/router';
 import { HomePage } from './pages/HomePage';
@@ -30,6 +31,17 @@ const NotFoundPage = React.lazy(loadNotFoundPage);
 const VALID_DOC_SLUGS = new Set(DOC_SECTION_ROUTES.map((c) => c.slug));
 
 const preloadedRoutes = new Set<string>();
+
+const IDLE_PREFETCH_ROUTES = [
+  '/quickstart',
+  '/features',
+  '/examples',
+  '/rules',
+  '/docs',
+  '/integrations',
+  '/changelog',
+  '/roadmap',
+] as const;
 
 function preloadRoute(pathname: string): void {
   if (pathname === '/' || preloadedRoutes.has(pathname)) return;
@@ -120,27 +132,85 @@ const RouteView: React.FC = () => {
   }
 
   return (
-    <Suspense fallback={<div className="min-h-[140dvh] bg-[var(--color-bg-canvas)]" />}>
+    <Suspense fallback={<PageSkeleton />}>
       {page}
     </Suspense>
   );
 };
 
-export const App: React.FC = () => (
-  <RouterProvider onPreloadRoute={preloadRoute}>
-    <a
-      href="#main-content"
-      className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[var(--z-skip)] focus:rounded-[4px] focus:bg-[var(--color-action-solid)] focus:px-4 focus:py-2.5 focus:font-editorial-mono focus:text-xs focus:text-[var(--color-action-text)]"
-    >
-      Skip to main content
-    </a>
+export const App: React.FC = () => {
+  useEffect(() => {
+    const connection = (
+      navigator as Navigator & {
+        connection?: { saveData?: boolean; effectiveType?: string };
+      }
+    ).connection;
 
-    <SiteHeader />
+    if (
+      connection?.saveData ||
+      connection?.effectiveType === 'slow-2g' ||
+      connection?.effectiveType === '2g'
+    ) {
+      return;
+    }
 
-    <main id="main-content">
-      <RouteView />
-    </main>
+    const idleWindow = window as Window & {
+      requestIdleCallback?: (
+        callback: (deadline: { didTimeout: boolean; timeRemaining: () => number }) => void,
+        options?: { timeout?: number }
+      ) => number;
+      cancelIdleCallback?: (handle: number) => void;
+    };
 
-    <SiteFooter />
-  </RouterProvider>
-);
+    let cancelled = false;
+    let routeIndex = 0;
+    let idleHandle: number | undefined;
+    let timeoutHandle: number | undefined;
+
+    const scheduleNext = () => {
+      if (cancelled || routeIndex >= IDLE_PREFETCH_ROUTES.length) return;
+
+      const runNext = () => {
+        if (cancelled || routeIndex >= IDLE_PREFETCH_ROUTES.length) return;
+        if (document.visibilityState === 'visible') {
+          preloadRoute(IDLE_PREFETCH_ROUTES[routeIndex]);
+        }
+        routeIndex += 1;
+        scheduleNext();
+      };
+
+      if (typeof idleWindow.requestIdleCallback === 'function') {
+        idleHandle = idleWindow.requestIdleCallback(runNext, { timeout: 2500 });
+      } else {
+        timeoutHandle = window.setTimeout(runNext, 1200);
+      }
+    };
+
+    scheduleNext();
+
+    return () => {
+      cancelled = true;
+      if (idleHandle !== undefined) idleWindow.cancelIdleCallback?.(idleHandle);
+      if (timeoutHandle !== undefined) window.clearTimeout(timeoutHandle);
+    };
+  }, []);
+
+  return (
+    <RouterProvider onPreloadRoute={preloadRoute}>
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[var(--z-skip)] focus:rounded-[4px] focus:bg-[var(--color-action-solid)] focus:px-4 focus:py-2.5 focus:font-editorial-mono focus:text-xs focus:text-[var(--color-action-text)]"
+      >
+        Skip to main content
+      </a>
+
+      <SiteHeader />
+
+      <main id="main-content">
+        <RouteView />
+      </main>
+
+      <SiteFooter />
+    </RouterProvider>
+  );
+};

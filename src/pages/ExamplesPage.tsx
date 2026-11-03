@@ -57,7 +57,7 @@ export const ExamplesPage: React.FC = () => {
       <PageMasthead
         pixelLines={['EXAMPLES']}
         srTitle={`Sample Architecture Reports — ${BRAND.name}`}
-        summary="Inspect static cartography outputs generated from four widely adopted open-source .NET repositories—covering 105 projects, 154 CQRS requests, and 154 linked handlers with zero MSBuild invocations."
+        summary="Inspect static cartography snapshots from four widely adopted open-source .NET repositories—covering 106 projects, 154 CQRS requests, and 154 linked handlers with zero MSBuild invocations."
         aside={
           <Link to="/quickstart" className="btn-primary">
             <span>Scan Your Own Repo</span>
@@ -76,13 +76,8 @@ export const ExamplesPage: React.FC = () => {
               Select a public .NET corpus repository.
             </h2>
             <p className="mt-2.5 mb-0 font-editorial-sans text-base leading-[1.6] text-pretty text-[var(--color-text-secondary)]">
-              Validated nightly in CI to guarantee 100% parity between{' '}
-              <code className="font-editorial-mono text-xs whitespace-nowrap">--analysis text</code>{' '}
-              and{' '}
-              <code className="font-editorial-mono text-xs whitespace-nowrap">
-                --analysis roslyn
-              </code>
-              .
+              A published 0.9.0 snapshot taken on 2 November 2026. Upstream HEADs move, so rerun the
+              CLI against any repository to reproduce or update these counts.
             </p>
           </div>
 
@@ -134,7 +129,7 @@ export const ExamplesPage: React.FC = () => {
                   {active.architectureStyle}
                 </div>
                 <div className="mt-0.5 font-editorial-mono text-xs text-[var(--color-text-secondary)]">
-                  {active.mediatorStack} · {active.parityNote}
+                  {active.mediatorStack} · {active.reportNote}
                 </div>
               </div>
 
@@ -181,7 +176,7 @@ export const ExamplesPage: React.FC = () => {
             <div className="grid grid-cols-1 border-b border-[var(--color-border-subtle)] lg:grid-cols-12">
               <div className="min-w-0 border-b border-[var(--color-border-subtle)] p-4 sm:p-7 lg:col-span-6 lg:border-r lg:border-b-0">
                 <div className="font-editorial-mono text-xs text-[var(--color-text-muted)]">
-                  Compiled Offline SVG Topology (--format html --render svg)
+                  Representative Layer Topology (rendered from scan graph data)
                 </div>
 
                 <div className="mt-4 overflow-x-auto">
@@ -283,7 +278,13 @@ export const ExamplesPage: React.FC = () => {
                   </dd>
                 </dl>
 
-                <div className="mt-5 rounded-[3px] bg-[var(--color-role-pass-bg)] px-3 py-2 font-editorial-mono text-xs text-[var(--color-role-pass-fg)]">
+                <div
+                  className={`mt-5 rounded-[3px] px-3 py-2 font-editorial-mono text-xs ${
+                    active.featuredSlice.diagnosticTone === 'pass'
+                      ? 'bg-[var(--color-role-pass-bg)] text-[var(--color-role-pass-fg)]'
+                      : 'bg-[var(--color-role-warn-bg)] text-[var(--color-role-warn-fg)]'
+                  }`}
+                >
                   {active.featuredSlice.diagnostic}
                 </div>
               </div>

@@ -32,7 +32,7 @@ export const MCP_TOOLS: readonly McpToolDoc[] = [
       'Returns compact solution topology: classified Clean Architecture layers, mediator & validation conventions, DbContexts, and a 1-line index of every Command and Query.',
     whenAgentCallsIt:
       'First tool call in a new session so the agent understands layer rules and naming conventions before creating or editing files.',
-    sampleResponse: `Solution: OrderingService (4 projects · text scan 14 ms)
+    sampleResponse: `Solution: OrderingService (4 projects · text scanner)
 Layers:
   Domain         -> Ordering.Domain
   Application    -> Ordering.Application (MediatR + FluentValidation)
@@ -50,7 +50,7 @@ Slices (24 total):
     purpose:
       'Traces a single Command or Query end-to-end with exact File:Line coordinates across endpoint dispatch, validator, pipeline behaviors, handler, EF Core DbSets, and published domain events.',
     whenAgentCallsIt:
-      'Before modifying an existing feature slice, eliminating 15–30 grep/read tool calls across folders.',
+      'Before modifying an existing feature slice, instead of grepping and reading files across folders.',
     sampleResponse: `Slice: CreateOrderCommand : IRequest<Guid>
   Dispatch   : src/Ordering.Api/Endpoints/OrdersEndpoints.cs:24 (POST /api/orders)
   Contract   : src/Ordering.Application/Orders/CreateOrder/CreateOrderCommand.cs:9
@@ -82,10 +82,10 @@ Slices (24 total):
     name: 'check_architecture',
     signature: 'check_architecture(strict?: boolean)',
     purpose:
-      'Executes all 11 static CQRS and Clean Architecture rules in milliseconds and returns structured File:Line diagnostics.',
+      'Executes all 11 static CQRS and Clean Architecture rules in a single source pass and returns structured File:Line diagnostics.',
     whenAgentCallsIt:
       'Immediately after generating a new vertical slice so the agent self-corrects missing validators, orphan notifications, or layer violations before finishing.',
-    sampleResponse: `Checks Completed in 12 ms (11 rules evaluated)
+    sampleResponse: `Checks Completed (11 rules evaluated)
   Errors   : 0
   Warnings : 1
     [WARN] CommandWithoutValidator
@@ -150,7 +150,7 @@ claude mcp add cqrslens -- ${BRAND.cliBinary} . --mcp
     name: 'Antigravity',
     configPath: 'mcp_config.json',
     summary:
-      'Point Antigravity at your active .NET solution root over stdio for sub-20 ms architectural lookups.',
+      'Point Antigravity at your active .NET solution root over stdio so architecture queries use the live static map instead of ad-hoc file greps.',
     snippet: `{
   "mcpServers": {
     "cqrslens": {
@@ -180,7 +180,7 @@ export const CI_RECIPES: readonly CiPlatformRecipe[] = [
     name: 'GitHub Actions',
     configPath: '.github/workflows/architecture.yml',
     highlights: [
-      'Runs in ~2 seconds without dotnet restore or dotnet build',
+      'Runs without dotnet restore or dotnet build',
       'Posts/updates a sticky PR comment with a Mermaid delta diagram of added/changed slices',
       'Uploads SARIF 2.1.0 findings directly to GitHub Code Scanning',
     ],
@@ -253,7 +253,7 @@ steps:
   - script: |
       dotnet tool install --tool-path ./.tools ${BRAND.nugetPackage} --version ${BRAND.version}
       ./.tools/${BRAND.cliBinary} src --format html --render svg -o $(Build.ArtifactStagingDirectory)/ARCHITECTURE.html
-      ./.tools/${BRAND.cliBinary} src --strict --baseline cqrslens-baseline.json --sarif-output $(Build.ArtifactStagingDirectory)/cqrslens.sarif
+      ./.tools/${BRAND.cliBinary} src --strict --baseline cqrslens-baseline.json --sarif $(Build.ArtifactStagingDirectory)/cqrslens.sarif
     displayName: 'Run Static CQRS & Layer Checks'
 
   - publish: $(Build.ArtifactStagingDirectory)

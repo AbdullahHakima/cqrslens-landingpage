@@ -1,4 +1,4 @@
-export type RuleSeverity = 'error' | 'warning';
+export type RuleSeverity = 'error' | 'warning' | 'conditional';
 export type RuleCategory =
   | 'CQRS Wiring'
   | 'Clean Architecture Layers'
@@ -8,6 +8,8 @@ export type RuleCategory =
 export interface ArchitectureRuleDoc {
   id: string;
   severity: RuleSeverity;
+  /** Explains a conditional default, e.g. warning unless the layer model is asserted. */
+  severityNote?: string;
   category: RuleCategory;
   summary: string;
   rationale: string;
@@ -80,7 +82,9 @@ public sealed class InvoiceCreatedAuditHandler
   },
   {
     id: 'LayerViolation',
-    severity: 'error',
+    severity: 'conditional',
+    severityNote:
+      'Default is warning. It becomes an error when a layer model is asserted through configured layers or a confident conventional layer layout; an explicit rules override always wins.',
     category: 'Clean Architecture Layers',
     summary: 'A Domain project references Infrastructure, Api, Web, or UI.',
     rationale:
@@ -107,7 +111,9 @@ public sealed class InvoiceCreatedAuditHandler
   },
   {
     id: 'ApplicationLayerViolation',
-    severity: 'error',
+    severity: 'conditional',
+    severityNote:
+      'Default is warning. It becomes an error when a layer model is asserted through configured layers or a confident conventional layer layout; an explicit rules override always wins.',
     category: 'Clean Architecture Layers',
     summary: 'An Application project references Infrastructure, Api, Web, or UI.',
     rationale:

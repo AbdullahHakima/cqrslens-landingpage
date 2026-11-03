@@ -31,31 +31,70 @@
   --forest-100: oklch(0.936 0.028 152);
   --forest-700: oklch(0.455 0.108 152);
 
-  /* Tier 2 — Semantic Surface Tokens */
-  --color-bg-canvas: var(--mineral-100);
-  --color-bg-elevated: var(--mineral-50);
-  --color-bg-subtle: var(--mineral-150);
-  --color-bg-sunken: var(--mineral-200);
-  --color-bg-inverse: var(--mineral-950);
-  --color-bg-inverse-elevated: var(--mineral-900);
-  --color-bg-inverse-subtle: var(--mineral-800);
+  /* Tier 1 — Egyptian Lapis, Papyrus & Saffron Ramp
+     Promoted from the footer engraving plate to the site-wide palette. */
+  --lapis-600: oklch(0.4 0.078 257);
+  --lapis-700: oklch(0.34 0.082 257);
+  --lapis-750: oklch(0.318 0.082 257);
+  --lapis-800: oklch(0.295 0.081 257);
+  --lapis-850: oklch(0.27 0.078 257);
+  --lapis-900: oklch(0.245 0.075 257);
+  --lapis-950: oklch(0.195 0.058 257);
+  --papyrus-100: oklch(0.952 0.025 92);
+  --papyrus-200: oklch(0.912 0.031 92);
+  --papyrus-300: oklch(0.858 0.032 92);
+  --papyrus-400: oklch(0.845 0.055 88);
+  --papyrus-500: oklch(0.745 0.045 88);
+  --saffron-400: oklch(0.825 0.115 80);
+
+  /* Tier 2 — Semantic Surface Tokens (composed dark lapis plate) */
+  --color-bg-canvas: var(--lapis-900);
+  --color-bg-elevated: var(--lapis-850);
+  --color-bg-subtle: var(--lapis-800);
+  --color-bg-sunken: var(--lapis-950);
+  --color-bg-inverse: var(--lapis-950);
+  --color-bg-inverse-elevated: var(--lapis-900);
+  --color-bg-inverse-subtle: var(--lapis-800);
 
   /* Tier 2 — Semantic Foreground / Ink Tokens (All WCAG AA/AAA verified) */
-  --color-text-primary: var(--mineral-950);          /* 16.1:1 on canvas */
-  --color-text-secondary: var(--mineral-700);        /* 9.5:1 on canvas */
-  --color-text-muted: var(--mineral-600);            /* 5.9:1 on canvas */
-  --color-text-on-inverse: var(--mineral-100);       /* 16.1:1 on inverse */
-  --color-text-on-inverse-muted: var(--mineral-400); /* 6.7:1 on inverse */
+  --color-text-primary: var(--papyrus-100);
+  --color-text-secondary: var(--papyrus-300);
+  --color-text-muted: var(--papyrus-500);
+  --color-text-on-inverse: var(--papyrus-100);
+  --color-text-on-inverse-muted: var(--papyrus-400);
 
   /* Tier 2 — Semantic Structural Hairlines & Controls */
-  --color-border-subtle: var(--mineral-200);
-  --color-border-strong: var(--mineral-300);
-  --color-border-inverse: var(--mineral-800);
-  --color-border-inverse-strong: var(--mineral-700);
-  --color-action-solid: var(--mineral-950);
-  --color-action-solid-hover: var(--mineral-800);
-  --color-action-text: var(--mineral-50);
-  --color-focus-ring: var(--mineral-950);
+  --color-border-subtle: var(--lapis-750);
+  --color-border-strong: var(--lapis-700);
+  --color-border-inverse: var(--lapis-800);
+  --color-border-inverse-strong: var(--lapis-700);
+  --color-action-solid: var(--papyrus-100);
+  --color-action-solid-hover: var(--papyrus-200);
+  --color-action-text: var(--lapis-950);
+  --color-action-inverse-solid: var(--papyrus-100);
+  --color-action-inverse-solid-hover: var(--papyrus-200);
+  --color-action-inverse-text: var(--lapis-950);
+  --color-focus-ring: var(--papyrus-100);
+
+  /* Tier 2 — Hero Owl Halftone Palette
+     Deliberately independent from page surfaces so the sculpted owl keeps its
+     porcelain body and lapis-ink features on the dark lapis hero field. */
+  --color-owl-paper: var(--lapis-900);
+  --color-owl-highlight: var(--papyrus-100);
+  --color-owl-clay: var(--papyrus-300);
+  --color-owl-ink: var(--lapis-950);
+
+  /* Tier 2 — Footer: Lapis Engraving Plate & Papyrus Ink */
+  --color-bg-footer: var(--lapis-900);
+  --color-bg-footer-raised: var(--lapis-800);
+  --color-bg-footer-deep: var(--lapis-950);
+  --color-text-footer: var(--papyrus-100);
+  --color-text-footer-muted: var(--papyrus-400);
+  --color-border-footer: var(--lapis-600);
+  --color-border-footer-faint: var(--lapis-700);
+  --color-footer-accent: var(--saffron-400);
+  --color-footer-engraving: var(--papyrus-100);
+  --color-footer-focus: var(--papyrus-100);
 
   /* Tier 2 — Semantic CQRS & Diagnostic Domain Roles */
   --color-role-command-bg: var(--cobalt-100);

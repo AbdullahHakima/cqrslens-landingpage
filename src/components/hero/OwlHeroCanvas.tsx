@@ -1,4 +1,4 @@
-import { useEffect, useImperativeHandle, useRef, forwardRef } from 'react';
+import { useEffect, useImperativeHandle, useRef, forwardRef, type RefObject } from 'react';
 import {
   LinearFilter,
   Mesh,
@@ -22,6 +22,12 @@ export interface OwlHeroCanvasHandle {
 
 interface OwlHeroCanvasProps {
   inspectingCta: boolean;
+  /**
+   * Layout anchor describing where the owl should stand inside the full-bleed hero
+   * surface. The canvas fills the whole hero; the 3D scene is framed to this element's
+   * rectangle, so one continuous surface serves every breakpoint.
+   */
+  stageRef: RefObject<HTMLElement | null>;
 }
 
 interface ResolvedPalette {
@@ -35,25 +41,27 @@ interface ResolvedPalette {
 let cachedPalette: ResolvedPalette | null = null;
 
 /**
- * Resolves all 4 Tier-2 CSS color expressions (including `oklch(...)` custom properties)
- * in a single software-backed 4x1 canvas readback, matching the browser's CSS compositor
- * byte-for-byte with zero GPU readback stalls and 0ms caching across mounts.
+ * Resolves the four dedicated owl-palette CSS color expressions (including
+ * `oklch(...)` custom properties) in a single software-backed 4x1 canvas readback,
+ * matching the browser's CSS compositor byte-for-byte with zero GPU readback stalls
+ * and 0ms caching across mounts. These tokens are intentionally independent from the
+ * page surface tokens so the porcelain owl keeps its contrast on the lapis hero.
  */
 function resolvePaletteFromTokens(): ResolvedPalette {
   const fallbacks: readonly [[number, number, number], [number, number, number], [number, number, number], [number, number, number]] = [
-    [0.957, 0.949, 0.925],
-    [0.988, 0.984, 0.969],
-    [0.890, 0.880, 0.850],
-    [0.067, 0.071, 0.063],
+    [0.020, 0.122, 0.263],
+    [0.961, 0.925, 0.839],
+    [0.840, 0.800, 0.690],
+    [0.012, 0.082, 0.184],
   ];
 
   try {
     const styles = getComputedStyle(document.documentElement);
     const vars = [
-      styles.getPropertyValue('--color-bg-canvas').trim(),
-      styles.getPropertyValue('--color-bg-elevated').trim(),
-      styles.getPropertyValue('--color-bg-sunken').trim(),
-      styles.getPropertyValue('--color-text-primary').trim(),
+      styles.getPropertyValue('--color-owl-paper').trim(),
+      styles.getPropertyValue('--color-owl-highlight').trim(),
+      styles.getPropertyValue('--color-owl-clay').trim(),
+      styles.getPropertyValue('--color-owl-ink').trim(),
     ] as const;
 
     const key = vars.join('|');
@@ -109,7 +117,7 @@ function resolvePaletteFromTokens(): ResolvedPalette {
 }
 
 export const OwlHeroCanvas = forwardRef<OwlHeroCanvasHandle, OwlHeroCanvasProps>(
-  ({ inspectingCta }, ref) => {
+  ({ inspectingCta, stageRef }, ref) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const inspectingRef = useRef(inspectingCta);
@@ -160,7 +168,7 @@ export const OwlHeroCanvas = forwardRef<OwlHeroCanvasHandle, OwlHeroCanvasProps>
         const owlController = createOwlSceneController();
         const postMaterial = createOwlHalftoneMaterial();
 
-        /* Sync shader palette byte-for-byte with active Tier-2 OKLCH CSS tokens */
+        /* Sync shader palette byte-for-byte with the active owl-palette OKLCH tokens */
         const syncPaletteFromTokens = () => {
           const palette = resolvePaletteFromTokens();
           postMaterial.uniforms.uPaperColor.value.copy(palette.paper);
@@ -186,47 +194,68 @@ export const OwlHeroCanvas = forwardRef<OwlHeroCanvasHandle, OwlHeroCanvasProps>
         });
         postMaterial.uniforms.tScene.value = renderTarget.texture;
 
+        const groundProbe = new Vector3();
         let cssW = 1;
         let cssH = 1;
-        let docLeft = 0;
-        let docTop = 0;
+        /* Stage = the sub-rectangle of the hero surface the owl is framed into */
+        let stageDocLeft = 0;
+        let stageDocTop = 0;
+        let stageW = 1;
+        let stageH = 1;
 
         const updateSize = () => {
           const rect = container.getBoundingClientRect();
-          docLeft = rect.left + window.scrollX;
-          docTop = rect.top + window.scrollY;
           cssW = Math.max(16, Math.round(rect.width));
           cssH = Math.max(16, Math.round(rect.height));
+
+          /* The stage anchor is a layout element, so CSS alone decides where the owl
+             stands at every breakpoint (right half on desktop, below the copy when stacked).
+             Falls back to the whole surface if the anchor is not mounted. */
+          const stageEl = stageRef.current;
+          const sRect = stageEl ? stageEl.getBoundingClientRect() : rect;
+          const sx = Math.min(Math.max(sRect.left - rect.left, 0), cssW - 16);
+          const sy = Math.min(Math.max(sRect.top - rect.top, 0), cssH - 16);
+          stageW = Math.max(16, Math.min(Math.round(sRect.width), cssW - sx));
+          stageH = Math.max(16, Math.min(Math.round(sRect.height), cssH - sy));
+          stageDocLeft = sRect.left + window.scrollX;
+          stageDocTop = sRect.top + window.scrollY;
+
           const dpr = Math.min(window.devicePixelRatio || 1, 2);
           /* Pass 1 feeds the quantized halftone shader; 1.25x DPR + 2x MSAA cuts
-             offscreen GPU fill-rate by up to 8x while Pass 2 renders at full Retina DPR */
+             offscreen GPU fill-rate by up to 8x while Pass 2 renders at full Retina DPR.
+             Pass 1 only covers the stage, so a full-bleed hero costs no more than a split one. */
           const rtDpr = Math.min(dpr, 1.25);
 
           renderer.setPixelRatio(dpr);
           renderer.setSize(cssW, cssH, false);
 
-          const bufW = Math.round(cssW * rtDpr);
-          const bufH = Math.round(cssH * rtDpr);
-          renderTarget.setSize(bufW, bufH);
+          renderTarget.setSize(Math.round(stageW * rtDpr), Math.round(stageH * rtDpr));
 
-          const aspect = cssW / Math.max(1, cssH);
+          const aspect = stageW / Math.max(1, stageH);
           owlController.camera.aspect = aspect;
-          /* Responsive framing tied to layout mode (stacked < 1024px vs side-by-side >= 1024px) */
+
+          /* Responsive framing tied to layout mode (stacked < 1024px vs side-by-side >= 1024px).
+             Visible height at distance d is 2 * d * tan(15deg) ~= 0.536 * d. */
           const vw = window.innerWidth || cssW;
           const isStackedStage = vw < 1024;
+          const VIS_PER_Z = 0.536;
           let baseZ: number;
           let offsetX: number;
           let camY: number;
           let lookY: number;
 
           if (isStackedStage) {
-            baseZ = aspect < 1.15 ? 10.55 : aspect < 1.65 ? 9.75 : 9.35;
-            offsetX = 0.04;
-            camY = -0.05;
-            lookY = -0.15;
+            /* Owl-first framing: height-fit the whole owl and let its floor shadow bleed off the
+               right edge. Narrow stages tighten to the owl's own width so it stays large. */
+            baseZ = Math.max(3.8 / VIS_PER_Z, 2.9 / (aspect * VIS_PER_Z));
+            offsetX = 0.08;
+            camY = -0.02;
+            lookY = -0.06;
           } else {
             const isCompactSideStage = vw < 1220;
-            baseZ = isCompactSideStage ? 10.2 : 9.45;
+            baseZ = isCompactSideStage ? 9.3 : 8.6;
+            /* Guard very tall / narrow stages (portrait iPad Pro) against horizontal crop */
+            baseZ = Math.max(baseZ, 3.9 / (aspect * VIS_PER_Z));
             offsetX = isCompactSideStage ? -0.38 : -0.30;
             camY = 0.08;
             lookY = -0.04;
@@ -236,7 +265,20 @@ export const OwlHeroCanvas = forwardRef<OwlHeroCanvasHandle, OwlHeroCanvasProps>
           owlController.camera.lookAt(offsetX, lookY, 0);
           owlController.camera.updateProjectionMatrix();
 
+          /* Ground-contact line of the talons in stage UV, so the cast-shadow band tracks the
+             feet at every stage aspect ratio instead of assuming a fixed framing */
+          owlController.camera.updateMatrixWorld();
+          const footNdc = groundProbe.set(0, -1.4, 0).project(owlController.camera);
+          postMaterial.uniforms.uFootY.value = footNdc.y * 0.5 + 0.5;
+
           postMaterial.uniforms.uResolutionCss.value.set(cssW, cssH);
+          /* Stage rectangle in hero UV space (origin bottom-left, like gl_FragCoord) */
+          postMaterial.uniforms.uStageRect.value.set(
+            sx / cssW,
+            (cssH - sy - stageH) / cssH,
+            stageW / cssW,
+            stageH / cssH
+          );
           postMaterial.uniforms.uRowPitch.value = cssW < 540 ? 6.0 : 7.0;
           postMaterial.uniforms.uColPitch.value = cssW < 540 ? 4.0 : 4.5;
         };
@@ -253,9 +295,9 @@ export const OwlHeroCanvas = forwardRef<OwlHeroCanvasHandle, OwlHeroCanvasProps>
         let pointerIdleTimer = 0;
         const onPointerMove = (e: PointerEvent) => {
           if (e.pointerType === 'touch') return;
-          /* Map pointer relative to cached document coordinates (zero layout reads) */
-          interaction.pointerX = ((e.pageX - docLeft) / Math.max(cssW, 1) - 0.5) * 2;
-          interaction.pointerY = -((e.pageY - docTop) / Math.max(cssH, 1) - 0.5) * 2;
+          /* Map pointer relative to the cached owl stage (zero layout reads) */
+          interaction.pointerX = ((e.pageX - stageDocLeft) / Math.max(stageW, 1) - 0.5) * 2;
+          interaction.pointerY = -((e.pageY - stageDocTop) / Math.max(stageH, 1) - 0.5) * 2;
           interaction.pointerActive = true;
 
           window.clearTimeout(pointerIdleTimer);
@@ -356,6 +398,7 @@ export const OwlHeroCanvas = forwardRef<OwlHeroCanvasHandle, OwlHeroCanvasProps>
           }
         });
         resizeObserver.observe(container);
+        if (stageRef.current) resizeObserver.observe(stageRef.current);
 
         const intersectionObserver = new IntersectionObserver(
           (entries) => {
@@ -421,9 +464,16 @@ export const OwlHeroCanvas = forwardRef<OwlHeroCanvasHandle, OwlHeroCanvasProps>
     return (
       <div
         ref={containerRef}
-        onClick={() => triggerFnRef.current?.()}
-        title="Click owl to pulse an architectural scan"
-        className="relative h-full w-full cursor-pointer touch-pan-y select-none"
+        onClick={(e) => {
+          const stage = stageRef.current;
+          if (!stage) return;
+          /* The canvas is full-bleed; only clicks that land on the owl stage pulse the scan */
+          const r = stage.getBoundingClientRect();
+          if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) {
+            triggerFnRef.current?.();
+          }
+        }}
+        className="relative h-full w-full touch-pan-y select-none"
       >
         <canvas
           ref={canvasRef}
