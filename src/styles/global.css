@@ -188,9 +188,15 @@
   contain-intrinsic-size: auto 620px;
 }
 
-/* Fixed lapis-glass navigation. The tint stays dark enough for AA text over the
-   hero owl while the blur and top sheen keep the bar reading as a physical pane. */
-.site-header {
+/* Fixed lapis-glass navigation. The bar and the mobile panel are separate panes:
+   the ::before pseudo-element paints only the bar, so the panel can show the page
+   behind it instead of stacking on top of the bar tint. */
+.site-header::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  z-index: -1;
+  height: calc(4rem + env(safe-area-inset-top, 0px));
   background-color: color-mix(in oklab, var(--color-bg-canvas) 64%, transparent);
   background-image: linear-gradient(
     180deg,
@@ -209,7 +215,13 @@
     box-shadow 200ms var(--ease-out);
 }
 
-.site-header[data-scrolled='true'] {
+@media (min-width: 640px) {
+  .site-header::before {
+    height: calc(4.5rem + env(safe-area-inset-top, 0px));
+  }
+}
+
+.site-header[data-scrolled='true']::before {
   background-color: color-mix(in oklab, var(--color-bg-canvas) 82%, transparent);
   border-bottom-color: var(--color-border-subtle);
   box-shadow:
@@ -218,20 +230,36 @@
 }
 
 .site-header-panel {
-  background-color: color-mix(in oklab, var(--color-bg-canvas) 91%, transparent);
-  -webkit-backdrop-filter: blur(22px) saturate(140%);
-  backdrop-filter: blur(22px) saturate(140%);
+  background-color: color-mix(in oklab, var(--color-bg-canvas) 74%, transparent);
+  background-image:
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--color-text-primary) 5%, transparent) 0%,
+      transparent 34%
+    ),
+    linear-gradient(
+      180deg,
+      transparent 60%,
+      color-mix(in oklab, var(--lapis-950) 26%, transparent) 100%
+    );
+  -webkit-backdrop-filter: blur(26px) saturate(150%);
+  backdrop-filter: blur(26px) saturate(150%);
+  border-bottom: 1px solid color-mix(in oklab, var(--color-border-subtle) 72%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, var(--color-text-primary) 7%, transparent),
+    0 30px 60px -36px color-mix(in oklab, var(--lapis-950) 95%, transparent);
 }
 
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .site-header,
-  .site-header[data-scrolled='true'] {
+  .site-header::before,
+  .site-header[data-scrolled='true']::before {
     background-color: var(--color-bg-canvas);
     background-image: none;
   }
 
   .site-header-panel {
     background-color: var(--color-bg-canvas);
+    background-image: none;
   }
 }
 

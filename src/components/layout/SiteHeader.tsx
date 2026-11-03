@@ -70,7 +70,7 @@ export const SiteHeader: React.FC = () => {
         <div
           aria-hidden="true"
           onClick={() => setMenuOpen(false)}
-          className="fixed inset-0 z-[calc(var(--z-header)-1)] bg-[var(--color-bg-inverse)]/55 backdrop-blur-[2px] lg:hidden"
+          className="fixed inset-0 z-[calc(var(--z-header)-1)] bg-[var(--color-bg-inverse)]/40 backdrop-blur-[3px] lg:hidden"
         />
       )}
       <header
