@@ -59,7 +59,7 @@ export const HeroSection: React.FC = () => {
         <div
           ref={stageRef}
           aria-hidden="true"
-          className="pointer-events-none relative -my-8 min-h-[250px] flex-1 lg:absolute lg:inset-y-0 lg:right-0 lg:left-[15vw] lg:m-0 lg:min-h-0 lg:flex-none"
+          className="pointer-events-none relative mt-2 -mb-8 min-h-[250px] flex-1 lg:absolute lg:inset-y-0 lg:right-0 lg:left-[30vw] lg:m-0 lg:min-h-0 lg:flex-none"
         />
         <div className="pointer-events-auto mt-auto pt-10 lg:pt-12">
           <p className="m-0 max-w-[36ch] font-editorial-mono text-sm leading-[1.6] text-pretty text-[var(--color-text-primary)] sm:max-w-[39ch] sm:text-base lg:max-w-[36ch] xl:max-w-[39ch]">
