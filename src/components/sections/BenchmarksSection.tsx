@@ -7,13 +7,13 @@ const CORPUS = [
     owner: 'jasontaylordev/',
     repo: 'CleanArchitecture',
     url: 'https://github.com/jasontaylordev/CleanArchitecture',
-    projects: 13,
-    requests: 11,
-    handlers: 11,
-    validators: 6,
+    projects: 8,
+    requests: 12,
+    handlers: 12,
+    validators: 5,
     behaviors: 4,
     dbContexts: 1,
-    findings: '0 errors / 6 warnings',
+    findings: '0 errors / 9 warnings',
   },
   {
     owner: 'ardalis/',
@@ -68,7 +68,7 @@ export const BenchmarksSection: React.FC = () => (
           Measured on public .NET repositories.
         </h2>
         <p className="mt-3 mb-0 max-w-[31rem] text-base leading-[1.6] text-pretty text-[var(--color-text-secondary)]">
-          A 0.9.0 snapshot taken on 2 November 2026 across 106 projects, 154 requests, and 154
+          A 0.9.0 snapshot taken on 2 November 2026 across 101 projects, 155 requests, and 155
           handlers in four canonical open-source solutions. All four complete with zero
           error-severity findings; the remaining warnings expose real validation, reachability, and
           notification hygiene debt.

@@ -22,14 +22,14 @@ const HORIZON_META: Record<
     badge: '[IN DESIGN]',
     badgeClass: 'bg-[var(--color-role-command-bg)] text-[var(--color-role-command-fg)]',
     description:
-      'Capabilities currently being specified and prototyped to expand live incremental scanning, distributed message buses, and modular monolith enforcement.',
+      'Capabilities currently being specified and prototyped. Mirrors the project roadmap in the CqrsLens repository.',
   },
   exploring: {
-    title: 'Exploring — Community & Research',
-    badge: '[EXPLORING]',
+    title: 'Ideas — Not Planned Yet',
+    badge: '[IDEA]',
     badgeClass: 'bg-[var(--color-role-warn-bg)] text-[var(--color-role-warn-fg)]',
     description:
-      'Candidate directions prioritized directly by real-world .NET repositories and GitHub issue feedback—no speculative calendar dates.',
+      'Ideas recorded in the project roadmap (ROADMAP.md) as not planned yet — no design, no schedule, no speculative calendar dates.',
   },
 };
 
@@ -37,14 +37,18 @@ export const RoadmapPage: React.FC = () => {
   const [filter, setFilter] = useState<'all' | RoadmapHorizon>('all');
 
   const visibleHorizons: readonly RoadmapHorizon[] =
-    filter === 'all' ? ['next', 'exploring', 'shipped'] : [filter];
+    filter === 'all'
+      ? (['next', 'exploring', 'shipped'] as const).filter(
+          (h) => ROADMAP_ITEMS.some((i) => i.horizon === h)
+        )
+      : [filter];
 
   return (
     <>
       <PageMasthead
         pixelLines={['ROADMAP']}
         srTitle={`Architectural Roadmap — ${BRAND.name}`}
-        summary="Organized by engineering readiness rather than arbitrary quarter promises. Prioritize upcoming checks, messaging integrations, or IDE tooling directly on GitHub Issues."
+        summary="Mirrors ROADMAP.md in the CqrsLens repository: what has shipped, and the ideas recorded as not planned yet. Suggest or discuss new directions directly on GitHub Issues."
         aside={
           <a
             href={BRAND.githubNewIssueUrl}
@@ -71,21 +75,26 @@ export const RoadmapPage: React.FC = () => {
           >
             {(
               [
-                { id: 'all', label: `All Milestones (${ROADMAP_ITEMS.length})` },
+                { id: 'all', label: `All Milestones (${ROADMAP_ITEMS.length})`, count: ROADMAP_ITEMS.length },
                 {
                   id: 'next',
                   label: `Next Horizon (${ROADMAP_ITEMS.filter((i) => i.horizon === 'next').length})`,
+                  count: ROADMAP_ITEMS.filter((i) => i.horizon === 'next').length,
                 },
                 {
                   id: 'exploring',
                   label: `Exploring (${ROADMAP_ITEMS.filter((i) => i.horizon === 'exploring').length})`,
+                  count: ROADMAP_ITEMS.filter((i) => i.horizon === 'exploring').length,
                 },
                 {
                   id: 'shipped',
                   label: `Shipped (${ROADMAP_ITEMS.filter((i) => i.horizon === 'shipped').length})`,
+                  count: ROADMAP_ITEMS.filter((i) => i.horizon === 'shipped').length,
                 },
               ] as const
-            ).map((btn) => {
+            )
+              .filter((btn) => btn.id === 'all' || btn.count > 0)
+              .map((btn) => {
               const active = filter === btn.id;
               return (
                 <button

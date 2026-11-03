@@ -167,6 +167,25 @@ export const CHANGELOG_RELEASES: readonly ReleaseEntry[] = [
     ],
   },
   {
+    version: '0.5.1',
+    dateLabel: '2026-10-23',
+    headline: 'Primary-Constructor DbContext Detection & Mermaid Hardening',
+    summary:
+      'A correctness patch: text mode now detects DbContext classes declared with a primary constructor, and Mermaid reports are hardened for GitHub rendering.',
+    changes: [
+      {
+        tag: 'FIXED',
+        category: 'Engine',
+        text: 'Text mode missed DbContext classes declared with a primary constructor (e.g. `class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext`). These contexts and their DbSet properties are now detected, matching the Roslyn backend.',
+      },
+      {
+        tag: 'IMPROVED',
+        category: 'Outputs',
+        text: 'Mermaid reports hardened for GitHub rendering: role-prefixed ASCII node ids, reserved-word handling, GitHub-safe label entities, and diagrams split at 15 requests grouped by project.',
+      },
+    ],
+  },
+  {
     version: '0.5.0',
     dateLabel: '2026-10-22',
     headline: 'FastEndpoints Validators, External Handler Wrappers & Module-Aware Linking',
@@ -231,6 +250,98 @@ export const CHANGELOG_RELEASES: readonly ReleaseEntry[] = [
         tag: 'ADDED',
         category: 'Engine',
         text: 'A pinned public validation corpus with local runner and non-blocking report workflow, documented as informational rather than a release gate.',
+      },
+    ],
+  },
+  {
+    version: '0.3.0',
+    dateLabel: '2026-10-22',
+    headline: 'Opt-In Roslyn Analysis, Traceable Results & Reproducible Reports',
+    summary:
+      'Adds the opt-in Roslyn backend alongside the default text scanner, source locations and structured diagnostics on every result, and byte-reproducible reports via --generated-at.',
+    changes: [
+      {
+        tag: 'ADDED',
+        category: 'Engine',
+        text: 'Opt-in Roslyn analysis (`--analysis roslyn`) that resolves real MediatR/FluentValidation/EF Core contracts and reports unresolved contracts; text mode stays the default and fallback.',
+      },
+      {
+        tag: 'ADDED',
+        category: 'Outputs',
+        text: 'Traceable analysis results: source locations on every request, handler, validator, behavior and DbContext, plus structured diagnostics rendered in Markdown and HTML reports.',
+      },
+      {
+        tag: 'ADDED',
+        category: 'Outputs',
+        text: 'Reproducible reports via `--generated-at`; timing is reported as 0 ms in this mode so golden files are byte-identical.',
+      },
+      {
+        tag: 'FIXED',
+        category: 'Engine',
+        text: 'Test projects are classified as Tests (not production layers), duplicate project names no longer produce false layer violations, and DbContext/DbSet detection no longer misattributes DbSets across classes.',
+      },
+    ],
+  },
+  {
+    version: '0.2.1',
+    dateLabel: '2026-10-21',
+    headline: 'Namespace-Safe Identities & Marker Resolution Fixes',
+    summary:
+      'A correctness patch for handler/validator identity and marker-interface resolution.',
+    changes: [
+      {
+        tag: 'FIXED',
+        category: 'Engine',
+        text: 'Handler and validator identities stay fully-qualified after linking, so same-named types in different namespaces remain separate Mermaid nodes.',
+      },
+      {
+        tag: 'FIXED',
+        category: 'Engine',
+        text: 'Generic `where` constraints are ignored when detecting implemented request shapes, and custom marker-interface inheritance resolves by namespace before falling back to a simple-name match.',
+      },
+      {
+        tag: 'FIXED',
+        category: 'CI',
+        text: 'The GitHub Action pins the matching CqrsLens package version, so a tagged action does not silently install a later NuGet release.',
+      },
+    ],
+  },
+  {
+    version: '0.2.0',
+    dateLabel: '2026-10-21',
+    headline: 'Custom Markers, Namespace-Aware Linking, HTML Output & First Checks',
+    summary:
+      'Adds custom marker interfaces, fully-qualified linking, multiple DbContexts per file, HTML reports, the first architecture checks with --strict, and the GitHub Action.',
+    changes: [
+      {
+        tag: 'ADDED',
+        category: 'Engine',
+        text: 'Custom marker interfaces: requests are followed through interface inheritance, and `--markers ICommand,IQuery,IMessage` names additional request roots for hierarchies that do not derive from IRequest.',
+      },
+      {
+        tag: 'ADDED',
+        category: 'Engine',
+        text: 'Namespace-aware linking: requests, handlers and validators are keyed by fully-qualified name, so same-named requests in different namespaces no longer share handlers or validators.',
+      },
+      {
+        tag: 'ADDED',
+        category: 'Outputs',
+        text: 'HTML output (`--format md|html`): a single portable file with embedded CSS, summary stat cards, and Mermaid diagrams rendered in the browser from a pinned, SRI-checked CDN.',
+      },
+      {
+        tag: 'ADDED',
+        category: 'Rules',
+        text: 'Architecture checks in every report — MissingHandler and LayerViolation errors, CommandWithoutValidator warnings — with `--strict` exiting with code 4 when any error is found.',
+      },
+      {
+        tag: 'ADDED',
+        category: 'CI',
+        text: 'GitHub Action (`action.yml` at the repo root): a composite action that installs CqrsLens, scans, and uploads the report as a workflow artifact.',
+      },
+      {
+        tag: 'ADDED',
+        category: 'Engine',
+        text: 'Parallel scanning with deterministic, sorted output, and a timing footer at the end of every report.',
       },
     ],
   },

@@ -19,7 +19,7 @@ Every route ships both client-side navigation and build-time static HTML entry p
 - `/docs` & `/docs/:section` — Technical reference manual with sticky chapter rail, parameter tables, `.cqrslens.json` schema, and exit codes (`src/pages/DocsPage.tsx`, `src/data/docs.ts`)
 - `/rules` — Searchable 11-rule static checks catalog with `#RuleId` SARIF anchors and C# violation vs. clean resolution examples (`src/pages/RulesPage.tsx`, `src/data/rules.ts`)
 - `/integrations` — Copy-paste setups for Claude Code, Cursor, VS Code Copilot, Antigravity MCP servers, GitHub Actions, Azure DevOps, and GitLab CI (`src/pages/IntegrationsPage.tsx`, `src/data/integrations.ts`)
-- `/examples` — Inspectable snapshots from `jasontaylordev`, `kgrzybek`, `ardalis`, and `martinothamar` public repositories, covering 106 projects and 154 CQRS requests (`src/pages/ExamplesPage.tsx`, `src/data/examples.ts`)
+- `/examples` — Inspectable snapshots from `jasontaylordev`, `kgrzybek`, `ardalis`, and `martinothamar` public repositories, covering 101 projects and 155 CQRS requests (`src/pages/ExamplesPage.tsx`, `src/data/examples.ts`)
 - `/changelog` — Chronological release ledger with subsystem filters (`src/pages/ChangelogPage.tsx`, `src/data/changelog.ts`)
 - `/roadmap` — Readiness-horizon roadmap wired to GitHub Issues (`src/pages/RoadmapPage.tsx`, `src/data/roadmap.ts`)
 

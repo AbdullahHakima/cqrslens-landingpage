@@ -27,9 +27,9 @@ export interface CiPlatformRecipe {
 export const MCP_TOOLS: readonly McpToolDoc[] = [
   {
     name: 'get_architecture_dna',
-    signature: 'get_architecture_dna()',
+    signature: 'get_architecture_dna(path?, analysis?, includeIndex?)',
     purpose:
-      'Returns compact solution topology: classified Clean Architecture layers, mediator & validation conventions, DbContexts, and a 1-line index of every Command and Query.',
+      'Returns a compact Architectural DNA summary: layer & project topology, CQRS conventions (mediator library, handler layout, active pipeline behaviors), and EF Core DbContexts. Set includeIndex: true only when you need the full one-line index of every slice.',
     whenAgentCallsIt:
       'First tool call in a new session so the agent understands layer rules and naming conventions before creating or editing files.',
     sampleResponse: `Solution: OrderingService (4 projects · text scanner)
@@ -46,7 +46,7 @@ Slices (24 total):
   },
   {
     name: 'trace_slice',
-    signature: 'trace_slice(requestName: string)',
+    signature: 'trace_slice(query: string, limit?)',
     purpose:
       'Traces a single Command or Query end-to-end with exact File:Line coordinates across endpoint dispatch, validator, pipeline behaviors, handler, EF Core DbSets, and published domain events.',
     whenAgentCallsIt:
@@ -62,9 +62,9 @@ Slices (24 total):
   },
   {
     name: 'trace_entity_impact',
-    signature: 'trace_entity_impact(entityOrDbSet: string)',
+    signature: 'trace_entity_impact(entity: string, match?, limit?)',
     purpose:
-      'Computes the reverse blast-radius map of every Command, Query, and Notification Handler that reads or mutates a specific EF Core entity / DbSet.',
+      'Traces an EF Core entity or DbSet across the architecture: its schema (PKs, FKs, properties, relationships) and every Command, Query, Handler, and API Endpoint that reads, writes, or depends on it. Entity matching is exact by default, so Order never matches OrderItem.',
     whenAgentCallsIt:
       'Before altering an entity property, splitting a database table, or refactoring aggregate invariants.',
     sampleResponse: `Entity Impact: OrderingDbContext.Orders (Entity: Order)
@@ -80,17 +80,15 @@ Slices (24 total):
   },
   {
     name: 'check_architecture',
-    signature: 'check_architecture(strict?: boolean)',
+    signature: 'check_architecture(path?, analysis?)',
     purpose:
-      'Executes all 11 static CQRS and Clean Architecture rules in a single source pass and returns structured File:Line diagnostics.',
+      'Runs the CqrsLens static architecture rules and returns all active findings with File:Line locations.',
     whenAgentCallsIt:
       'Immediately after generating a new vertical slice so the agent self-corrects missing validators, orphan notifications, or layer violations before finishing.',
-    sampleResponse: `Checks Completed (11 rules evaluated)
-  Errors   : 0
-  Warnings : 1
-    [WARN] CommandWithoutValidator
-      Target : RefundOrderCommand (src/Ordering.Application/Refunds/RefundOrderCommand.cs:6)
-      Fix    : Add AbstractValidator<RefundOrderCommand> in Ordering.Application.`,
+    sampleResponse: `Architecture checks: 0 error(s), 1 warning(s)
+  [Warning] CommandWithoutValidator
+    Command \`RefundOrderCommand\` has no validator.
+    src/Ordering.Application/Refunds/RefundOrderCommand.cs:6`,
   },
 ] as const;
 
@@ -274,10 +272,12 @@ steps:
   script:
     - dotnet tool install --tool-path ./.tools ${BRAND.nugetPackage} --version ${BRAND.version}
     - ./.tools/${BRAND.cliBinary} . --format html --render svg -o ARCHITECTURE.html
+    - ./.tools/${BRAND.cliBinary} . --format json -o ARCHITECTURE.json
     - ./.tools/${BRAND.cliBinary} . --strict --baseline cqrslens-baseline.json
   artifacts:
     when: always
     paths:
-      - ARCHITECTURE.html`,
+      - ARCHITECTURE.html
+      - ARCHITECTURE.json`,
   },
 ] as const;

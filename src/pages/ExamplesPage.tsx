@@ -61,7 +61,7 @@ export const ExamplesPage: React.FC = () => {
       <PageMasthead
         pixelLines={['EXAMPLES']}
         srTitle={`Sample Architecture Reports — ${BRAND.name}`}
-        summary="Inspect static cartography snapshots from four widely adopted open-source .NET repositories—covering 106 projects, 154 CQRS requests, and 154 linked handlers with zero MSBuild invocations."
+        summary="Inspect static cartography snapshots from four widely adopted open-source .NET repositories—covering 101 projects, 155 CQRS requests, and 155 linked handlers with zero MSBuild invocations."
         aside={
           <Link to="/quickstart" className="btn-primary">
             <span>Scan Your Own Repo</span>

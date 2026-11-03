@@ -181,7 +181,7 @@ ${BRAND.cliBinary} . --mcp`,
               col3: 'Recursively scans the target solution directory.',
             },
             {
-              col1: '-f, --format <fmt>',
+              col1: '--format <fmt>',
               col2: 'md (default) | html | json | agent',
               col3: 'Selects primary output representation. A .html, .json, or .agent.md -o path implies the matching format. SARIF is additive via --sarif, not a --format value.',
             },

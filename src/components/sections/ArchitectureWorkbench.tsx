@@ -26,17 +26,17 @@ const SLICES: readonly SliceTrace[] = [
     id: 'create-todo-item',
     name: 'CreateTodoItemCommand',
     kind: 'Command',
-    project: 'CleanArchitecture.Application',
-    endpoint: 'POST /api/TodoItems (route inferred)  (TodoItems.cs:23)',
-    requestLoc: 'TodoItems/Commands/CreateTodoItem/CreateTodoItem.cs:6',
+    project: 'Application',
+    endpoint: 'POST /todoitems (route inferred)  (TodoItemsController.cs:22)',
+    requestLoc: 'TodoItems/Commands/CreateTodoItem/CreateTodoItemCommand.cs:8',
     responseType: 'int',
     validator: 'CreateTodoItemCommandValidator',
-    validatorLoc: 'TodoItems/Commands/CreateTodoItem/CreateTodoItemCommandValidator.cs:3',
+    validatorLoc: 'TodoItems/Commands/CreateTodoItem/CreateTodoItemCommandValidator.cs:5',
     behaviors: ['4 project behaviors recorded in scan order'],
     handler: 'CreateTodoItemCommandHandler',
-    handlerLoc: 'TodoItems/Commands/CreateTodoItem/CreateTodoItem.cs:13',
+    handlerLoc: 'TodoItems/Commands/CreateTodoItem/CreateTodoItemCommand.cs:15',
     dbSets: ['ApplicationDbContext.TodoItems (TodoItem)'],
-    publishedEvents: [],
+    publishedEvents: ['TodoItemCreatedEvent'],
     finding: {
       rule: 'NO FINDINGS',
       severity: 'pass',
@@ -48,15 +48,15 @@ const SLICES: readonly SliceTrace[] = [
     id: 'get-todos',
     name: 'GetTodosQuery',
     kind: 'Query',
-    project: 'CleanArchitecture.Application',
-    endpoint: 'GET /api/TodoLists (route inferred)  (TodoLists.cs:23)',
-    requestLoc: 'TodoLists/Queries/GetTodos/GetTodos.cs:10',
+    project: 'Application',
+    endpoint: 'GET /todolists (route inferred)  (TodoListsController.cs:14)',
+    requestLoc: 'TodoLists/Queries/GetTodos/GetTodosQuery.cs:12',
     responseType: 'TodosVm',
     validator: null,
     validatorLoc: null,
     behaviors: ['4 project behaviors recorded in scan order'],
     handler: 'GetTodosQueryHandler',
-    handlerLoc: 'TodoLists/Queries/GetTodos/GetTodos.cs:12',
+    handlerLoc: 'TodoLists/Queries/GetTodos/GetTodosQuery.cs:14',
     dbSets: ['ApplicationDbContext.TodoLists (TodoList)'],
     publishedEvents: [],
     finding: {
@@ -531,8 +531,8 @@ Written: samples/SampleShop/ARCHITECTURE.html (zero-JS SVG)`}
                       get_architecture_dna
                     </strong>
                     <span className="font-editorial-sans text-[0.8125rem] text-[var(--color-text-secondary)]">
-                      Compact layer topology, mediator conventions, DbContexts, and 1-line slice
-                      index.
+                      Compact layer topology, CQRS conventions, DbContexts, and counts — with an
+                      optional one-line index of every slice.
                     </span>
                   </li>
                   <li className="border-l-2 border-[var(--color-border-strong)] pl-3">

@@ -53,19 +53,20 @@ export const CORPUS_EXAMPLES: readonly CorpusExampleReport[] = [
     githubUrl: 'https://github.com/jasontaylordev/CleanArchitecture',
     architectureStyle: '4-Layer Canonical Clean Architecture',
     mediatorStack: 'MediatR + FluentValidation + EF Core',
-    projects: 13,
-    requests: 11,
-    handlers: 11,
-    validators: 6,
+    projects: 8,
+    requests: 12,
+    handlers: 12,
+    validators: 5,
     behaviors: 4,
     dbContexts: 1,
-    findingsSummary: '0 errors / 6 warnings',
-    reportNote: 'Warning mix: validation gaps, template reachability, and one unpublished event',
+    findingsSummary: '0 errors / 9 warnings',
+    reportNote:
+      'Warning mix: 4 commands without validators, 2 unreachable template requests, unpublished and orphan notifications',
     nodes: [
-      { id: 'web', label: 'CleanArchitecture.Web', role: 'presentation', x: 40, y: 24, w: 185 },
-      { id: 'infra', label: 'CleanArchitecture.Infrastructure', role: 'infrastructure', x: 295, y: 24, w: 225 },
-      { id: 'app', label: 'CleanArchitecture.Application', role: 'application', x: 155, y: 106, w: 215 },
-      { id: 'domain', label: 'CleanArchitecture.Domain', role: 'domain', x: 175, y: 184, w: 180 },
+      { id: 'web', label: 'WebUI', role: 'presentation', x: 40, y: 24, w: 185 },
+      { id: 'infra', label: 'Infrastructure', role: 'infrastructure', x: 295, y: 24, w: 225 },
+      { id: 'app', label: 'Application', role: 'application', x: 155, y: 106, w: 215 },
+      { id: 'domain', label: 'Domain', role: 'domain', x: 175, y: 184, w: 180 },
     ],
     edges: [
       { fromX: 132, fromY: 60, toX: 230, toY: 106 },
@@ -77,24 +78,25 @@ export const CORPUS_EXAMPLES: readonly CorpusExampleReport[] = [
     featuredSlice: {
       contract: 'CreateTodoItemCommand : IRequest<int>',
       kind: 'Command',
-      dispatch: 'POST /api/TodoItems (inferred route) · Web/Endpoints/TodoItems.cs:23',
+      dispatch: 'POST /todoitems (inferred route) · WebUI/Controllers/TodoItemsController.cs:22',
       validator:
-        'CreateTodoItemCommandValidator · Application/TodoItems/Commands/CreateTodoItem/CreateTodoItemCommandValidator.cs:3',
-      pipeline: 'ValidationBehaviour + 3 more in scan order (not execution order)',
+        'CreateTodoItemCommandValidator · Application/TodoItems/Commands/CreateTodoItem/CreateTodoItemCommandValidator.cs:5',
+      pipeline:
+        '4 behaviors in scan order — AuthorizationBehaviour, PerformanceBehaviour, UnhandledExceptionBehaviour, ValidationBehaviour (not execution order)',
       handler:
-        'CreateTodoItemCommandHandler · Application/TodoItems/Commands/CreateTodoItem/CreateTodoItem.cs:13',
+        'CreateTodoItemCommandHandler · Application/TodoItems/Commands/CreateTodoItem/CreateTodoItemCommand.cs:15',
       persistence: 'IApplicationDbContext.TodoItems → TodoItem',
       diagnostic:
-        '[PASS] Handler, validator, and EF Core DbSet linked. Six project-level warnings remain.',
+        '[PASS] Handler, validator, and EF Core DbSet linked. Nine warnings remain across the solution.',
       diagnosticTone: 'pass',
     },
     markdownExcerpt: `# CleanArchitecture — CqrsLens 0.9.0 Snapshot
-- **Projects Scanned**: 13
-- **CQRS Requests**: 11 (11 handlers linked, 6 validators)
+- **Projects Scanned**: 8
+- **CQRS Requests**: 12 (12 handlers linked, 5 validators)
 - **Pipeline Behaviors**: 4 (recorded in scan order)
 - **EF Core Contexts**: ApplicationDbContext (TodoItems → TodoItem)
-- **Architecture Checks**: 0 errors / 6 warnings
-- **Warnings**: 3 CommandWithoutValidator · 2 UnreachableRequest · 1 UnpublishedNotification
+- **Architecture Checks**: 0 errors / 9 warnings
+- **Warnings**: 4 CommandWithoutValidator · 2 UnreachableRequest · 2 UnpublishedNotification · 1 OrphanNotification
 - **Reachability Note**: both UnreachableRequest findings are template requests with no production call site
 - **Snapshot**: text scanner · 2026-11-02`,
   },
@@ -156,7 +158,7 @@ export const CORPUS_EXAMPLES: readonly CorpusExampleReport[] = [
     repo: 'CleanArchitecture',
     githubUrl: 'https://github.com/ardalis/CleanArchitecture',
     architectureStyle: 'Core / UseCases / Infrastructure / FastEndpoints Web',
-    mediatorStack: 'MediatR (Ardalis.SharedKernel) + FastEndpoints Validators',
+    mediatorStack: 'martinothamar/Mediator (Ardalis.SharedKernel) + FastEndpoints Validators',
     projects: 22,
     requests: 23,
     handlers: 23,
@@ -166,10 +168,10 @@ export const CORPUS_EXAMPLES: readonly CorpusExampleReport[] = [
     findingsSummary: '0 errors / 38 warnings',
     reportNote: 'FastEndpoints validators are visible but report as orphan relative to CQRS contracts',
     nodes: [
-      { id: 'web', label: 'NimblePros.Sample.Web (FastEndpoints)', role: 'presentation', x: 30, y: 24, w: 240 },
-      { id: 'infra', label: 'NimblePros.Sample.Infrastructure', role: 'infrastructure', x: 300, y: 24, w: 230 },
-      { id: 'usecases', label: 'NimblePros.Sample.UseCases', role: 'application', x: 165, y: 106, w: 215 },
-      { id: 'core', label: 'NimblePros.Sample.Core', role: 'domain', x: 180, y: 184, w: 185 },
+      { id: 'web', label: 'Clean.Architecture.Web (FastEndpoints)', role: 'presentation', x: 30, y: 24, w: 240 },
+      { id: 'infra', label: 'Clean.Architecture.Infrastructure', role: 'infrastructure', x: 300, y: 24, w: 230 },
+      { id: 'usecases', label: 'Clean.Architecture.UseCases', role: 'application', x: 165, y: 106, w: 215 },
+      { id: 'core', label: 'Clean.Architecture.Core', role: 'domain', x: 180, y: 184, w: 185 },
     ],
     edges: [
       { fromX: 150, fromY: 60, toX: 240, toY: 106 },
@@ -184,7 +186,7 @@ export const CORPUS_EXAMPLES: readonly CorpusExampleReport[] = [
       dispatch: 'POST /Contributors · Web/Contributors/Create.cs:15',
       validator:
         'None linked — 21 FastEndpoints validators target request DTOs and report OrphanValidator',
-      pipeline: '3 behaviors in scan order (LoggingBehavior, CachingBehavior)',
+      pipeline: '3 behaviors in scan order (CachingBehavior, LoggingBehavior ×2)',
       handler: 'CreateContributorHandler · UseCases/Contributors/Create/CreateContributorHandler.cs:5',
       persistence: 'IRepository<Contributor> → AppDbContext.Contributors',
       diagnostic:
