@@ -166,8 +166,8 @@ export function createOwlSceneController(
 
   const talonMat = track(
     new THREE.MeshStandardMaterial({
-      color: 0x161715,
-      roughness: 0.65,
+      color: 0x525956,
+      roughness: 0.62,
       metalness: 0.0,
     })
   );
@@ -177,7 +177,7 @@ export function createOwlSceneController(
   const floorMat = track(
     new THREE.ShadowMaterial({
       color: 0x000000,
-      opacity: 0.44,
+      opacity: 0.38,
     })
   );
   const floorMesh = new THREE.Mesh(floorGeo, floorMat);
@@ -214,6 +214,11 @@ export function createOwlSceneController(
       /* Puff forward chest slightly */
       if (v.z > 0) {
         v.z += 0.07 * Math.cos(ny * Math.PI * 0.5);
+      }
+      /* Gently tuck lower hem above feathered ankles so feet & splayed toes read cleanly */
+      if (ny < -0.56) {
+        const hemLift = smoothstep(-0.56, -1.0, ny);
+        v.y += hemLift * 0.105;
       }
       /* Subtle sculpted breast-feather chevron ridges so scanlines pick up delicate owl plumage */
       if (v.z > 0.25 && Math.abs(ny) < 0.58) {
@@ -425,18 +430,29 @@ export function createOwlSceneController(
   beakMesh.castShadow = false;
   headGroup.add(beakMesh);
 
-  /* 7. Articulated Feet & 3-Toed Talons */
-  const sharedToeGeo = track(new THREE.CapsuleGeometry(0.048, 0.14, compact ? 4 : 6, compact ? 8 : 10));
+  /* 7. Feathered Tarsus Cuffs & Cleanly Separated 3-Toed Talons */
+  const sharedAnkleGeo = track(
+    new THREE.SphereGeometry(0.105, compact ? 12 : 16, compact ? 10 : 12)
+  );
+  sharedAnkleGeo.scale(1.05, 0.72, 1.0);
+  const sharedToeGeo = track(
+    new THREE.CapsuleGeometry(0.029, 0.135, compact ? 4 : 6, compact ? 8 : 10)
+  );
 
   function buildFoot(side: -1 | 1): THREE.Group {
     const footGroup = new THREE.Group();
-    footGroup.position.set(side * 0.34, -1.34, 0.14);
+    footGroup.position.set(side * 0.31, -1.33, 0.24);
+
+    const ankleCuff = new THREE.Mesh(sharedAnkleGeo, porcelainMat);
+    ankleCuff.position.set(0, 0.08, -0.05);
+    ankleCuff.castShadow = true;
+    footGroup.add(ankleCuff);
 
     for (let t = -1; t <= 1; t++) {
       const toe = new THREE.Mesh(sharedToeGeo, talonMat);
-      toe.rotation.x = Math.PI * 0.5;
-      toe.rotation.z = t * -0.28;
-      toe.position.set(t * 0.08, 0, 0.05);
+      toe.rotation.x = Math.PI * 0.51;
+      toe.rotation.z = t * -0.32;
+      toe.position.set(t * 0.092, -0.01, t === 0 ? 0.075 : 0.048);
       toe.castShadow = true;
       footGroup.add(toe);
     }
@@ -887,8 +903,8 @@ export function createOwlSceneController(
     rightTuft.rotation.z = -0.52 + rTuft * 0.42;
 
     const groundOffset = Math.max(0, bY + 0.04) * 0.35;
-    leftFoot.position.set(-0.34, -1.34 - groundOffset + leftFootLift, 0.14 + leftFootSwingZ);
-    rightFoot.position.set(0.34, -1.34 - groundOffset + rightFootLift, 0.14 + rightFootSwingZ);
+    leftFoot.position.set(-0.31, -1.33 - groundOffset + leftFootLift, 0.24 + leftFootSwingZ);
+    rightFoot.position.set(0.31, -1.33 - groundOffset + rightFootLift, 0.24 + rightFootSwingZ);
     leftFoot.rotation.x = leftFootFlexX;
     rightFoot.rotation.x = rightFootFlexX;
 

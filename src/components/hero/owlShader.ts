@@ -163,7 +163,7 @@ export function createOwlHalftoneMaterial(): ShaderMaterial {
         vec3 baseColor = mix(uPaperColor, owlClayBase, smoothIsOwl);
 
         float darkness = cellIsOwl > 0.5
-          ? smoothstep(0.885, 0.06, cellLum)
+          ? smoothstep(0.885, 0.03, cellLum)
           : max(floorShadow, gobo);
         darkness = max(darkness, scanRipple);
 
@@ -176,13 +176,14 @@ export function createOwlHalftoneMaterial(): ShaderMaterial {
         float inkMask = 0.0;
 
         if (!isEyeCatchlight && effDark > 0.09) {
-          if (effDark >= 0.90 && cellIsOwl > 0.5) {
-            /* REGIME 3: Obsidian features ONLY (eyes, beak, talons) merge into solid pixel blocks */
+          if (cellLum < 0.038 && cellIsOwl > 0.5) {
+            /* REGIME 3: Pure obsidian features ONLY (eyes & beak) merge into solid pixel blocks,
+               keeping talons & shaded lower belly cleanly in hatched Regime-2 scanlines */
             inkMask = 1.0;
           } else {
             /* REGIME 2: Airy architectural horizontal scanlines capped at ~46% of rowPitch
-               so shaded white plumage always retains crisp breathing gaps */
-            float normShade = clamp((effDark - 0.09) / 0.80, 0.0, 1.0);
+               so shaded plumage and splayed talons always retain crisp breathing gaps */
+            float normShade = clamp((effDark - 0.09) / 0.85, 0.0, 1.0);
             float maxHalf = uRowPitch * 0.23;
             float minHalf = 0.52;
             float stepped = floor(normShade * 4.0) / 3.0;
