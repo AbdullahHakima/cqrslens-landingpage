@@ -14,7 +14,11 @@ import {
   WebGLRenderer,
 } from 'three';
 import { createOwlHalftoneMaterial } from './owlShader';
-import { createOwlSceneController, OwlInteractionState } from './owlRig';
+import {
+  createOwlSceneController,
+  OwlInteractionState,
+  WALK_IN_DURATION,
+} from './owlRig';
 
 export interface OwlHeroCanvasHandle {
   triggerScan: (aimX?: number, aimY?: number) => void;
@@ -372,9 +376,9 @@ export const OwlHeroCanvas = forwardRef<OwlHeroCanvasHandle, OwlHeroCanvasProps>
           interaction.pointerActive = false;
         };
 
-        const clockStart = performance.now();
-        const REDUCED_POSE_SEC = 3.2;
-        let prevNow = clockStart;
+        const REDUCED_POSE_SEC = WALK_IN_DURATION + 3.2;
+        let activeTimeSec = 0;
+        let prevNow = performance.now();
         let lastRenderMs = 0;
         let revealed = false;
         let rafId = 0;
@@ -392,18 +396,21 @@ export const OwlHeroCanvas = forwardRef<OwlHeroCanvasHandle, OwlHeroCanvasProps>
             if (disposed || contextLost) return;
             updateSize();
             if (!isRunning) {
-              renderFrameAt(performance.now());
+              renderFrameAt(performance.now(), false);
             }
           });
         };
 
-        const renderFrameAt = (nowMs: number) => {
+        const renderFrameAt = (nowMs: number, advanceClock = true) => {
           if (contextLost) return;
-          const elapsedSec = (nowMs - clockStart) / 1000;
           const dt = Math.min(0.05, Math.max(0.001, (nowMs - prevNow) / 1000));
           const frameDelta = lastRenderMs > 0 ? nowMs - lastRenderMs : 16.7;
           prevNow = nowMs;
           lastRenderMs = nowMs;
+
+          if (!prefersReducedMotion && advanceClock) {
+            activeTimeSec += dt;
+          }
 
           interaction.inspectingCta = inspectingRef.current;
 
@@ -441,16 +448,19 @@ export const OwlHeroCanvas = forwardRef<OwlHeroCanvasHandle, OwlHeroCanvasProps>
             renderer.shadowMap.autoUpdate = true;
           }
 
-          const { scanWave, owlScreenPos } = owlController.update(
-            prefersReducedMotion ? REDUCED_POSE_SEC : elapsedSec,
+          const { scanWave, owlScreenPos, footY } = owlController.update(
+            prefersReducedMotion ? REDUCED_POSE_SEC : activeTimeSec,
             prefersReducedMotion ? 0.016 : dt,
             interaction
           );
 
-          postMaterial.uniforms.uTime.value = prefersReducedMotion ? REDUCED_POSE_SEC : elapsedSec;
+          postMaterial.uniforms.uTime.value = prefersReducedMotion
+            ? REDUCED_POSE_SEC
+            : activeTimeSec;
           postMaterial.uniforms.uScanWave.value =
             reducedScanOverride !== null ? reducedScanOverride : scanWave;
           postMaterial.uniforms.uOwlScreenPos.value.copy(owlScreenPos);
+          postMaterial.uniforms.uFootY.value = footY;
 
           /* Pass 1: Render 3D sculpted Owl + directional floor shadow into offscreen target */
           renderer.setRenderTarget(renderTarget);
@@ -479,11 +489,12 @@ export const OwlHeroCanvas = forwardRef<OwlHeroCanvasHandle, OwlHeroCanvasProps>
 
         const startLoop = () => {
           if (prefersReducedMotion) {
-            /* Pre-warm spring solver for 20 steps so the static pose settles naturally */
+            /* Snap directly onto foreground perch & warm spring solver cleanly */
+            owlController.snapToPerch();
             for (let i = 0; i < 20; i++) {
               owlController.update(REDUCED_POSE_SEC, 0.03, interaction);
             }
-            renderFrameAt(performance.now());
+            renderFrameAt(performance.now(), false);
             return;
           }
           if (isRunning || !inViewport || document.hidden || contextLost) return;
@@ -491,7 +502,7 @@ export const OwlHeroCanvas = forwardRef<OwlHeroCanvasHandle, OwlHeroCanvasProps>
           const now = performance.now();
           prevNow = now;
           if (!revealed) {
-            renderFrameAt(now);
+            renderFrameAt(now, false);
           }
           rafId = window.requestAnimationFrame(loop);
         };
@@ -502,8 +513,11 @@ export const OwlHeroCanvas = forwardRef<OwlHeroCanvasHandle, OwlHeroCanvasProps>
         };
 
         triggerFnRef.current = (aimX?: number, aimY?: number) => {
-          const tSec = (performance.now() - clockStart) / 1000;
-          owlController.triggerScanHop(tSec, aimX, aimY);
+          owlController.triggerScanHop(
+            prefersReducedMotion ? REDUCED_POSE_SEC : activeTimeSec,
+            aimX,
+            aimY
+          );
           if (prefersReducedMotion) {
             /* Display a calm static sonar ring snapshot without rapid strobing */
             window.clearTimeout(reducedPulseTimer);
@@ -511,14 +525,14 @@ export const OwlHeroCanvas = forwardRef<OwlHeroCanvasHandle, OwlHeroCanvasProps>
             for (let i = 0; i < 6; i++) {
               owlController.update(REDUCED_POSE_SEC, 0.03, interaction);
             }
-            renderFrameAt(performance.now());
+            renderFrameAt(performance.now(), false);
             reducedPulseTimer = window.setTimeout(() => {
               if (disposed || contextLost) return;
               reducedScanOverride = null;
               for (let i = 0; i < 12; i++) {
                 owlController.update(REDUCED_POSE_SEC, 0.03, interaction);
               }
-              renderFrameAt(performance.now());
+              renderFrameAt(performance.now(), false);
             }, 950);
           }
         };

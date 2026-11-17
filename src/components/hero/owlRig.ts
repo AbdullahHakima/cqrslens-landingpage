@@ -53,21 +53,25 @@ export interface OwlControllerOptions {
   compactDetail?: boolean;
 }
 
+export const WALK_IN_DURATION = 3.25;
+
 export interface OwlSceneController {
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
   update: (timeSec: number, dt: number, interaction: OwlInteractionState) => {
     scanWave: number;
     owlScreenPos: THREE.Vector2;
+    footY: number;
   };
   triggerScanHop: (timeSec: number, aimX?: number, aimY?: number) => void;
+  snapToPerch: () => void;
   dispose: () => void;
 }
 
 /**
  * Builds the vertex-sculpted 3D Little Owl (*Athene noctua*) rig, directional
- * architectural studio lighting, ground shadow catcher, and 5-act behavioral
- * spring-physics animation director.
+ * architectural studio lighting, ground shadow catcher, and depth walk-in +
+ * 5-act behavioral spring-physics animation director.
  */
 export function createOwlSceneController(
   options: OwlControllerOptions = {}
@@ -75,7 +79,7 @@ export function createOwlSceneController(
   const compact = Boolean(options.compactDetail);
   const scene = new THREE.Scene();
 
-  const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 40);
+  const camera = new THREE.PerspectiveCamera(30, 1, 0.5, 40);
   /* Position camera so the Owl sits comfortably around x = ~48% of the canvas
      (which spans the right ~64vw of the hero), leaving space on the right for
      its floor cast shadow and sweeping gobo scanline field. */
@@ -115,6 +119,7 @@ export function createOwlSceneController(
   keyLight.shadow.bias = -0.0008;
   keyLight.shadow.radius = compact ? 1.5 : 2.5;
   scene.add(keyLight);
+  scene.add(keyLight.target);
 
   /* Soft right-side fill keeps shaded plumage inside airy Regime-2 scanlines */
   const rightFillLight = new THREE.DirectionalLight(0xffffff, 0.58);
@@ -167,8 +172,8 @@ export function createOwlSceneController(
     })
   );
 
-  /* Ground Shadow Catcher at y = -1.38 */
-  const floorGeo = track(new THREE.PlaneGeometry(14, 8));
+  /* Ground Shadow Catcher at y = -1.38 spanning full walk-in horizon depth */
+  const floorGeo = track(new THREE.PlaneGeometry(20, 26));
   const floorMat = track(
     new THREE.ShadowMaterial({
       color: 0x000000,
@@ -177,17 +182,16 @@ export function createOwlSceneController(
   );
   const floorMesh = new THREE.Mesh(floorGeo, floorMat);
   floorMesh.rotation.x = -Math.PI / 2;
-  floorMesh.position.set(1.2, -1.38, 0);
+  floorMesh.position.set(1.2, -1.38, -6.5);
   floorMesh.receiveShadow = true;
   scene.add(floorMesh);
 
   /* -----------------------------------------------------------------------
-     Root Owl Rig Hierarchy
+     Root Owl Rig Hierarchy (starts afar in depth at z = -14.5 for walk-in)
      ----------------------------------------------------------------------- */
   const owlRoot = new THREE.Group();
-  owlRoot.position.set(-0.08, -0.04, 0);
-  /* Slight 3/4 sculptural angle so left side catches key light and right side casts depth */
-  owlRoot.rotation.y = -0.08;
+  owlRoot.position.set(1.15, -0.04, -14.5);
+  owlRoot.rotation.y = 0.14;
   scene.add(owlRoot);
 
   /* 1. Sculpted Plump Owl Torso */
@@ -453,16 +457,18 @@ export function createOwlSceneController(
   const eyePitch = new DampedSpring(0, 340, 26);
   const lidSquint = new DampedSpring(0, 155, 20);
 
-  const bodyX = new DampedSpring(-0.08, 130, 18);
+  const bodyX = new DampedSpring(1.15, 135, 19);
   const bodyY = new DampedSpring(-0.04, 195, 19);
-  const bodyYaw = new DampedSpring(-0.08, 120, 18);
+  const bodyZ = new DampedSpring(-14.5, 125, 22);
+  const bodyYaw = new DampedSpring(0.14, 120, 18);
+  const bodyRoll = new DampedSpring(0, 170, 18);
   const bodySquash = new DampedSpring(0, 240, 17);
   const chestPuff = new DampedSpring(1.0, 160, 15);
 
   const leftWingOpen = new DampedSpring(0, 180, 16);
   const rightWingOpen = new DampedSpring(0, 180, 16);
-  const leftTuftPerk = new DampedSpring(0, 195, 14);
-  const rightTuftPerk = new DampedSpring(0, 195, 14);
+  const leftTuftPerk = new DampedSpring(0.18, 195, 14);
+  const rightTuftPerk = new DampedSpring(0.18, 195, 14);
   const tailPitch = new DampedSpring(0, 170, 16);
   const tailYaw = new DampedSpring(0, 150, 16);
 
@@ -473,7 +479,23 @@ export function createOwlSceneController(
   let tapAimX = 0;
   let tapAimY = 0;
   const owlProjected = new THREE.Vector3();
+  const footProjected = new THREE.Vector3();
   const owlScreenPos = new THREE.Vector2(0.46, 0.48);
+
+  function snapToPerch(): void {
+    bodyX.value = bodyX.target = -0.08;
+    bodyX.velocity = 0;
+    bodyY.value = bodyY.target = -0.04;
+    bodyY.velocity = 0;
+    bodyZ.value = bodyZ.target = 0;
+    bodyZ.velocity = 0;
+    bodyYaw.value = bodyYaw.target = -0.08;
+    bodyYaw.velocity = 0;
+    bodyRoll.value = bodyRoll.target = 0;
+    bodyRoll.velocity = 0;
+    leftTuftPerk.value = leftTuftPerk.target = 0;
+    rightTuftPerk.value = rightTuftPerk.target = 0;
+  }
 
   function triggerScanHop(timeSec: number, aimX?: number, aimY?: number): void {
     const sinceLast = timeSec - lastHopTriggerSec;
@@ -507,12 +529,17 @@ export function createOwlSceneController(
     }
   }
 
-  function computeBlinkAmount(t: number, cycleT: number): number {
+  function computeBlinkAmount(t: number, cycleT: number, inWalk: boolean): number {
     /* Double-blink during Act 3 (cycleT ~ 9.1s) + periodic natural bird blinks */
     const pulse = (center: number, width: number): number => {
       const d = Math.abs(cycleT - center);
       return d < width ? Math.cos((d / width) * Math.PI * 0.5) ** 2 : 0;
     };
+
+    if (inWalk) {
+      const d = Math.abs(t - 1.38);
+      return d < 0.10 ? Math.cos((d / 0.10) * Math.PI * 0.5) ** 2 : 0;
+    }
 
     let blink = Math.max(
       pulse(1.68, 0.11),
@@ -535,9 +562,11 @@ export function createOwlSceneController(
     timeSec: number,
     dt: number,
     interaction: OwlInteractionState
-  ): { scanWave: number; owlScreenPos: THREE.Vector2 } {
+  ): { scanWave: number; owlScreenPos: THREE.Vector2; footY: number } {
     const LOOP_LEN = 12.6;
-    const cycleT = timeSec % LOOP_LEN;
+    const isWalkingIn = timeSec < WALK_IN_DURATION;
+    /* Offset arrival into calm Act 4 perch (~1.7s breathe) before first sidestep hop */
+    const cycleT = isWalkingIn ? 11.4 : (timeSec - WALK_IN_DURATION + 10.9) % LOOP_LEN;
     const breath = Math.sin(timeSec * 2.25);
 
     /* Base targets before behavioral act overrides */
@@ -549,7 +578,9 @@ export function createOwlSceneController(
     let tgtSquint = 0;
     let tgtBodyX = -0.08;
     let tgtBodyY = -0.04;
+    let tgtBodyZ = 0;
     let tgtBodyYaw = -0.08;
+    let tgtBodyRoll = 0;
     let tgtSquash = 0;
     let tgtPuff = 1.0 + breath * 0.015; // Calm chest breathing
     let tgtLWing = Math.max(0, breath) * 0.018;
@@ -560,12 +591,73 @@ export function createOwlSceneController(
     let tgtTailYaw = 0;
     let leftFootLift = 0;
     let rightFootLift = 0;
+    let leftFootSwingZ = 0;
+    let rightFootSwingZ = 0;
+    let leftFootFlexX = 0;
+    let rightFootFlexX = 0;
 
-    /* -------------------------------------------------------------------
-       5-Act Autonomous Owl Story Choreography (C1/smooth transitions, zero
-       step snaps at act or loop boundaries)
-       ------------------------------------------------------------------- */
-    if (cycleT < 2.4) {
+    if (isWalkingIn) {
+      /* -----------------------------------------------------------------
+         Entrance Walk-In: Grounded 6-Step Owl Stride From Far Depth (-14.5 -> 0)
+         with opposite-phase swing/stance pinning, lateral waddle, wing
+         balance, tail counterbalance, and avian head-gimbal stabilization.
+         ----------------------------------------------------------------- */
+      const u = THREE.MathUtils.clamp(timeSec / WALK_IN_DURATION, 0, 1);
+      const strideEnv = smoothstep(0.0, 0.10, u) * (1 - smoothstep(0.84, 1.0, u));
+      const phi = u * 3.0 * Math.PI * 2; // 3 full L+R gait cycles (6 clean steps)
+      const stepSin = Math.sin(phi);
+      const stepCos = Math.cos(phi);
+
+      /* Monotonically advancing Z/X travel with gentle stride surge per push-off */
+      const baseTravel = smoothstep(0.0, 0.96, u);
+      const travel = THREE.MathUtils.clamp(
+        baseTravel + Math.sin(2 * phi) * 0.008 * strideEnv,
+        0,
+        1
+      );
+      const curveS = Math.sin(u * Math.PI) * 0.14;
+      const walkX = THREE.MathUtils.lerp(1.15, -0.08, travel) - curveS;
+      const walkZ = THREE.MathUtils.lerp(-14.5, 0.0, travel);
+
+      /* Grounded alternating feet: swinging foot lifts forward (-cos -> +cos),
+         planted stance foot sweeps smoothly backward relative to moving torso
+         so talons stay pinned against the floor shadow without foot-sliding. */
+      const strideZ = 0.25 * strideEnv;
+      const swingL = Math.max(0, stepSin);
+      const swingR = Math.max(0, -stepSin);
+
+      leftFootLift = swingL * 0.22 * strideEnv;
+      rightFootLift = swingR * 0.22 * strideEnv;
+      leftFootSwingZ = -stepCos * strideZ;
+      rightFootSwingZ = stepCos * strideZ;
+      leftFootFlexX = -0.34 * swingL * strideEnv;
+      rightFootFlexX = -0.34 * swingR * strideEnv;
+
+      /* Plump owl center-of-mass weight shift onto supporting foot + bounce */
+      const doubleSupport = 1 - Math.abs(stepSin);
+      tgtBodyX = walkX + stepSin * 0.055 * strideEnv;
+      tgtBodyZ = walkZ;
+      tgtBodyY = -0.04 + Math.abs(stepSin) * 0.075 * strideEnv - doubleSupport * 0.018 * strideEnv;
+      tgtBodyRoll = -stepSin * 0.088 * strideEnv;
+      tgtBodyYaw = THREE.MathUtils.lerp(0.14, -0.08, smoothstep(0.1, 0.94, u)) - stepSin * 0.095 * strideEnv;
+      tgtSquash = doubleSupport * 0.052 * strideEnv;
+      tgtPuff += Math.abs(stepSin) * 0.025 * strideEnv;
+
+      /* Balance wings & tail counterbalance */
+      tgtLWing += (swingR * 0.15 + swingL * 0.06) * strideEnv;
+      tgtRWing += (swingL * 0.15 + swingR * 0.06) * strideEnv;
+      tgtTailPitch = -0.06 + Math.abs(stepSin) * 0.16 * strideEnv;
+      tgtTailYaw = stepSin * 0.12 * strideEnv;
+
+      /* Avian gimbal head stabilization + alert arrival glance */
+      const curiosity = Math.sin(u * Math.PI * 1.5) * 0.16 * (1 - smoothstep(0.75, 1.0, u));
+      tgtHeadRoll = -tgtBodyRoll * 0.65;
+      tgtHeadYaw = stepSin * 0.045 * strideEnv + curiosity;
+      tgtHeadPitch = -0.04 * strideEnv + Math.cos(2 * phi) * 0.032 * strideEnv;
+      tgtEyeYaw = curiosity * 0.45;
+      tgtLTuft = 0.22 * smoothstep(0.0, 0.8, u);
+      tgtRTuft = 0.22 * smoothstep(0.0, 0.8, u);
+    } else if (cycleT < 2.4) {
       /* ACT 0: Seamless anticipation crouch -> 2-step sidestep hop -> ruffle */
       if (cycleT < 0.18) {
         const p = cycleT / 0.18;
@@ -724,7 +816,9 @@ export function createOwlSceneController(
     lidSquint.target = tgtSquint;
     bodyX.target = tgtBodyX;
     bodyY.target = tgtBodyY;
+    bodyZ.target = tgtBodyZ;
     bodyYaw.target = tgtBodyYaw;
+    bodyRoll.target = tgtBodyRoll;
     bodySquash.target = tgtSquash;
     chestPuff.target = tgtPuff;
     leftWingOpen.target = tgtLWing;
@@ -742,7 +836,9 @@ export function createOwlSceneController(
     const squint = Math.max(0, lidSquint.step(dt));
     const bX = bodyX.step(dt);
     const bY = bodyY.step(dt);
+    const bZ = bodyZ.step(dt);
     const bYaw = bodyYaw.step(dt);
+    const bRoll = bodyRoll.step(dt);
     const squash = THREE.MathUtils.clamp(bodySquash.step(dt), -0.14, 0.16);
     const puff = chestPuff.step(dt);
     const lWing = leftWingOpen.step(dt);
@@ -752,10 +848,15 @@ export function createOwlSceneController(
     const tPitch = tailPitch.step(dt);
     const tYaw = tailYaw.step(dt);
 
+    /* Keep directional shadow frustum centered around the owl at every depth */
+    keyLight.position.set(bX - 6.4, 2.75, bZ + 1.95);
+    keyLight.target.position.set(bX, 0, bZ);
+    keyLight.target.updateMatrixWorld();
+
     /* Apply kinematics to 3D rig (plus subtle pitch tilt from gaze) */
-    owlRoot.position.x = bX;
-    owlRoot.position.y = bY;
+    owlRoot.position.set(bX, bY, bZ);
     owlRoot.rotation.y = bYaw;
+    owlRoot.rotation.z = bRoll;
     owlRoot.rotation.x = THREE.MathUtils.clamp(-ePitch * 0.05, -0.035, 0.035);
 
     const stretchX = puff * (1 + squash * 0.45);
@@ -770,7 +871,7 @@ export function createOwlSceneController(
     leftEye.eyeball.rotation.set(-ePitch, eYaw, 0, 'YXZ');
     rightEye.eyeball.rotation.set(-ePitch, eYaw, 0, 'YXZ');
 
-    const blink = computeBlinkAmount(timeSec, cycleT);
+    const blink = computeBlinkAmount(timeSec, cycleT, isWalkingIn);
     const interactiveWide = interaction.inspectingCta ? -0.08 : 0;
     leftEye.upperLid.rotation.x = THREE.MathUtils.lerp(-1.42 + interactiveWide, -0.02, blink);
     rightEye.upperLid.rotation.x = THREE.MathUtils.lerp(-1.42 + interactiveWide, -0.02, blink);
@@ -785,23 +886,29 @@ export function createOwlSceneController(
     leftTuft.rotation.z = 0.52 - lTuft * 0.42;
     rightTuft.rotation.z = -0.52 + rTuft * 0.42;
 
-    leftFoot.position.y = -1.34 - Math.max(0, bY + 0.04) * 0.35 + leftFootLift;
-    rightFoot.position.y = -1.34 - Math.max(0, bY + 0.04) * 0.35 + rightFootLift;
+    const groundOffset = Math.max(0, bY + 0.04) * 0.35;
+    leftFoot.position.set(-0.34, -1.34 - groundOffset + leftFootLift, 0.14 + leftFootSwingZ);
+    rightFoot.position.set(0.34, -1.34 - groundOffset + rightFootLift, 0.14 + rightFootSwingZ);
+    leftFoot.rotation.x = leftFootFlexX;
+    rightFoot.rotation.x = rightFootFlexX;
 
     /* Compute active sonar scan wave progress (-1 when idle, 0..1.25 when sweeping) */
     let scanWave = -1.0;
     const sinceManual = timeSec - manualScanStart;
     if (sinceManual >= 0 && sinceManual <= 1.35) {
       scanWave = sinceManual / 1.1;
-    } else if (cycleT >= 5.75 && cycleT <= 7.25) {
+    } else if (!isWalkingIn && cycleT >= 5.75 && cycleT <= 7.25) {
       scanWave = (cycleT - 5.75) / 1.2;
     }
 
-    /* Project Owl chest/head center to normalized canvas UV for radial sonar origin */
-    owlProjected.set(bX, bY + 0.2, 0).project(camera);
+    /* Project Owl chest/head center and ground horizon line in normalized stage UV */
+    owlProjected.set(bX, bY + 0.2, bZ).project(camera);
     owlScreenPos.set(owlProjected.x * 0.5 + 0.5, owlProjected.y * 0.5 + 0.5);
 
-    return { scanWave, owlScreenPos };
+    footProjected.set(bX, -1.4, bZ).project(camera);
+    const footY = THREE.MathUtils.clamp(footProjected.y * 0.5 + 0.5, 0.05, 0.85);
+
+    return { scanWave, owlScreenPos, footY };
   }
 
   function dispose(): void {
@@ -815,6 +922,7 @@ export function createOwlSceneController(
     camera,
     update,
     triggerScanHop,
+    snapToPerch,
     dispose,
   };
 }
