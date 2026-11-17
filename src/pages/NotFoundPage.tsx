@@ -12,8 +12,12 @@ export const NotFoundPage: React.FC = () => {
       aria-labelledby="not-found-heading"
       className="mx-auto flex min-h-[72dvh] max-w-[1440px] flex-col justify-center px-4 pt-24 pb-16 sm:px-8 sm:pt-28 sm:pb-20 lg:px-12"
     >
-      <div className="max-w-[38rem]">
-        <h1 id="not-found-heading" className="m-0">
+      <div className="max-w-[46rem]">
+        <h1
+          id="not-found-heading"
+          aria-label={`404 — Unmapped Route in ${BRAND.name}`}
+          className="m-0"
+        >
           <span className="sr-only">404 — Unmapped Route in {BRAND.name}</span>
           <PixelWordmark
             lines={['404', 'UNMAPPED']}
@@ -23,7 +27,7 @@ export const NotFoundPage: React.FC = () => {
           />
         </h1>
 
-        <p className="mt-6 mb-0 font-editorial-sans text-base leading-[1.6] text-pretty text-[var(--color-text-secondary)]">
+        <p className="mt-6 mb-0 max-w-[38rem] font-editorial-sans text-base leading-[1.6] text-pretty text-[var(--color-text-secondary)]">
           No page handler is linked to{' '}
           <code className="break-words [overflow-wrap:anywhere] rounded-[3px] bg-[var(--color-bg-sunken)] px-1.5 py-0.5 font-editorial-mono text-xs text-[var(--color-text-primary)]">
             {pathname}

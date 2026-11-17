@@ -15,7 +15,7 @@ const OUTPUT_PREVIEWS: Record<
     flag: '--format md',
     title: 'Git-Native Mermaid Architecture Monograph',
     detail:
-      'Canonically sorted ARCHITECTURE.md that renders layer DAGs, flow diagrams, behavior chains, CQRS request ledgers, and DbContext ER diagrams natively inside GitHub, GitLab, and Azure DevOps.',
+      'Canonically sorted ARCHITECTURE.md rendering layer DAGs, flow and per-request sequence diagrams, Validation Coverage, API Endpoints, Findings clusters, and DbContext ER diagrams inside GitHub, GitLab, and Azure DevOps.',
     sample: `## Clean Architecture Layer Graph
 \`\`\`mermaid
 flowchart TD
@@ -25,9 +25,14 @@ flowchart TD
   App --> Domain
 \`\`\`
 
-| Request | Type | Response | Handler | Validators | Dispatched by | Project |
-|---|---|---|---|---|---|---|
-| CreateOrderCommand | Command | Guid | CreateOrderCommandHandler | CreateOrderCommandValidator | POST /api/orders | Ordering.Application |`,
+### CreateOrderCommand — Request sequence
+\`\`\`mermaid
+sequenceDiagram
+  ep->>m: CreateOrderCommand
+  m->>b1: handle
+  b1->>h1: handle
+  h1->>db: Orders.Add
+\`\`\``,
   },
   html: {
     flag: '--format html --render svg',
@@ -44,30 +49,32 @@ Architecture checks: 0 error(s), 2 warning(s) - see the report.`,
     flag: '--format json',
     title: 'Schema-Versioned Machine Graph',
     detail:
-      'Canonical JSON graph for internal developer portals (Backstage), custom policy scripts, and longitudinal architectural metrics.',
+      'Canonical JSON graph including projects, requests, endpoints, flowEdges, DI-resolved DbContext edges (resolvedEdges), direct service calls (serviceCallEdges), and architecture findings.',
     sample: `{
   "schemaVersion": 1,
   "toolVersion": "${BRAND.version}",
   "scanner": "text",
   "summary": {
-    "projects": 4, "requests": 24, "handlers": 24, "validators": 21,
-    "behaviors": 3, "dbContexts": 1, "errors": 0, "warnings": 2
+    "projects": 4, "requests": 24, "handlers": 24,
+    "validators": 21, "behaviors": 3, "dbContexts": 1
   },
-  "projects": [
-    { "name": "Ordering.Api", "layer": "Api", "references": ["Ordering.Application"] }
-  ],
-  "requests": [
+  "resolvedEdges": [
     {
-      "name": "CreateOrderCommand",
-      "fullName": "Ordering.Application.Orders.CreateOrderCommand",
-      "kind": "Command",
-      "responseType": "Guid",
-      "handlers": ["Ordering.Application.Orders.CreateOrderCommandHandler"],
-      "validators": ["Ordering.Application.Orders.CreateOrderCommandValidator"],
-      "touchedEntities": ["Orders (Order)", "OrderLines (OrderLine)"]
+      "kind": "handlerToDbContextResolved",
+      "from": "CreateOrderCommandHandler",
+      "via": "IOrderingDbContext",
+      "to": "OrderingDbContext"
     }
   ],
-  "checks": []
+  "serviceCallEdges": [
+    {
+      "kind": "serviceCall",
+      "from": "CreateOrderCommandHandler",
+      "via": "IOrderRepository",
+      "method": "Add",
+      "to": "SqlOrderRepository"
+    }
+  ]
 }`,
   },
   agent: {
@@ -122,11 +129,11 @@ const COMPARISON_ROWS = [
     ndepend: 'Yes — analyzes compiled assemblies & PDBs',
   },
   {
-    dimension: 'Execution model',
-    noctua: 'Source-only scan; no restore or build step',
-    archUnit: 'Runs as compiled xUnit/NUnit reflection tests',
-    roslynAnalyzers: 'Runs inside the csc compiler build pipeline',
-    ndepend: 'Analyzes compiled assemblies & PDBs',
+    dimension: 'DI-resolved DbContext & direct service calls',
+    noctua: 'Built-in (resolvedEdges & serviceCallEdges across diagrams & MCP)',
+    archUnit: 'Manual reflection checks on types',
+    roslynAnalyzers: 'Custom syntax/semantic walker required',
+    ndepend: 'Compiled IL call graph without CQRS grouping',
   },
   {
     dimension: 'End-to-end CQRS slice & validator linking',
@@ -136,22 +143,22 @@ const COMPARISON_ROWS = [
     ndepend: 'Custom CQLinq queries required',
   },
   {
-    dimension: 'EF Core DbSet & Domain Event blast radius',
-    noctua: 'Built-in (--slice & trace_entity_impact)',
+    dimension: 'EF Core DbSet, request impact & Domain Events',
+    noctua: 'Built-in (--slice, trace_entity_impact, trace_request_impact)',
     archUnit: 'Not included',
     roslynAnalyzers: 'Not included',
     ndepend: 'Method call graph only (no CQRS semantics)',
   },
   {
-    dimension: 'Architecture diagrams (Mermaid & zero-JS SVG)',
-    noctua: 'Built-in deterministic .md & offline .html',
+    dimension: 'Architecture & sequence diagrams (Mermaid & zero-JS SVG)',
+    noctua: 'Built-in .md, offline .html, --export-svg, --export-mermaid',
     archUnit: 'None (pass/fail assertions only)',
     roslynAnalyzers: 'None (compiler warnings only)',
     ndepend: 'Desktop/HTML dependency matrices',
   },
   {
     dimension: 'Built-in MCP server for AI coding agents',
-    noctua: 'Yes (--mcp stdio + --format agent)',
+    noctua: 'Yes (7 read-only --mcp tools incl. verify_claim + --format agent)',
     archUnit: 'No',
     roslynAnalyzers: 'No',
     ndepend: 'No',
@@ -267,13 +274,14 @@ export const FeaturesPage: React.FC = () => {
                 </div>
                 <div className="py-3.5">
                   <dt className="font-editorial-mono text-xs font-medium text-[var(--color-text-primary)]">
-                    EF Core Read vs. Write Persistence Tracking
+                    EF Core, DI Resolution &amp; Service-Call Tracking
                   </dt>
                   <dd className="mt-1 mb-0 font-editorial-sans text-sm text-[var(--color-text-secondary)]">
-                    Extracts <code className="font-editorial-mono text-xs">DbContext</code> ER diagrams and
-                    distinguishes mutating <code className="font-editorial-mono text-xs">DbSet&lt;T&gt;</code>{' '}
-                    touches from read-only <code className="font-editorial-mono text-xs">AsNoTracking()</code>{' '}
-                    queries.
+                    Extracts <code className="font-editorial-mono text-xs">DbContext</code> ER diagrams,
+                    resolves <code className="font-editorial-mono text-xs">IDbContext</code>{' '}
+                    abstractions and direct handler service calls through DI, and distinguishes
+                    mutating <code className="font-editorial-mono text-xs">DbSet&lt;T&gt;</code>{' '}
+                    touches from <code className="font-editorial-mono text-xs">AsNoTracking()</code>.
                   </dd>
                 </div>
               </dl>
@@ -535,7 +543,7 @@ export const FeaturesPage: React.FC = () => {
                     x="97"
                     y="67"
                     textAnchor="middle"
-                    className="fill-[var(--color-text-muted)] font-editorial-mono text-[11.5px]"
+                    className="fill-[var(--color-text-muted)] font-editorial-mono text-[12px]"
                   >
                     sender.Send(cmd)
                   </text>
@@ -562,7 +570,7 @@ export const FeaturesPage: React.FC = () => {
                     x="309"
                     y="67"
                     textAnchor="middle"
-                    className="fill-[var(--color-role-command-fg)] font-editorial-mono text-[11.5px]"
+                    className="fill-[var(--color-role-command-fg)] font-editorial-mono text-[12px]"
                   >
                     IRequest&lt;Guid&gt;
                   </text>
@@ -581,7 +589,7 @@ export const FeaturesPage: React.FC = () => {
                     x="521"
                     y="51"
                     textAnchor="middle"
-                    className="fill-[var(--color-role-pass-fg)] font-editorial-mono text-[11.5px] font-medium"
+                    className="fill-[var(--color-role-pass-fg)] font-editorial-mono text-[12px] font-medium"
                   >
                     OrderCommandValidator
                   </text>
@@ -589,7 +597,7 @@ export const FeaturesPage: React.FC = () => {
                     x="521"
                     y="67"
                     textAnchor="middle"
-                    className="fill-[var(--color-role-pass-fg)] font-editorial-mono text-[11.5px]"
+                    className="fill-[var(--color-role-pass-fg)] font-editorial-mono text-[12px]"
                   >
                     AbstractValidator&lt;T&gt;
                   </text>
@@ -608,7 +616,7 @@ export const FeaturesPage: React.FC = () => {
                     x="309"
                     y="145"
                     textAnchor="middle"
-                    className="fill-[var(--color-text-primary)] font-editorial-mono text-[11.5px]"
+                    className="fill-[var(--color-text-primary)] font-editorial-mono text-[12px]"
                   >
                     LoggingBehavior -&gt; ValidationBehavior
                   </text>
@@ -616,7 +624,7 @@ export const FeaturesPage: React.FC = () => {
                     x="309"
                     y="161"
                     textAnchor="middle"
-                    className="fill-[var(--color-text-muted)] font-editorial-mono text-[11.5px]"
+                    className="fill-[var(--color-text-muted)] font-editorial-mono text-[12px]"
                   >
                     IPipelineBehavior&lt;TRequest, TResponse&gt;
                   </text>
@@ -643,7 +651,7 @@ export const FeaturesPage: React.FC = () => {
                     x="309"
                     y="247"
                     textAnchor="middle"
-                    className="fill-[var(--color-text-muted)] font-editorial-mono text-[11.5px]"
+                    className="fill-[var(--color-text-muted)] font-editorial-mono text-[12px]"
                   >
                     Orders/CreateOrderHandler.cs:14
                   </text>
@@ -662,7 +670,7 @@ export const FeaturesPage: React.FC = () => {
                     x="150"
                     y="309"
                     textAnchor="middle"
-                    className="fill-[var(--color-role-query-fg)] font-editorial-mono text-[11.5px]"
+                    className="fill-[var(--color-role-query-fg)] font-editorial-mono text-[12px]"
                   >
                     ShopDbContext.Orders, OrderLines
                   </text>
@@ -681,7 +689,7 @@ export const FeaturesPage: React.FC = () => {
                     x="463"
                     y="309"
                     textAnchor="middle"
-                    className="fill-[var(--color-text-primary)] font-editorial-mono text-[11.5px]"
+                    className="fill-[var(--color-text-primary)] font-editorial-mono text-[12px]"
                   >
                     OrderPlacedNotification (2 handlers)
                   </text>
@@ -706,7 +714,10 @@ export const FeaturesPage: React.FC = () => {
               One static graph, five deterministic outputs.
             </h2>
             <p className="mt-3 mb-0 font-editorial-sans text-base leading-[1.6] text-pretty text-[var(--color-text-secondary)]">
-              Outputs are canonically sorted, and <code className="font-editorial-mono text-xs">--generated-at</code>{' '}
+              Outputs are canonically sorted, every diagram exports standalone via{' '}
+              <code className="font-editorial-mono text-xs whitespace-nowrap">--export-svg</code> or{' '}
+              <code className="font-editorial-mono text-xs whitespace-nowrap">--export-mermaid</code>,
+              and <code className="font-editorial-mono text-xs whitespace-nowrap">--generated-at</code>{' '}
               removes the only run-specific timestamp so CI can compare files across operating
               systems.
             </p>
@@ -715,10 +726,11 @@ export const FeaturesPage: React.FC = () => {
           <div
             role="tablist"
             aria-label="Output format representations"
-            className="tablist-scroll mt-8 border-b border-[var(--color-border-strong)] sm:mt-10"
+            className="mt-8 grid grid-cols-2 border-t border-l border-[var(--color-border-strong)] sm:mt-10 sm:flex sm:flex-nowrap sm:border-t-0 sm:border-b sm:border-l-0"
           >
             {OUTPUT_TABS.map((tab, idx) => {
               const selected = outputTab === tab.id;
+              const isLastOdd = idx === OUTPUT_TABS.length - 1;
               return (
                 <button
                   key={tab.id}
@@ -730,10 +742,12 @@ export const FeaturesPage: React.FC = () => {
                   tabIndex={selected ? 0 : -1}
                   onClick={() => setOutputTab(tab.id)}
                   onKeyDown={(e) => handleOutputTabKeyDown(e, idx)}
-                  className={`inline-flex min-h-[46px] shrink-0 cursor-pointer items-center border-b-2 px-3.5 font-editorial-mono text-xs whitespace-nowrap transition-colors duration-150 sm:px-5 ${
+                  className={`inline-flex min-h-[46px] cursor-pointer items-center justify-center border-r border-b px-3 font-editorial-mono text-xs transition-colors duration-150 sm:shrink-0 sm:justify-start sm:border-r-0 sm:border-b-2 sm:px-5 sm:whitespace-nowrap ${
+                    isLastOdd ? 'col-span-2 sm:col-span-1 ' : ''
+                  }${
                     selected
-                      ? 'border-[var(--color-text-primary)] font-medium text-[var(--color-text-primary)]'
-                      : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
+                      ? 'border-r-[var(--color-border-strong)] border-b-[var(--color-text-primary)] bg-[var(--color-bg-elevated)] font-medium text-[var(--color-text-primary)] sm:bg-transparent'
+                      : 'border-r-[var(--color-border-strong)] border-b-[var(--color-border-strong)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] sm:border-b-transparent'
                   }`}
                 >
                   {tab.label}
@@ -752,7 +766,7 @@ export const FeaturesPage: React.FC = () => {
               <code className="inline-block break-words [overflow-wrap:anywhere] rounded-[3px] bg-[var(--color-bg-sunken)] px-2 py-1 font-editorial-mono text-xs text-[var(--color-text-primary)]">
                 {activeOutput.flag}
               </code>
-              <h3 className="mt-4 mb-0 font-editorial-sans text-lg font-medium text-[var(--color-text-primary)]">
+              <h3 className="mt-4 mb-0 font-editorial-sans text-lg font-medium text-balance text-[var(--color-text-primary)]">
                 {activeOutput.title}
               </h3>
               <p className="mt-2.5 mb-0 max-w-[30rem] font-editorial-sans text-sm leading-[1.6] text-[var(--color-text-secondary)]">

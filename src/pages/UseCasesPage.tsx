@@ -33,7 +33,7 @@ ${BRAND.cliBinary} . --format html --render svg -o ARCHITECTURE.html
 # Inspect any suspicious request chain immediately
 ${BRAND.cliBinary} . --slice ProcessSettlementCommand`,
     linkTo: '/examples',
-    linkLabel: 'See 47-project modular monolith map',
+    linkLabel: 'See 46-project modular monolith map',
   },
   {
     id: 'ai-coding-agents',
@@ -42,15 +42,16 @@ ${BRAND.cliBinary} . --slice ProcessSettlementCommand`,
     problem:
       'When asked to modify a vertical slice, LLM coding agents spend thousands of tokens running sequential grep and file-read calls across Controllers, Application folders, Validators, and DbContexts—and frequently forget pipeline validators or domain event subscribers.',
     outcome:
-      'Serving cqrslens over stdio (--mcp) gives the agent four deterministic structural tools. One trace_slice call returns exact File:Line coordinates for the entire chain, and check_architecture verifies all 11 static rules before the agent finishes its turn.',
+      'Serving cqrslens over stdio (--mcp) gives the agent seven read-only structural tools. trace_slice and trace_request_impact expose File:Line coordinates, DI-resolved DbContexts, and service calls, verify_claim settles design assertions, and check_architecture runs all 11 static rules.',
     commandLabel: 'MCP Agent Loop',
     commandSnippet: `# Register stdio server once at repo root
 claude mcp add cqrslens -- ${BRAND.cliBinary} . --mcp
 
 # Agent workflow:
-1. get_architecture_dna()          -> learns layers & conventions
-2. trace_slice("CreateOrder")      -> gets exact File:Line slice map
-3. check_architecture(strict=true) -> catches missing validator pre-commit`,
+1. get_architecture_dna()            -> layers & conventions
+2. trace_request_impact("OrderCmd")  -> handler, DI edges, calls
+3. verify_claim("OrderCmd", ...)     -> fail-closed evidence
+4. check_architecture(severity="error") -> catch drift early`,
     linkTo: '/integrations',
     linkLabel: 'Copy editor MCP configurations',
   },
@@ -80,11 +81,15 @@ ${BRAND.cliBinary} src --strict --baseline cqrslens-baseline.json`,
     outcome:
       'Static persistence modeling traces DbSet<T> accesses across handlers—separating write mutations from AsNoTracking() reads—so refactoring plans account for every affected vertical slice up front.',
     commandLabel: 'Entity Blast-Radius Inspection',
-    commandSnippet: `# Via MCP tool trace_entity_impact("Orders") or JSON graph filter:
+    commandSnippet: `# Via MCP trace_entity_impact("Order") or JSON graph:
 Entity: ShopDbContext.Orders
-  Write Slices (3): CreateOrderCommand, CancelOrderCommand, ShipOrderCommand
-  Read Slices  (2): GetOrderDetailsQuery [AsNoTracking], ExportOrdersQuery [AsNoTracking]
-  Events       (2): OrderPlacedNotification, OrderShippedNotification`,
+  Write Slices (3):
+    CreateOrderCommand, CancelOrderCommand, ShipOrderCommand
+  Read Slices (2):
+    GetOrderDetailsQuery [AsNoTracking]
+    ExportOrdersQuery [AsNoTracking]
+  Events (2):
+    OrderPlacedNotification, OrderShippedNotification`,
     linkTo: '/docs/output-formats',
     linkLabel: 'Explore JSON & ER schemas',
   },

@@ -4,6 +4,7 @@ import { CORPUS_EXAMPLES } from '../data/examples';
 import { Link } from '../lib/router';
 import { PageMasthead } from '../components/layout/PageMasthead';
 import { CodeBlock } from '../components/ui/CodeBlock';
+import { BreakablePath } from '../components/ui/InlineCodeText';
 import { ArrowUpRightIcon, ChevronRightIcon } from '../components/ui/Icons';
 
 export const ExamplesPage: React.FC = () => {
@@ -61,7 +62,7 @@ export const ExamplesPage: React.FC = () => {
       <PageMasthead
         pixelLines={['EXAMPLES']}
         srTitle={`Sample Architecture Reports — ${BRAND.name}`}
-        summary="Inspect static cartography snapshots from four widely adopted open-source .NET repositories—covering 101 projects, 155 CQRS requests, and 155 linked handlers with zero MSBuild invocations."
+        summary="Inspect static cartography snapshots from four widely adopted open-source .NET repositories—covering 105 projects, 154 CQRS requests, and 154 linked handlers with zero MSBuild invocations."
         aside={
           <Link to="/quickstart" className="btn-primary">
             <span>Scan Your Own Repo</span>
@@ -80,16 +81,17 @@ export const ExamplesPage: React.FC = () => {
               Select a public .NET corpus repository.
             </h2>
             <p className="mt-2.5 mb-0 font-editorial-sans text-base leading-[1.6] text-pretty text-[var(--color-text-secondary)]">
-              A published 0.9.0 snapshot taken on 2 November 2026. Upstream HEADs move, so rerun the
-              CLI against any repository to reproduce or update these counts.
+              Validation snapshot recorded on 7 November 2026 (v1.0.0; shape and check counts
+              unchanged in v1.1.0). Upstream HEADs move, so rerun the CLI against any repository to
+              reproduce or update these counts.
             </p>
           </div>
 
-          {/* Repository Selector Tabs */}
+          {/* Repository Selector Tabs (2x2 Grid on Mobile/Tablet, Single Row on lg+) */}
           <div
             role="tablist"
             aria-label="Open-source .NET benchmark repositories"
-            className="tablist-scroll mt-8 border-b border-[var(--color-border-strong)] sm:mt-9"
+            className="mt-8 grid grid-cols-2 border-t border-l border-[var(--color-border-strong)] sm:mt-9 lg:flex lg:flex-nowrap lg:border-t-0 lg:border-b lg:border-l-0"
           >
             {CORPUS_EXAMPLES.map((ex, idx) => {
               const selected = ex.id === active.id;
@@ -104,16 +106,16 @@ export const ExamplesPage: React.FC = () => {
                   tabIndex={selected ? 0 : -1}
                   onClick={() => setSelectedId(ex.id)}
                   onKeyDown={(e) => handleRepoTabKeyDown(e, idx)}
-                  className={`inline-flex min-h-[48px] shrink-0 cursor-pointer items-center gap-2 border-b-2 px-3.5 font-editorial-mono text-xs whitespace-nowrap transition-colors duration-150 sm:px-5 ${
+                  className={`flex min-h-[52px] min-w-0 cursor-pointer flex-col items-start justify-center border-r border-b px-3 py-2 text-left font-editorial-mono text-xs transition-colors duration-150 lg:min-h-[48px] lg:shrink-0 lg:flex-row lg:items-center lg:gap-0 lg:border-r-0 lg:border-b-2 lg:px-5 lg:whitespace-nowrap ${
                     selected
-                      ? 'border-[var(--color-text-primary)] font-medium text-[var(--color-text-primary)]'
-                      : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
+                      ? 'border-r-[var(--color-border-strong)] border-b-[var(--color-text-primary)] bg-[var(--color-bg-elevated)] font-medium text-[var(--color-text-primary)] lg:bg-transparent'
+                      : 'border-r-[var(--color-border-strong)] border-b-[var(--color-border-strong)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] lg:border-b-transparent'
                   }`}
                 >
-                  <span>
+                  <span className="truncate text-[0.6875rem] opacity-75 lg:text-xs lg:opacity-100">
                     {ex.owner}
-                    {ex.repo}
                   </span>
+                  <span className="w-full truncate font-medium lg:w-auto">{ex.repo}</span>
                 </button>
               );
             })}
@@ -183,12 +185,36 @@ export const ExamplesPage: React.FC = () => {
                   Representative Layer Topology (rendered from scan graph data)
                 </div>
 
-                <div className="mt-4 overflow-x-auto">
+                {/* Compact Mobile Layer Stack (< 640px) — avoids SVG scaling/clipping */}
+                <div className="mt-4 space-y-2 sm:hidden">
+                  {active.nodes.map((node) => {
+                    const st = getNodeStyles(node.role);
+                    return (
+                      <div
+                        key={node.id}
+                        style={{
+                          backgroundColor: st.fill,
+                          borderColor: st.stroke,
+                          color: st.text,
+                        }}
+                        className="flex items-center justify-between gap-2 border px-3 py-2 font-editorial-mono text-xs font-medium"
+                      >
+                        <span className="min-w-0 break-words">{node.label}</span>
+                        <span className="shrink-0 text-[0.65rem] uppercase opacity-75">
+                          {node.role}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Tablet & Desktop SVG Topology (sm+) */}
+                <div className="mt-4 hidden overflow-x-auto sm:block">
                   <svg
                     viewBox="0 0 560 236"
                     role="img"
                     aria-label={`Static architecture dependency diagram for ${active.owner}${active.repo}`}
-                    className="block h-auto w-full min-w-[460px] xl:min-w-0"
+                    className="block h-auto w-full min-w-0"
                   >
                     <g
                       fill="none"
@@ -237,7 +263,7 @@ export const ExamplesPage: React.FC = () => {
                   <span className="font-editorial-mono text-xs text-[var(--color-text-muted)]">
                     Representative Vertical Slice (--slice)
                   </span>
-                  <span className="rounded-[3px] bg-[var(--color-role-command-bg)] px-2 py-0.5 font-editorial-mono text-[0.6875rem] font-medium text-[var(--color-role-command-fg)]">
+                  <span className="rounded-[3px] bg-[var(--color-role-command-bg)] px-2 py-0.5 font-editorial-mono text-xs font-medium text-[var(--color-role-command-fg)]">
                     {active.featuredSlice.kind}
                   </span>
                 </div>
@@ -250,35 +276,35 @@ export const ExamplesPage: React.FC = () => {
                   <dt className="font-editorial-sans font-medium text-[var(--color-text-muted)] sm:col-span-3">
                     Dispatch
                   </dt>
-                  <dd className="m-0 break-words [overflow-wrap:anywhere] font-editorial-mono text-[var(--color-text-primary)] sm:col-span-9">
-                    {active.featuredSlice.dispatch}
+                  <dd className="m-0 font-editorial-mono text-[var(--color-text-primary)] sm:col-span-9">
+                    <BreakablePath path={active.featuredSlice.dispatch} />
                   </dd>
 
                   <dt className="mt-1.5 font-editorial-sans font-medium text-[var(--color-text-muted)] sm:col-span-3 sm:mt-0">
                     Validator
                   </dt>
-                  <dd className="m-0 break-words [overflow-wrap:anywhere] font-editorial-mono text-[var(--color-text-primary)] sm:col-span-9">
-                    {active.featuredSlice.validator}
+                  <dd className="m-0 font-editorial-mono text-[var(--color-text-primary)] sm:col-span-9">
+                    <BreakablePath path={active.featuredSlice.validator} />
                   </dd>
 
                   <dt className="mt-1.5 font-editorial-sans font-medium text-[var(--color-text-muted)] sm:col-span-3 sm:mt-0">
                     Pipeline
                   </dt>
-                  <dd className="m-0 break-words [overflow-wrap:anywhere] font-editorial-mono text-[var(--color-text-secondary)] sm:col-span-9">
+                  <dd className="m-0 break-words font-editorial-mono text-[var(--color-text-secondary)] sm:col-span-9">
                     {active.featuredSlice.pipeline}
                   </dd>
 
                   <dt className="mt-1.5 font-editorial-sans font-medium text-[var(--color-text-muted)] sm:col-span-3 sm:mt-0">
                     Handler
                   </dt>
-                  <dd className="m-0 break-words [overflow-wrap:anywhere] font-editorial-mono font-medium text-[var(--color-text-primary)] sm:col-span-9">
-                    {active.featuredSlice.handler}
+                  <dd className="m-0 font-editorial-mono font-medium text-[var(--color-text-primary)] sm:col-span-9">
+                    <BreakablePath path={active.featuredSlice.handler} />
                   </dd>
 
                   <dt className="mt-1.5 font-editorial-sans font-medium text-[var(--color-text-muted)] sm:col-span-3 sm:mt-0">
                     Persistence
                   </dt>
-                  <dd className="m-0 break-words [overflow-wrap:anywhere] font-editorial-mono text-[var(--color-text-primary)] sm:col-span-9">
+                  <dd className="m-0 break-words font-editorial-mono text-[var(--color-text-primary)] sm:col-span-9">
                     {active.featuredSlice.persistence}
                   </dd>
                 </dl>
@@ -301,6 +327,7 @@ export const ExamplesPage: React.FC = () => {
               badge={active.findingsSummary}
               code={active.markdownExcerpt}
               tone="inverse"
+              wrap
               className="border-0"
             />
           </div>

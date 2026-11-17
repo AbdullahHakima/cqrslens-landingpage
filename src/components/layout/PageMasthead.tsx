@@ -25,7 +25,7 @@ export const PageMasthead: React.FC<PageMastheadProps> = ({
     <div className="mx-auto max-w-[1440px] px-4 sm:px-8 lg:px-12">
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-end lg:gap-12">
         <div className="min-w-0 lg:col-span-7">
-          <h1 id="page-masthead-heading" className="m-0">
+          <h1 id="page-masthead-heading" aria-label={srTitle} className="m-0">
             <span className="sr-only">{srTitle}</span>
             <PixelWordmark
               lines={pixelLines}

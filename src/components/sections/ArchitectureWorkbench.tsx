@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { BRAND } from '../../config/brand';
+import { BreakablePath } from '../ui/InlineCodeText';
 
 type WorkbenchTab = 'slice' | 'topology' | 'mcp' | 'ci';
 
@@ -27,21 +28,22 @@ const SLICES: readonly SliceTrace[] = [
     name: 'CreateTodoItemCommand',
     kind: 'Command',
     project: 'Application',
-    endpoint: 'POST /todoitems (route inferred)  (TodoItemsController.cs:22)',
-    requestLoc: 'TodoItems/Commands/CreateTodoItem/CreateTodoItemCommand.cs:8',
+    endpoint: 'POST /api/TodoItems (inferred) · Web.Endpoints.TodoItems.CreateTodoItem',
+    requestLoc: 'src/Application/TodoItems/Commands/CreateTodoItem/CreateTodoItem.cs',
     responseType: 'int',
     validator: 'CreateTodoItemCommandValidator',
-    validatorLoc: 'TodoItems/Commands/CreateTodoItem/CreateTodoItemCommandValidator.cs:5',
-    behaviors: ['4 project behaviors recorded in scan order'],
+    validatorLoc:
+      'src/Application/TodoItems/Commands/CreateTodoItem/CreateTodoItemCommandValidator.cs',
+    behaviors: ['4 registered behaviors: UnhandledException -> Authorization -> Validation -> Performance'],
     handler: 'CreateTodoItemCommandHandler',
-    handlerLoc: 'TodoItems/Commands/CreateTodoItem/CreateTodoItemCommand.cs:15',
+    handlerLoc: 'src/Application/TodoItems/Commands/CreateTodoItem/CreateTodoItem.cs',
     dbSets: ['ApplicationDbContext.TodoItems (TodoItem)'],
     publishedEvents: ['TodoItemCreatedEvent'],
     finding: {
       rule: 'NO FINDINGS',
       severity: 'pass',
       message:
-        'Endpoint route inferred; handler, validator, and EF Core DbSet linked for this slice.',
+        'Endpoint route inferred; handler, validator, and 4 registered pipeline behaviors linked for this slice.',
     },
   },
   {
@@ -49,14 +51,14 @@ const SLICES: readonly SliceTrace[] = [
     name: 'GetTodosQuery',
     kind: 'Query',
     project: 'Application',
-    endpoint: 'GET /todolists (route inferred)  (TodoListsController.cs:14)',
-    requestLoc: 'TodoLists/Queries/GetTodos/GetTodosQuery.cs:12',
+    endpoint: 'GET /api/TodoLists (inferred) · Web.Endpoints.TodoLists.GetTodoLists',
+    requestLoc: 'src/Application/TodoLists/Queries/GetTodos/GetTodos.cs',
     responseType: 'TodosVm',
     validator: null,
     validatorLoc: null,
-    behaviors: ['4 project behaviors recorded in scan order'],
+    behaviors: ['4 registered behaviors: UnhandledException -> Authorization -> Validation -> Performance'],
     handler: 'GetTodosQueryHandler',
-    handlerLoc: 'TodoLists/Queries/GetTodos/GetTodosQuery.cs:14',
+    handlerLoc: 'src/Application/TodoLists/Queries/GetTodos/GetTodos.cs',
     dbSets: ['ApplicationDbContext.TodoLists (TodoList)'],
     publishedEvents: [],
     finding: {
@@ -164,11 +166,11 @@ export const ArchitectureWorkbench: React.FC = () => {
           </div>
         </div>
 
-        {/* Accessible Single-Baseline Tab Bar */}
+        {/* Accessible Single-Baseline Tab Bar (2x2 Grid on Mobile, Single Row on sm+) */}
         <div
           role="tablist"
           aria-label="Architecture output modes"
-          className="tablist-scroll mt-8 border-b border-[var(--color-border-strong)] sm:mt-12"
+          className="mt-8 grid grid-cols-2 border-t border-l border-[var(--color-border-strong)] sm:mt-12 sm:flex sm:flex-nowrap sm:border-t-0 sm:border-b sm:border-l-0"
         >
           {TABS.map((tab, idx) => {
             const selected = activeTab === tab.id;
@@ -183,10 +185,10 @@ export const ArchitectureWorkbench: React.FC = () => {
                 tabIndex={selected ? 0 : -1}
                 onClick={() => setActiveTab(tab.id)}
                 onKeyDown={(e) => handleTabKeyDown(e, idx)}
-                className={`inline-flex min-h-[46px] shrink-0 cursor-pointer items-center gap-2.5 border-b-2 px-3.5 py-2.5 font-editorial-sans text-sm whitespace-nowrap transition-colors duration-150 sm:px-5 ${
+                className={`inline-flex min-h-[46px] cursor-pointer items-center justify-center gap-2 border-r border-b px-3 py-2.5 text-center font-editorial-sans text-xs transition-colors duration-150 sm:shrink-0 sm:justify-start sm:border-r-0 sm:border-b-2 sm:px-5 sm:text-sm sm:whitespace-nowrap ${
                   selected
-                    ? 'border-[var(--color-text-primary)] font-medium text-[var(--color-text-primary)]'
-                    : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
+                    ? 'border-r-[var(--color-border-strong)] border-b-[var(--color-text-primary)] bg-[var(--color-bg-elevated)] font-medium text-[var(--color-text-primary)] sm:bg-transparent'
+                    : 'border-r-[var(--color-border-strong)] border-b-[var(--color-border-strong)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] sm:border-b-transparent'
                 }`}
               >
                 <span>{tab.label}</span>
@@ -259,14 +261,14 @@ export const ArchitectureWorkbench: React.FC = () => {
               <div className="min-w-0 p-4 sm:p-7 lg:col-span-8">
                 <div className="flex flex-col items-start gap-2.5 border-b border-[var(--color-border-subtle)] pb-4 sm:flex-row sm:justify-between sm:gap-3">
                   <div className="w-full min-w-0 sm:flex-1">
-                    <div className="break-words [overflow-wrap:anywhere] font-editorial-mono text-xs font-medium text-[var(--color-text-primary)] sm:text-sm">
+                    <div className="break-words font-editorial-mono text-xs font-medium text-[var(--color-text-primary)] sm:text-sm">
                       {activeSlice.name}{' '}
                       <span className="text-[var(--color-text-muted)]">
                         : IRequest&lt;{activeSlice.responseType}&gt;
                       </span>
                     </div>
-                    <div className="mt-1 break-words [overflow-wrap:anywhere] font-editorial-mono text-xs text-[var(--color-text-muted)]">
-                      {activeSlice.requestLoc}
+                    <div className="mt-1 font-editorial-mono text-xs text-[var(--color-text-muted)]">
+                      <BreakablePath path={activeSlice.requestLoc} />
                     </div>
                   </div>
                   <span
@@ -287,8 +289,8 @@ export const ArchitectureWorkbench: React.FC = () => {
                   <dt className="font-editorial-sans text-[0.8125rem] font-medium text-[var(--color-text-muted)] sm:col-span-3">
                     Dispatch Site
                   </dt>
-                  <dd className="m-0 min-w-0 break-words [overflow-wrap:anywhere] font-editorial-mono text-[var(--color-text-primary)] sm:col-span-9">
-                    {activeSlice.endpoint}
+                  <dd className="m-0 min-w-0 font-editorial-mono text-[var(--color-text-primary)] sm:col-span-9">
+                    <BreakablePath path={activeSlice.endpoint} />
                   </dd>
 
                   <dt className="font-editorial-sans text-[0.8125rem] font-medium text-[var(--color-text-muted)] sm:col-span-3">
@@ -296,13 +298,15 @@ export const ArchitectureWorkbench: React.FC = () => {
                   </dt>
                   <dd className="m-0 min-w-0 sm:col-span-9">
                     {activeSlice.validator ? (
-                      <div className="break-words [overflow-wrap:anywhere] font-editorial-mono">
-                        <span className="text-[var(--color-text-primary)]">
+                      <div className="font-editorial-mono">
+                        <span className="block break-words text-[var(--color-text-primary)]">
                           {activeSlice.validator}
                         </span>
-                        <span className="mt-0.5 block text-[var(--color-text-muted)]">
-                          {activeSlice.validatorLoc}
-                        </span>
+                        {activeSlice.validatorLoc && (
+                          <span className="mt-0.5 block text-[var(--color-text-muted)]">
+                            <BreakablePath path={activeSlice.validatorLoc} />
+                          </span>
+                        )}
                       </div>
                     ) : (
                       <span className="font-editorial-sans text-[0.8125rem] text-[var(--color-role-warn-text)]">
@@ -314,19 +318,19 @@ export const ArchitectureWorkbench: React.FC = () => {
                   <dt className="font-editorial-sans text-[0.8125rem] font-medium text-[var(--color-text-muted)] sm:col-span-3">
                     Pipeline
                   </dt>
-                  <dd className="m-0 min-w-0 break-words [overflow-wrap:anywhere] font-editorial-mono text-[var(--color-text-primary)] sm:col-span-9">
+                  <dd className="m-0 min-w-0 break-words font-editorial-mono text-[var(--color-text-primary)] sm:col-span-9">
                     {activeSlice.behaviors.join(' -> ')}
                   </dd>
 
                   <dt className="font-editorial-sans text-[0.8125rem] font-medium text-[var(--color-text-muted)] sm:col-span-3">
                     Handler
                   </dt>
-                  <dd className="m-0 min-w-0 break-words [overflow-wrap:anywhere] font-editorial-mono sm:col-span-9">
-                    <span className="font-medium text-[var(--color-text-primary)]">
+                  <dd className="m-0 min-w-0 font-editorial-mono sm:col-span-9">
+                    <span className="block break-words font-medium text-[var(--color-text-primary)]">
                       {activeSlice.handler}
                     </span>
                     <span className="mt-0.5 block text-[var(--color-text-muted)]">
-                      {activeSlice.handlerLoc}
+                      <BreakablePath path={activeSlice.handlerLoc} />
                     </span>
                   </dd>
 
@@ -408,7 +412,7 @@ Written: samples/SampleShop/ARCHITECTURE.html (zero-JS SVG)`}
                     viewBox="0 0 520 230"
                     role="img"
                     aria-label="Clean Architecture dependency graph showing Api and Infrastructure pointing inward to Application and Domain"
-                    className="block h-auto w-full min-w-[400px] max-w-[520px] sm:min-w-0"
+                    className="block h-auto w-full max-w-[520px]"
                   >
                   <g
                     fill="none"
@@ -521,42 +525,38 @@ Written: samples/SampleShop/ARCHITECTURE.html (zero-JS SVG)`}
                   Built-in Model Context Protocol Server
                 </h3>
                 <p className="mt-2 mb-5 max-w-[30rem] font-editorial-sans text-sm leading-[1.6] text-[var(--color-text-secondary)]">
-                  Run <code className="font-editorial-mono text-xs">{BRAND.cliBinary} . --mcp</code>{' '}
-                  so Claude Code, Cursor, or Antigravity queries exact codebase topology instead of
-                  grepping hundreds of files.
+                  Run{' '}
+                  <code className="font-editorial-mono text-xs whitespace-nowrap">
+                    {BRAND.cliBinary} . --mcp
+                  </code>{' '}
+                  so Claude Code, Cursor, or Antigravity queries 7 read-only structural tools
+                  instead of grepping hundreds of files.
                 </p>
-                <ul className="m-0 list-none space-y-3 p-0 text-sm">
+                <ul className="m-0 list-none space-y-2.5 p-0 text-sm">
                   <li className="border-l-2 border-[var(--color-text-primary)] pl-3">
                     <strong className="block font-editorial-mono text-xs text-[var(--color-text-primary)]">
                       get_architecture_dna
                     </strong>
                     <span className="font-editorial-sans text-[0.8125rem] text-[var(--color-text-secondary)]">
-                      Compact layer topology, CQRS conventions, DbContexts, and counts — with an
-                      optional one-line index of every slice.
+                      Compact layer topology, CQRS conventions, DbContexts, and slice counts.
                     </span>
                   </li>
                   <li className="border-l-2 border-[var(--color-border-strong)] pl-3">
                     <strong className="block font-editorial-mono text-xs text-[var(--color-text-primary)]">
-                      trace_slice
+                      trace_slice · trace_entity_impact · trace_request_impact
                     </strong>
                     <span className="font-editorial-sans text-[0.8125rem] text-[var(--color-text-secondary)]">
-                      End-to-end File:Line path from endpoint route to handler, DbSets, and events.
+                      End-to-end File:Line slices, EF entity blast radius, DI-resolved DbContext
+                      edges, and direct handler service calls.
                     </span>
                   </li>
                   <li className="border-l-2 border-[var(--color-border-strong)] pl-3">
                     <strong className="block font-editorial-mono text-xs text-[var(--color-text-primary)]">
-                      trace_entity_impact
+                      verify_claim · check_architecture · diff_architecture
                     </strong>
                     <span className="font-editorial-sans text-[0.8125rem] text-[var(--color-text-secondary)]">
-                      Blast-radius map of every command, query, and event touching an EF entity.
-                    </span>
-                  </li>
-                  <li className="border-l-2 border-[var(--color-border-strong)] pl-3">
-                    <strong className="block font-editorial-mono text-xs text-[var(--color-text-primary)]">
-                      check_architecture
-                    </strong>
-                    <span className="font-editorial-sans text-[0.8125rem] text-[var(--color-text-secondary)]">
-                      Runs all 11 static rules before an agent commits architectural drift.
+                      Fail-closed design claim verification, filtered/project-grouped checks across
+                      11 rules, and branch-vs-snapshot diffs.
                     </span>
                   </li>
                 </ul>
@@ -594,7 +594,7 @@ $ cqrslens . --format agent -o ARCHITECTURE.agent.md`}
                   .github/workflows/architecture.yml
                 </div>
                 <pre className="mt-4 overflow-x-auto font-editorial-mono text-[0.71875rem] leading-[1.65] sm:text-xs">
-{`- uses: AbdullahHakima/cqrslens@v0.9.0
+{`- uses: AbdullahHakima/cqrslens@v${BRAND.version}
   with:
     path: src
     strict: 'true'

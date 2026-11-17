@@ -197,7 +197,7 @@ export const SiteFooter: React.FC = () => {
                 Built in {BRAND.footerOrigin}
               </p>
             </div>
-            <p className="mt-1.5 mb-0 ml-4 font-editorial-mono text-[0.625rem] leading-[1.5] tracking-[0.08em] text-[var(--color-text-footer-muted)] tabular-nums">
+            <p className="mt-1.5 mb-0 ml-4 font-editorial-mono text-[0.625rem] leading-[1.5] tracking-[0.04em] text-[var(--color-text-footer-muted)] tabular-nums">
               {BRAND.footerCoordinates}
             </p>
 
@@ -270,11 +270,11 @@ export const SiteFooter: React.FC = () => {
               aria-label={`Copy install command: ${BRAND.installCommand}`}
               className="group mt-4 flex min-h-[64px] w-full max-w-[23rem] cursor-pointer items-stretch overflow-hidden rounded-[3px] border border-[var(--color-border-footer)] bg-[var(--color-bg-footer-raised)] p-0 text-left transition-[border-color,background-color] duration-150 ease-[var(--ease-out)] hover:border-[var(--color-text-footer-muted)] active:scale-[0.99]"
             >
-              <span className="flex min-w-0 flex-1 flex-col justify-center gap-1 px-3.5 py-2.5">
+              <span className="flex min-w-0 flex-1 flex-col justify-center gap-1 px-3 py-2.5">
                 <span className="font-editorial-mono text-[0.625rem] leading-[1.4] tracking-[0.14em] text-[var(--color-text-footer-muted)] uppercase">
                   Install command
                 </span>
-                <code className="min-w-0 font-editorial-mono text-[0.71875rem] leading-[1.55] break-words text-[var(--color-text-footer)] [overflow-wrap:anywhere]">
+                <code className="min-w-0 font-editorial-mono text-[0.65rem] leading-[1.55] break-words text-[var(--color-text-footer)] sm:whitespace-nowrap xl:text-[0.65rem] 2xl:text-[0.71875rem]">
                   <span aria-hidden="true" className="select-none opacity-60">
                     ${' '}
                   </span>
@@ -285,7 +285,7 @@ export const SiteFooter: React.FC = () => {
 
               <span
                 aria-hidden="true"
-                className="relative flex w-12 shrink-0 items-center justify-center bg-[var(--color-footer-engraving)] text-[var(--color-bg-footer-deep)] transition-[background-color,color] duration-150 ease-[var(--ease-out)] group-hover:bg-[var(--color-footer-accent)]"
+                className="relative flex w-11 shrink-0 items-center justify-center bg-[var(--color-footer-engraving)] text-[var(--color-bg-footer-deep)] transition-[background-color,color] duration-150 ease-[var(--ease-out)] group-hover:bg-[var(--color-footer-accent)]"
               >
                 <span
                   className={`flex items-center justify-center transition-[opacity,transform,filter] duration-200 ease-[var(--ease-out)] motion-reduce:transition-none ${
@@ -333,7 +333,7 @@ export const SiteFooter: React.FC = () => {
                 href={BRAND.authorUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex min-h-[32px] items-center text-[var(--color-text-footer)] no-underline underline-offset-[0.22em] transition-colors duration-150 hover:text-[var(--color-footer-accent)] hover:underline"
+                className="inline-flex min-h-[44px] items-center text-[var(--color-text-footer)] no-underline underline-offset-[0.22em] transition-colors duration-150 hover:text-[var(--color-footer-accent)] hover:underline"
               >
                 {BRAND.authorName}
               </a>

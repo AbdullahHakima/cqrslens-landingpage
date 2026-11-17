@@ -9,7 +9,7 @@ interface ProjectStatsProps {
 }
 
 const statLinkClass =
-  'inline-flex min-h-[32px] items-center gap-1.5 no-underline transition-colors duration-150';
+  'inline-flex min-h-[44px] items-center gap-1.5 no-underline transition-colors duration-150';
 
 export const ProjectStats: React.FC<ProjectStatsProps> = ({
   className = '',

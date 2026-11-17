@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { BRAND } from '../config/brand';
 import { DOC_CHAPTERS } from '../data/docs';
 import { Link, useRouter } from '../lib/router';
@@ -8,7 +8,14 @@ import { InlineCodeText } from '../components/ui/InlineCodeText';
 import { ArrowLeftIcon, ChevronDownIcon, ChevronRightIcon } from '../components/ui/Icons';
 
 export const DocsPage: React.FC = () => {
-  const { pathname, navigate } = useRouter();
+  const { pathname } = useRouter();
+  const chapterMenuRef = useRef<HTMLDetailsElement>(null);
+
+  useEffect(() => {
+    if (chapterMenuRef.current) {
+      chapterMenuRef.current.open = false;
+    }
+  }, [pathname]);
 
   const activeSlug = pathname.startsWith('/docs/')
     ? pathname.slice('/docs/'.length)
@@ -43,27 +50,45 @@ export const DocsPage: React.FC = () => {
             </span>
           </div>
 
-          {/* Mobile / Tablet Chapter Select */}
-          <div className="relative w-full sm:w-auto lg:hidden">
-            <label htmlFor="docs-chapter-select" className="sr-only">
-              Select documentation chapter
-            </label>
-            <div className="relative">
-              <select
-                id="docs-chapter-select"
-                value={chapter.slug}
-                onChange={(e) => navigate(`/docs/${e.target.value}`)}
-                className="min-h-[44px] w-full appearance-none rounded-[4px] border border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)] py-2 pr-9 pl-3.5 font-editorial-mono text-xs text-[var(--color-text-primary)] sm:min-w-[240px]"
-              >
-                {DOC_CHAPTERS.map((ch) => (
-                  <option key={ch.slug} value={ch.slug}>
-                    {ch.navTitle}
-                  </option>
-                ))}
-              </select>
-              <ChevronDownIcon className="pointer-events-none absolute top-1/2 right-3 size-3.5 -translate-y-1/2 text-[var(--color-text-secondary)]" />
-            </div>
-          </div>
+          {/* Mobile / Tablet Chapter Disclosure (no native select caret drift) */}
+          <details
+            ref={chapterMenuRef}
+            className="group relative w-full border border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)] sm:w-auto sm:min-w-[260px] lg:hidden"
+          >
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-3 px-3.5 py-2 font-editorial-mono text-xs text-[var(--color-text-primary)] [&::-webkit-details-marker]:hidden">
+              <span className="truncate">{chapter.navTitle}</span>
+              <ChevronDownIcon className="size-3.5 shrink-0 text-[var(--color-text-secondary)] transition-transform duration-150 group-open:rotate-180" />
+            </summary>
+            <nav
+              aria-label="Documentation chapters"
+              className="divide-y divide-[var(--color-border-subtle)] border-t border-[var(--color-border-subtle)] bg-[var(--color-bg-elevated)] sm:absolute sm:right-0 sm:left-0 sm:z-20 sm:border sm:border-[var(--color-border-strong)] sm:shadow-lg"
+            >
+              {DOC_CHAPTERS.map((ch) => {
+                const isCurrent = ch.slug === chapter.slug;
+                const href = ch.slug === 'overview' ? '/docs' : `/docs/${ch.slug}`;
+                return (
+                  <Link
+                    key={ch.slug}
+                    to={href}
+                    aria-current={isCurrent ? 'page' : undefined}
+                    onClick={() => {
+                      if (chapterMenuRef.current) chapterMenuRef.current.open = false;
+                    }}
+                    className={`flex min-h-[44px] items-center justify-between px-3.5 py-2 font-editorial-mono text-xs no-underline ${
+                      isCurrent
+                        ? 'bg-[var(--color-bg-sunken)] font-medium text-[var(--color-text-primary)]'
+                        : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-subtle)] hover:text-[var(--color-text-primary)]'
+                    }`}
+                  >
+                    <span>{ch.navTitle}</span>
+                    {isCurrent && (
+                      <span className="text-[var(--color-footer-accent)]">[active]</span>
+                    )}
+                  </Link>
+                );
+              })}
+            </nav>
+          </details>
 
           <div className="hidden items-center gap-5 lg:flex">
             <Link
@@ -131,18 +156,17 @@ export const DocsPage: React.FC = () => {
 
           {/* Calm Central Reading Column */}
           <article className="min-w-0 py-8 sm:py-10 md:py-14 lg:col-span-9 xl:col-span-7">
-            <div className="max-w-[43rem]">
-              <h1 className="m-0 text-[clamp(1.75rem,3.1vw,2.55rem)] font-medium tracking-[-0.025em] leading-[1.15] text-balance text-[var(--color-text-primary)]">
-                {chapter.title}
-              </h1>
+            <h1 className="m-0 max-w-[43rem] text-[clamp(1.75rem,3.1vw,2.55rem)] font-medium tracking-[-0.025em] leading-[1.15] text-balance text-[var(--color-text-primary)]">
+              {chapter.title}
+            </h1>
 
-              <p className="mt-4 mb-0 font-editorial-sans text-base leading-[1.6] text-pretty text-[var(--color-text-secondary)] sm:text-[1.0625rem]">
-                {chapter.lead}
-              </p>
+            <p className="mt-4 mb-0 max-w-[60ch] font-editorial-sans text-base leading-[1.6] text-pretty text-[var(--color-text-secondary)] sm:text-[1.0625rem]">
+              {chapter.lead}
+            </p>
 
-              {/* Mobile / Tablet Compact "On This Page" Disclosure (< xl) */}
-              {chapter.subsections.length > 1 && (
-                <details className="mt-6 border border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)] xl:hidden">
+            {/* Mobile / Tablet Compact "On This Page" Disclosure (< xl) */}
+            {chapter.subsections.length > 1 && (
+              <details className="mt-6 max-w-[60ch] border border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)] xl:hidden">
                   <summary className="flex min-h-[44px] cursor-pointer items-center justify-between px-4 py-2.5 font-editorial-mono text-xs font-medium text-[var(--color-text-primary)]">
                     <span>On this page ({chapter.subsections.length})</span>
                     <ChevronDownIcon className="size-3.5 text-[var(--color-text-secondary)]" />
@@ -177,7 +201,7 @@ export const DocsPage: React.FC = () => {
                       {sub.heading}
                     </h2>
 
-                    <div className="mt-3.5 space-y-3.5">
+                    <div className="mt-3.5 max-w-[60ch] space-y-3.5">
                       {sub.paragraphs.map((para, idx) => (
                         <p
                           key={idx}
@@ -190,7 +214,14 @@ export const DocsPage: React.FC = () => {
 
                     {sub.code && (
                       <div className="mt-6">
-                        <CodeBlock label={sub.code.label} code={sub.code.snippet} tone="inverse" />
+                        <CodeBlock
+                          label={sub.code.label}
+                          code={sub.code.snippet}
+                          tone="inverse"
+                          wrap={sub.code.snippet
+                            .split('\n')
+                            .some((line) => line.length > 84)}
+                        />
                       </div>
                     )}
 
@@ -248,7 +279,7 @@ export const DocsPage: React.FC = () => {
                     )}
 
                     {sub.note && (
-                      <div className="mt-5 border border-[var(--color-border-strong)] bg-[var(--color-bg-subtle)] px-4 py-3.5 font-editorial-sans text-sm leading-[1.55] text-[var(--color-text-primary)]">
+                      <div className="mt-5 max-w-[60ch] border border-[var(--color-border-strong)] bg-[var(--color-bg-subtle)] px-4 py-3.5 font-editorial-sans text-sm leading-[1.55] text-[var(--color-text-primary)]">
                         {sub.note}
                       </div>
                     )}
@@ -285,7 +316,6 @@ export const DocsPage: React.FC = () => {
                   </Link>
                 )}
               </nav>
-            </div>
           </article>
 
           {/* Right Sticky "On This Page" Rail (xl+) */}

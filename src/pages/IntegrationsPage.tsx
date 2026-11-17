@@ -103,7 +103,10 @@ export const IntegrationsPage: React.FC = () => {
               Connect your AI coding agent in one configuration block.
             </h2>
             <p className="mt-3 mb-0 font-editorial-sans text-base leading-[1.6] text-pretty text-[var(--color-text-secondary)]">
-              Running <code className="font-editorial-mono text-xs">{BRAND.cliBinary} . --mcp</code>{' '}
+              Running{' '}
+              <code className="font-editorial-mono text-xs whitespace-nowrap">
+                {BRAND.cliBinary} . --mcp
+              </code>{' '}
               starts a zero-network stdio server directly inside your local workspace.
             </p>
           </div>
@@ -111,11 +114,12 @@ export const IntegrationsPage: React.FC = () => {
           <div
             role="tablist"
             aria-label="AI coding agent editors"
-            className="tablist-scroll mt-8 border-b border-[var(--color-border-strong)] sm:mt-10"
+            className="mt-8 grid grid-cols-2 border-t border-l border-[var(--color-border-strong)] sm:mt-10 sm:flex sm:flex-nowrap sm:border-t-0 sm:border-b sm:border-l-0"
           >
             {AGENT_RECIPES.map((agent, idx) => {
               const selected = agent.id === activeAgent.id;
               const AgentIcon = AGENT_ICONS[agent.id] ?? FileTextIcon;
+              const isLastOdd = idx === AGENT_RECIPES.length - 1;
               return (
                 <button
                   key={agent.id}
@@ -127,14 +131,16 @@ export const IntegrationsPage: React.FC = () => {
                   tabIndex={selected ? 0 : -1}
                   onClick={() => setSelectedAgentId(agent.id)}
                   onKeyDown={(e) => handleAgentTabKeyDown(e, idx)}
-                  className={`inline-flex min-h-[46px] shrink-0 cursor-pointer items-center gap-2 border-b-2 px-3.5 font-editorial-mono text-xs whitespace-nowrap transition-colors duration-150 sm:px-5 ${
+                  className={`inline-flex min-h-[46px] cursor-pointer items-center justify-center gap-2 border-r border-b px-3 font-editorial-mono text-xs transition-colors duration-150 sm:shrink-0 sm:justify-start sm:border-r-0 sm:border-b-2 sm:px-4 sm:whitespace-nowrap md:px-5 ${
+                    isLastOdd ? 'col-span-2 sm:col-span-1 ' : ''
+                  }${
                     selected
-                      ? 'border-[var(--color-text-primary)] font-medium text-[var(--color-text-primary)]'
-                      : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
+                      ? 'border-r-[var(--color-border-strong)] border-b-[var(--color-text-primary)] bg-[var(--color-bg-elevated)] font-medium text-[var(--color-text-primary)] sm:bg-transparent'
+                      : 'border-r-[var(--color-border-strong)] border-b-[var(--color-border-strong)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] sm:border-b-transparent'
                   }`}
                 >
                   <AgentIcon className="size-[18px] shrink-0" />
-                  {agent.name}
+                  <span>{agent.name}</span>
                 </button>
               );
             })}
@@ -150,7 +156,7 @@ export const IntegrationsPage: React.FC = () => {
               <code className="inline-block break-words [overflow-wrap:anywhere] rounded-[3px] bg-[var(--color-bg-sunken)] px-2 py-1 font-editorial-mono text-xs text-[var(--color-text-primary)]">
                 {activeAgent.configPath}
               </code>
-              <h3 className="mt-4 mb-0 flex items-center gap-2.5 font-editorial-sans text-lg font-medium text-[var(--color-text-primary)]">
+              <h3 className="mt-4 mb-0 flex items-center gap-2.5 font-editorial-sans text-lg font-medium text-balance text-[var(--color-text-primary)]">
                 <ActiveAgentIcon className="size-5 shrink-0" />
                 <span>{activeAgent.name} Setup</span>
               </h3>
@@ -171,7 +177,7 @@ export const IntegrationsPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Section 2: Interactive 4-Tool MCP Payload Inspector */}
+      {/* Section 2: Interactive 7-Tool MCP Payload Inspector */}
       <section
         id="mcp-tools"
         aria-labelledby="mcp-tools-heading"
@@ -183,7 +189,7 @@ export const IntegrationsPage: React.FC = () => {
               id="mcp-tools-heading"
               className="m-0 text-[clamp(1.65rem,2.9vw,2.35rem)] font-medium tracking-[-0.025em] leading-[1.16] text-balance text-[var(--color-text-primary)]"
             >
-              Four structural MCP tools exposed to your agent.
+              Seven read-only MCP tools exposed to your agent.
             </h2>
             <p className="mt-3 mb-0 font-editorial-sans text-base leading-[1.6] text-pretty text-[var(--color-text-secondary)]">
               Inspect the structured responses returned to LLM tool calls over local stdio.
@@ -191,26 +197,33 @@ export const IntegrationsPage: React.FC = () => {
           </div>
 
           <div className="mt-8 grid grid-cols-1 border border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)] sm:mt-10 lg:grid-cols-12">
-            <div className="grid min-w-0 grid-cols-1 divide-y divide-[var(--color-border-subtle)] border-b border-[var(--color-border-strong)] sm:grid-cols-2 sm:divide-y-0 lg:col-span-4 lg:grid-cols-1 lg:divide-y lg:border-r lg:border-b-0">
+            <div className="grid min-w-0 grid-cols-1 border-b border-[var(--color-border-strong)] sm:grid-cols-2 lg:col-span-4 lg:grid-cols-1 lg:border-r lg:border-b-0">
               {MCP_TOOLS.map((tool, tIdx) => {
                 const selected = tool.name === activeTool.name;
-                const tabletCellBorders =
-                  (tIdx < 2 ? 'sm:border-b ' : '') +
-                  (tIdx % 2 === 0 ? 'sm:border-r ' : '') +
-                  'sm:border-[var(--color-border-subtle)] lg:border-r-0';
+                const isLast = tIdx === MCP_TOOLS.length - 1;
+                const isOddFinal = MCP_TOOLS.length % 2 === 1 && isLast;
+                const cellBorders = [
+                  !isLast ? 'border-b border-[var(--color-border-subtle)]' : '',
+                  !isOddFinal && tIdx % 2 === 0
+                    ? 'sm:border-r sm:border-[var(--color-border-subtle)] lg:border-r-0'
+                    : '',
+                  isOddFinal ? 'sm:col-span-2 lg:col-span-1' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ');
                 return (
                   <button
                     key={tool.name}
                     type="button"
                     aria-pressed={selected}
                     onClick={() => setSelectedToolName(tool.name)}
-                    className={`flex min-h-[48px] w-full min-w-0 cursor-pointer flex-col items-start gap-1.5 px-4 py-3.5 text-left transition-colors duration-150 sm:px-5 sm:py-4 ${tabletCellBorders} ${
+                    className={`flex min-h-[48px] w-full min-w-0 cursor-pointer flex-col items-start gap-1.5 px-4 py-3.5 text-left transition-colors duration-150 sm:px-5 sm:py-4 ${cellBorders} ${
                       selected
                         ? 'bg-[var(--color-bg-sunken)]'
                         : 'bg-transparent hover:bg-[var(--color-bg-subtle)]'
                     }`}
                   >
-                    <span className="break-words [overflow-wrap:anywhere] font-editorial-mono text-xs font-medium text-[var(--color-text-primary)] sm:text-[0.8125rem]">
+                    <span className="break-words font-editorial-mono text-xs font-medium text-[var(--color-text-primary)] sm:text-[0.8125rem]">
                       {tool.name}
                     </span>
                     <span className="font-editorial-sans text-xs leading-[1.45] text-[var(--color-text-secondary)]">
@@ -223,10 +236,10 @@ export const IntegrationsPage: React.FC = () => {
 
             <div className="flex min-w-0 flex-col justify-between lg:col-span-8">
               <div className="border-b border-[var(--color-border-subtle)] p-4 sm:p-7">
-                <code className="block break-words [overflow-wrap:anywhere] font-editorial-mono text-xs font-medium text-[var(--color-text-primary)] sm:text-sm">
+                <code className="block break-words font-editorial-mono text-xs font-medium text-[var(--color-text-primary)] sm:text-sm">
                   {activeTool.signature}
                 </code>
-                <p className="mt-2.5 mb-0 max-w-[38rem] font-editorial-sans text-sm leading-[1.6] text-[var(--color-text-secondary)]">
+                <p className="mt-2.5 mb-0 max-w-[66ch] font-editorial-sans text-sm leading-[1.6] text-pretty text-[var(--color-text-secondary)]">
                   {activeTool.purpose}
                 </p>
               </div>
@@ -235,6 +248,7 @@ export const IntegrationsPage: React.FC = () => {
                 label={`MCP Tool Response · ${activeTool.name}`}
                 code={activeTool.sampleResponse}
                 tone="inverse"
+                wrap={activeTool.name !== 'trace_slice' && activeTool.name !== 'trace_entity_impact'}
                 className="border-0"
               />
             </div>
@@ -265,11 +279,12 @@ export const IntegrationsPage: React.FC = () => {
           <div
             role="tablist"
             aria-label="CI/CD platforms"
-            className="tablist-scroll mt-8 border-b border-[var(--color-border-strong)] sm:mt-10"
+            className="mt-8 grid grid-cols-2 border-t border-l border-[var(--color-border-strong)] sm:mt-10 sm:flex sm:flex-nowrap sm:border-t-0 sm:border-b sm:border-l-0"
           >
             {CI_RECIPES.map((ci, idx) => {
               const selected = ci.id === activeCi.id;
               const CiIcon = CI_ICONS[ci.id] ?? FileTextIcon;
+              const isLastOdd = CI_RECIPES.length % 2 === 1 && idx === CI_RECIPES.length - 1;
               return (
                 <button
                   key={ci.id}
@@ -281,14 +296,16 @@ export const IntegrationsPage: React.FC = () => {
                   tabIndex={selected ? 0 : -1}
                   onClick={() => setSelectedCiId(ci.id)}
                   onKeyDown={(e) => handleCiTabKeyDown(e, idx)}
-                  className={`inline-flex min-h-[46px] shrink-0 cursor-pointer items-center gap-2 border-b-2 px-3.5 font-editorial-mono text-xs whitespace-nowrap transition-colors duration-150 sm:px-5 ${
+                  className={`inline-flex min-h-[46px] cursor-pointer items-center justify-center gap-2 border-r border-b px-3 font-editorial-mono text-xs transition-colors duration-150 sm:shrink-0 sm:justify-start sm:border-r-0 sm:border-b-2 sm:px-5 sm:whitespace-nowrap ${
+                    isLastOdd ? 'col-span-2 sm:col-span-1 ' : ''
+                  }${
                     selected
-                      ? 'border-[var(--color-text-primary)] font-medium text-[var(--color-text-primary)]'
-                      : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
+                      ? 'border-r-[var(--color-border-strong)] border-b-[var(--color-text-primary)] bg-[var(--color-bg-elevated)] font-medium text-[var(--color-text-primary)] sm:bg-transparent'
+                      : 'border-r-[var(--color-border-strong)] border-b-[var(--color-border-strong)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] sm:border-b-transparent'
                   }`}
                 >
                   <CiIcon className="size-[18px] shrink-0" />
-                  {ci.name}
+                  <span>{ci.name}</span>
                 </button>
               );
             })}
@@ -304,7 +321,7 @@ export const IntegrationsPage: React.FC = () => {
               <code className="inline-block break-words [overflow-wrap:anywhere] rounded-[3px] bg-[var(--color-bg-sunken)] px-2 py-1 font-editorial-mono text-xs text-[var(--color-text-primary)]">
                 {activeCi.configPath}
               </code>
-              <h3 className="mt-4 mb-0 flex items-center gap-2.5 font-editorial-sans text-lg font-medium text-[var(--color-text-primary)]">
+              <h3 className="mt-4 mb-0 flex items-center gap-2.5 font-editorial-sans text-lg font-medium text-balance text-[var(--color-text-primary)]">
                 <ActiveCiIcon className="size-5 shrink-0" />
                 <span>{activeCi.name}</span>
               </h3>

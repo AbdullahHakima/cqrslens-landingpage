@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { BRAND } from '../config/brand';
 import {
   ARCHITECTURE_RULES,
@@ -63,6 +63,7 @@ export const RulesPage: React.FC = () => {
   const [categoryFilter, setCategoryFilter] = useState<'All' | RuleCategory>('All');
   const [query, setQuery] = useState('');
   const [copiedRuleId, setCopiedRuleId] = useState<string | null>(null);
+  const jumpMenuRef = useRef<HTMLDetailsElement>(null);
 
   const filteredRules = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -188,7 +189,7 @@ export const RulesPage: React.FC = () => {
       <div className="mx-auto max-w-[1440px] px-4 py-10 sm:px-8 sm:py-12 md:py-16 lg:px-12">
         {filteredRules.length === 0 ? (
           <div className="border border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)] p-6 sm:p-8">
-            <h2 className="m-0 font-editorial-sans text-lg font-medium text-[var(--color-text-primary)]">
+            <h2 className="m-0 font-editorial-sans text-lg font-medium text-balance text-[var(--color-text-primary)]">
               No rules matched "{query}"
             </h2>
             <p className="mt-2 mb-5 font-editorial-sans text-sm text-[var(--color-text-secondary)]">
@@ -208,39 +209,36 @@ export const RulesPage: React.FC = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-12">
-            {/* Mobile / Tablet Quick Jump Select (< lg) */}
-            <div className="lg:hidden">
-              <label htmlFor="rules-jump-select" className="sr-only">
-                Jump directly to a rule specification
-              </label>
-              <div className="relative">
-                <select
-                  id="rules-jump-select"
-                  defaultValue=""
-                  onChange={(e) => {
-                    const ruleId = e.target.value;
-                    if (!ruleId) return;
-                    const el = document.getElementById(ruleId);
-                    if (el) {
-                      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                      window.history.replaceState(null, '', `${window.location.pathname}#${ruleId}`);
-                    }
-                    e.target.value = '';
-                  }}
-                  className="min-h-[44px] w-full appearance-none rounded-[4px] border border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)] py-2 pr-9 pl-3.5 font-editorial-mono text-xs text-[var(--color-text-primary)]"
-                >
-                  <option value="" disabled>
-                    Jump to rule ({filteredRules.length} shown)...
-                  </option>
-                  {filteredRules.map((rule) => (
-                    <option key={rule.id} value={rule.id}>
-                      {rule.id} [{SEVERITY_ABBREVIATIONS[rule.severity]}]
-                    </option>
-                  ))}
-                </select>
-                <ChevronDownIcon className="pointer-events-none absolute top-1/2 right-3 size-3.5 -translate-y-1/2 text-[var(--color-text-secondary)]" />
-              </div>
-            </div>
+            {/* Mobile / Tablet Quick Jump Disclosure (< lg) */}
+            <details
+              ref={jumpMenuRef}
+              className="group border border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)] lg:hidden"
+            >
+              <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-2 px-3.5 py-2 font-editorial-mono text-xs text-[var(--color-text-primary)] [&::-webkit-details-marker]:hidden">
+                <span>Jump to rule ({filteredRules.length} shown)</span>
+                <ChevronDownIcon className="size-3.5 shrink-0 text-[var(--color-text-secondary)] transition-transform duration-150 group-open:rotate-180" />
+              </summary>
+              <ul className="m-0 divide-y divide-[var(--color-border-subtle)] border-t border-[var(--color-border-subtle)] list-none p-0">
+                {filteredRules.map((rule) => (
+                  <li key={rule.id}>
+                    <Link
+                      to={`#${rule.id}`}
+                      onClick={() => {
+                        if (jumpMenuRef.current) jumpMenuRef.current.open = false;
+                      }}
+                      className="flex min-h-[44px] items-center justify-between gap-2 px-3.5 py-2 font-editorial-mono text-xs text-[var(--color-text-primary)] no-underline hover:bg-[var(--color-bg-subtle)]"
+                    >
+                      <span className="min-w-0 break-words">{rule.id}</span>
+                      <span
+                        className={`shrink-0 rounded-[3px] px-1.5 py-0.5 text-[0.65rem] ${SEVERITY_STYLES[rule.severity]}`}
+                      >
+                        {SEVERITY_ABBREVIATIONS[rule.severity]}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </details>
 
             {/* Left Sticky Rule Index (lg+) */}
             <aside
@@ -248,7 +246,7 @@ export const RulesPage: React.FC = () => {
               className="hidden lg:col-span-3 lg:block"
             >
               <nav className="sticky top-26 border border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)]">
-                <div className="border-b border-[var(--color-border-subtle)] bg-[var(--color-bg-subtle)] px-4 py-2.5 font-editorial-mono text-xs text-[var(--color-text-secondary)]">
+                <div className="border-b border-[var(--color-border-subtle)] bg-[var(--color-bg-subtle)] px-3.5 py-2.5 font-editorial-mono text-xs text-[var(--color-text-secondary)] xl:px-4">
                   Showing {filteredRules.length} of {ARCHITECTURE_RULES.length} rules
                 </div>
                 <ul className="m-0 divide-y divide-[var(--color-border-subtle)] list-none p-0">
@@ -256,7 +254,7 @@ export const RulesPage: React.FC = () => {
                     <li key={rule.id}>
                       <Link
                         to={`#${rule.id}`}
-                        className="flex min-h-[44px] items-center justify-between gap-2 px-4 py-2 font-editorial-mono text-xs text-[var(--color-text-primary)] no-underline transition-colors duration-150 hover:bg-[var(--color-bg-subtle)]"
+                        className="flex min-h-[44px] items-center justify-between gap-2 px-3 py-2 font-editorial-mono text-[0.71875rem] text-[var(--color-text-primary)] no-underline transition-colors duration-150 hover:bg-[var(--color-bg-subtle)] xl:px-4 xl:text-xs"
                       >
                         <span className="truncate">{rule.id}</span>
                         <span
@@ -321,20 +319,20 @@ export const RulesPage: React.FC = () => {
                     </button>
                   </div>
 
-                  <p className="mt-3 mb-0 max-w-[42rem] font-editorial-sans text-base font-medium leading-[1.55] text-[var(--color-text-primary)]">
+                  <p className="mt-3 mb-0 max-w-[60ch] font-editorial-sans text-base font-medium leading-[1.55] text-pretty text-[var(--color-text-primary)]">
                     {rule.summary}
                   </p>
-                  <p className="mt-2 mb-0 max-w-[42rem] font-editorial-sans text-[0.9375rem] leading-[1.62] text-pretty text-[var(--color-text-secondary)]">
+                  <p className="mt-2 mb-0 max-w-[60ch] font-editorial-sans text-[0.9375rem] leading-[1.62] text-pretty text-[var(--color-text-secondary)]">
                     {rule.rationale}
                   </p>
                   {rule.severityNote && (
-                    <p className="mt-3 mb-0 max-w-[42rem] border-l-2 border-[var(--color-role-warn-text)] pl-3 font-editorial-sans text-sm leading-[1.55] text-[var(--color-text-secondary)]">
+                    <p className="mt-3 mb-0 max-w-[60ch] border-l-2 border-[var(--color-role-warn-text)] pl-3 font-editorial-sans text-sm leading-[1.55] text-pretty text-[var(--color-text-secondary)]">
                       {rule.severityNote}
                     </p>
                   )}
 
-                  {/* Side-by-Side Violation vs. Clean Resolution */}
-                  <div className="mt-6 grid grid-cols-1 gap-5 xl:grid-cols-2">
+                  {/* Stacked Violation vs. Clean Resolution (full 9-col measure avoids clipping) */}
+                  <div className="mt-6 grid grid-cols-1 gap-4">
                     <CodeBlock
                       label={rule.violationTitle}
                       badge="[VIOLATION]"

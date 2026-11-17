@@ -263,13 +263,13 @@
   }
 }
 
-/* Entrance stagger for stepped-pixel glyphs (disabled under reduced-motion) */
+/* Entrance stagger for stepped-pixel glyphs (already legible on mount, crisp 220ms settle) */
 @media (prefers-reduced-motion: no-preference) {
   .pixel-glyph-enter {
-    opacity: 0;
-    transform: translateY(8px);
-    animation: pixelGlyphReveal 460ms var(--ease-out) forwards;
-    animation-delay: calc(var(--glyph-index, 0) * 28ms + 20ms);
+    opacity: 0.28;
+    transform: translateY(4px);
+    animation: pixelGlyphReveal 220ms var(--ease-out) both;
+    animation-delay: calc(var(--glyph-index, 0) * 12ms);
   }
 }
 

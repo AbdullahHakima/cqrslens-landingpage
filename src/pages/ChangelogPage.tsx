@@ -67,7 +67,7 @@ export const ChangelogPage: React.FC = () => {
               <div
                 role="group"
                 aria-label="Filter changelog items by subsystem"
-                className="flex flex-wrap gap-2"
+                className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap"
               >
                 {FILTER_CATEGORIES.map((cat) => {
                   const active = selectedCategory === cat;
@@ -139,7 +139,7 @@ export const ChangelogPage: React.FC = () => {
                   {release.headline}
                 </h2>
 
-                <p className="mt-3 mb-0 max-w-[42rem] font-editorial-sans text-base leading-[1.6] text-pretty text-[var(--color-text-secondary)]">
+                <p className="mt-3 mb-0 max-w-[68ch] font-editorial-sans text-base leading-[1.6] text-pretty text-[var(--color-text-secondary)]">
                   {release.summary}
                 </p>
 
@@ -161,7 +161,7 @@ export const ChangelogPage: React.FC = () => {
                           {item.category}
                         </span>
                       </div>
-                      <p className="m-0 max-w-[42rem] font-editorial-sans text-sm leading-[1.58] text-[var(--color-text-primary)]">
+                      <p className="m-0 max-w-[68ch] font-editorial-sans text-sm leading-[1.58] text-pretty text-[var(--color-text-primary)]">
                         <InlineCodeText text={item.text} />
                       </p>
                     </li>

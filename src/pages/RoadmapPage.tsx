@@ -11,7 +11,7 @@ const HORIZON_META: Record<
   { title: string; badge: string; badgeClass: string; description: string }
 > = {
   shipped: {
-    title: 'Shipped Foundation (v0.8.0 – v0.9.0)',
+    title: 'Shipped Foundation (v0.4.0 – v1.1.0)',
     badge: '[SHIPPED]',
     badgeClass: 'bg-[var(--color-role-pass-bg)] text-[var(--color-role-pass-fg)]',
     description:
@@ -75,7 +75,7 @@ export const RoadmapPage: React.FC = () => {
           >
             {(
               [
-                { id: 'all', label: `All Milestones (${ROADMAP_ITEMS.length})`, count: ROADMAP_ITEMS.length },
+                { id: 'all', label: `All (${ROADMAP_ITEMS.length})`, count: ROADMAP_ITEMS.length },
                 {
                   id: 'next',
                   label: `Next Horizon (${ROADMAP_ITEMS.filter((i) => i.horizon === 'next').length})`,
@@ -202,7 +202,7 @@ export const RoadmapPage: React.FC = () => {
                               <div className="font-editorial-sans text-[0.9375rem] font-medium text-[var(--color-text-primary)]">
                                 {item.title}
                               </div>
-                              <p className="mt-1 mb-0 max-w-[34rem] font-editorial-sans text-[0.8125rem] leading-[1.58] text-[var(--color-text-secondary)]">
+                              <p className="mt-1 mb-0 max-w-[68ch] font-editorial-sans text-[0.8125rem] leading-[1.58] text-pretty text-[var(--color-text-secondary)]">
                                 <InlineCodeText text={item.summary} />
                               </p>
                             </td>

@@ -122,7 +122,7 @@ export const ChecksLedgerSection: React.FC = () => {
               <code className="font-editorial-mono text-[0.875em]">error</code>,{' '}
               <code className="font-editorial-mono text-[0.875em]">warning</code>, or{' '}
               <code className="font-editorial-mono text-[0.875em]">off</code>). In{' '}
-              <code className="font-editorial-mono text-[0.875em]">--strict</code> mode, errors exit
+              <code className="font-editorial-mono text-[0.875em] whitespace-nowrap">--strict</code> mode, errors exit
               with code <code className="font-editorial-mono text-[0.875em]">4</code> only when the
               scan is complete enough to trust.
             </p>
@@ -141,7 +141,7 @@ export const ChecksLedgerSection: React.FC = () => {
                   type="button"
                   aria-pressed={active}
                   onClick={() => setFilter(btn.key)}
-                  className={`min-h-[44px] cursor-pointer rounded-[4px] border px-3.5 font-editorial-sans text-[0.8125rem] font-medium tabular-data transition-colors duration-150 ${
+                  className={`min-h-[44px] cursor-pointer rounded-[4px] border px-3 font-editorial-sans text-xs font-medium tabular-data transition-colors duration-150 sm:px-3.5 sm:text-[0.8125rem] ${
                     active
                       ? 'border-[var(--color-action-solid)] bg-[var(--color-action-solid)] text-[var(--color-action-text)]'
                       : 'border-[var(--color-border-strong)] bg-[var(--color-bg-elevated)] text-[var(--color-text-primary)] hover:bg-[var(--color-bg-subtle)]'
@@ -159,15 +159,15 @@ export const ChecksLedgerSection: React.FC = () => {
           <ul className="m-0 list-none divide-y divide-[var(--color-border-subtle)] p-0 md:hidden">
             {visibleRules.map((rule) => (
               <li key={rule.id} className="p-4">
-                <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center justify-between gap-2">
                   <Link
                     to={`/rules#${rule.id}`}
-                    className="inline-flex min-h-[44px] items-center break-words [overflow-wrap:anywhere] font-editorial-mono text-[0.8125rem] font-medium text-[var(--color-text-primary)] no-underline hover:underline"
+                    className="inline-flex min-h-[44px] min-w-0 items-center break-words font-editorial-mono text-xs font-medium text-[var(--color-text-primary)] no-underline hover:underline sm:text-[0.8125rem]"
                   >
                     {rule.id}
                   </Link>
                   <span
-                    className={`inline-flex shrink-0 items-center gap-1.5 rounded-[3px] px-2 py-0.5 font-editorial-mono text-xs font-medium ${SEVERITY_STYLES[rule.severity]}`}
+                    className={`inline-flex shrink-0 items-center gap-1 rounded-[3px] px-2 py-0.5 font-editorial-mono text-[0.6875rem] font-medium whitespace-nowrap sm:gap-1.5 sm:text-xs ${SEVERITY_STYLES[rule.severity]}`}
                   >
                     <span aria-hidden="true">{SEVERITY_SYMBOLS[rule.severity]}</span>
                     <span>{rule.severity}</span>

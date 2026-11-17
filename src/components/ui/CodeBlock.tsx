@@ -7,6 +7,7 @@ interface CodeBlockProps {
   copyText?: string;
   tone?: 'inverse' | 'elevated';
   badge?: string;
+  wrap?: boolean;
   className?: string;
 }
 
@@ -16,6 +17,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({
   copyText,
   tone = 'inverse',
   badge,
+  wrap = false,
   className = '',
 }) => {
   const [copied, setCopied] = useState(false);
@@ -65,7 +67,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1 py-1">
           {label && (
             <span
-              className={`min-w-0 break-words font-editorial-mono text-[0.71875rem] leading-snug sm:truncate sm:text-xs ${
+              className={`min-w-0 break-words font-editorial-mono text-[0.71875rem] leading-snug sm:text-xs ${
                 isInverse
                   ? 'text-[var(--color-text-on-inverse-muted)]'
                   : 'text-[var(--color-text-secondary)]'
@@ -76,7 +78,7 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({
           )}
           {badge && (
             <span
-              className={`shrink-0 rounded-[3px] px-1.5 py-0.5 font-editorial-mono text-[0.6875rem] whitespace-nowrap ${
+              className={`shrink-0 rounded-[3px] px-1.5 py-0.5 font-editorial-mono text-xs whitespace-nowrap ${
                 isInverse
                   ? 'bg-[var(--color-bg-inverse)] text-[var(--color-text-on-inverse)]'
                   : 'bg-[var(--color-bg-sunken)] text-[var(--color-text-primary)]'
@@ -102,7 +104,11 @@ export const CodeBlock: React.FC<CodeBlockProps> = ({
         </button>
       </div>
 
-      <pre className="m-0 overflow-x-auto p-3.5 font-editorial-mono text-[0.71875rem] leading-[1.68] sm:p-5 sm:text-xs sm:leading-[1.7]">
+      <pre
+        className={`m-0 p-3.5 font-editorial-mono text-[0.71875rem] leading-[1.68] sm:p-5 sm:text-xs sm:leading-[1.7] ${
+          wrap ? 'whitespace-pre-wrap break-words' : 'overflow-x-auto'
+        }`}
+      >
         <code>{code}</code>
       </pre>
     </div>

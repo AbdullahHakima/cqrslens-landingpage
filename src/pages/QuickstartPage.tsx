@@ -126,8 +126,9 @@ ${BRAND.cliBinary} . --slice CreateOrder`,
             } auto-detected)
 ------------------------------------------------------
 Scanner               text · zero MSBuild calls
-Artifacts Written     ARCHITECTURE.md, ARCHITECTURE.html (inline SVG)
+Outputs Written       ARCHITECTURE.md, ARCHITECTURE.html (inline SVG)
 Checks Evaluated      11 static rules (exit code 0)`,
+        secondaryWrap: false,
       };
     }
 
@@ -154,7 +155,8 @@ claude mcp add cqrslens -- ${BRAND.cliBinary} . --mcp
           : 'First Prompt to Verify Your Agent Connection',
         secondaryCode: needsConfig
           ? configJson
-          : `"Call get_architecture_dna to summarize our Clean Architecture layers, then call trace_slice on our primary write command and run check_architecture."`,
+          : `"Call get_architecture_dna to summarize our Clean Architecture layers, call trace_request_impact on our primary command (including DI edges & service calls), and verify rules with check_architecture."`,
+        secondaryWrap: !needsConfig,
       };
     }
 
@@ -182,6 +184,7 @@ dotnet ${BRAND.cliBinary} src --strict --baseline cqrslens-baseline.json`,
     baseline: cqrslens-baseline.json
     comment-pr: 'true'
     sarif-output: cqrslens-results.sarif`,
+      secondaryWrap: false,
     };
   }, [mediator, validation, workflow]);
 
@@ -218,7 +221,7 @@ dotnet ${BRAND.cliBinary} src --strict --baseline cqrslens-baseline.json`,
             <div className="min-w-0 divide-y divide-[var(--color-border-subtle)] border-b border-[var(--color-border-strong)] lg:col-span-5 lg:border-r lg:border-b-0">
               {/* Group 1: Mediator */}
               <div className="p-4 sm:p-6">
-                <h3 className="m-0 font-editorial-sans text-sm font-medium text-[var(--color-text-primary)]">
+                <h3 className="m-0 font-editorial-sans text-sm font-medium text-balance text-[var(--color-text-primary)]">
                   1. CQRS / Mediator Convention
                 </h3>
                 <div
@@ -254,7 +257,7 @@ dotnet ${BRAND.cliBinary} src --strict --baseline cqrslens-baseline.json`,
 
               {/* Group 2: Validation */}
               <div className="p-4 sm:p-6">
-                <h3 className="m-0 font-editorial-sans text-sm font-medium text-[var(--color-text-primary)]">
+                <h3 className="m-0 font-editorial-sans text-sm font-medium text-balance text-[var(--color-text-primary)]">
                   2. Command Validation Convention
                 </h3>
                 <div
@@ -285,7 +288,7 @@ dotnet ${BRAND.cliBinary} src --strict --baseline cqrslens-baseline.json`,
 
               {/* Group 3: Workflow */}
               <div className="p-4 sm:p-6">
-                <h3 className="m-0 font-editorial-sans text-sm font-medium text-[var(--color-text-primary)]">
+                <h3 className="m-0 font-editorial-sans text-sm font-medium text-balance text-[var(--color-text-primary)]">
                   3. Target Workflow
                 </h3>
                 <div
@@ -333,6 +336,7 @@ dotnet ${BRAND.cliBinary} src --strict --baseline cqrslens-baseline.json`,
                   label={generated.secondaryLabel}
                   code={generated.secondaryCode}
                   tone="elevated"
+                  wrap={generated.secondaryWrap}
                 />
               </div>
 
@@ -382,7 +386,7 @@ dotnet ${BRAND.cliBinary} src --strict --baseline cqrslens-baseline.json`,
                     Step 01
                   </span>
                   <div className="sm:col-span-10">
-                    <h3 className="m-0 font-editorial-sans text-base font-medium text-[var(--color-text-primary)]">
+                    <h3 className="m-0 font-editorial-sans text-base font-medium text-balance text-[var(--color-text-primary)]">
                       Verify Clean Architecture Layer Classification
                     </h3>
                     <p className="mt-1.5 mb-0 max-w-[36rem] font-editorial-sans text-sm leading-[1.6] text-[var(--color-text-secondary)]">
@@ -398,19 +402,22 @@ dotnet ${BRAND.cliBinary} src --strict --baseline cqrslens-baseline.json`,
                     Step 02
                   </span>
                   <div className="sm:col-span-10">
-                    <h3 className="m-0 font-editorial-sans text-base font-medium text-[var(--color-text-primary)]">
+                    <h3 className="m-0 font-editorial-sans text-base font-medium text-balance text-[var(--color-text-primary)]">
                       Review the 11 Static Check Findings
                     </h3>
                     <p className="mt-1.5 mb-0 max-w-[36rem] font-editorial-sans text-sm leading-[1.6] text-[var(--color-text-secondary)]">
                       Inspect any <code className="font-editorial-mono text-xs">MissingHandler</code>,{' '}
                       <code className="font-editorial-mono text-xs">CommandWithoutValidator</code>, or{' '}
                       <code className="font-editorial-mono text-xs">UnreachableRequest</code>{' '}
-                      diagnostics, and tune severities in{' '}
-                      <Link to="/docs/configuration" className="text-[var(--color-text-primary)]">
-                        .cqrslens.json
-                      </Link>
-                      .
+                      diagnostics, and tune rule severities in{' '}
+                      <code className="font-editorial-mono text-xs">.cqrslens.json</code>.
                     </p>
+                    <div className="mt-1.5">
+                      <Link to="/docs/configuration" className="link-quiet">
+                        <span>Configure .cqrslens.json</span>
+                        <ChevronRightIcon className="size-3.5" />
+                      </Link>
+                    </div>
                   </div>
                 </li>
                 <li className="grid grid-cols-1 gap-2 py-5 sm:grid-cols-12 sm:gap-4">
@@ -418,13 +425,16 @@ dotnet ${BRAND.cliBinary} src --strict --baseline cqrslens-baseline.json`,
                     Step 03
                   </span>
                   <div className="sm:col-span-10">
-                    <h3 className="m-0 font-editorial-sans text-base font-medium text-[var(--color-text-primary)]">
+                    <h3 className="m-0 font-editorial-sans text-base font-medium text-balance text-[var(--color-text-primary)]">
                       Wire Your AI Coding Agent &amp; CI Pipeline
                     </h3>
                     <p className="mt-1.5 mb-0 max-w-[36rem] font-editorial-sans text-sm leading-[1.6] text-[var(--color-text-secondary)]">
-                      Connect <code className="font-editorial-mono text-xs">--mcp</code> in your
-                      editor so agents stop grepping blindly, and lock in architectural guardrails
-                      with <code className="font-editorial-mono text-xs">--strict</code> in CI.
+                      Connect{' '}
+                      <code className="font-editorial-mono text-xs whitespace-nowrap">--mcp</code>{' '}
+                      in your editor so agents stop grepping blindly, and lock in architectural
+                      guardrails with{' '}
+                      <code className="font-editorial-mono text-xs whitespace-nowrap">--strict</code>{' '}
+                      in CI.
                     </p>
                   </div>
                 </li>

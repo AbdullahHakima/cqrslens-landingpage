@@ -77,7 +77,7 @@ export const SiteHeader: React.FC = () => {
         data-scrolled={scrolled ? 'true' : 'false'}
         className="site-header fixed inset-x-0 top-0 z-[var(--z-header)] pt-[env(safe-area-inset-top)]"
       >
-        <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between gap-3 px-4 sm:h-18 sm:gap-4 sm:px-8 xl:px-12">
+        <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between gap-3 px-4 sm:h-18 sm:gap-4 sm:px-8 lg:px-12">
           <Link
             to="/"
             aria-label={`${BRAND.name} home`}
