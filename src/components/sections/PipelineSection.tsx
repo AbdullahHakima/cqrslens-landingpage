@@ -31,16 +31,16 @@ const STAGES = [
   },
   {
     step: '5',
-    title: 'Dispatch & EF Core Modeler',
+    title: 'DI, Service-Call & EF Core Modeler',
     detail:
-      'Tracks Send/Publish call sites for reachability and builds DbContext ER relationships from attributes and Fluent API.',
-    artifact: 'Flow Edges & ER Schemas',
+      'Resolves IDbContext abstractions through DI, tracks handler service calls and Send/Publish dispatches, and models EF Core ER schemas.',
+    artifact: 'Resolved Edges & ER Schemas',
   },
   {
     step: '6',
     title: 'Deterministic Renderer',
     detail:
-      'Emits byte-reproducible Markdown, offline zero-JS SVG HTML, schema-versioned JSON, SARIF, or live MCP responses.',
+      'Emits byte-reproducible Markdown (with sequence diagrams), zero-JS SVG HTML, JSON, standalone SVGs/.mmd, SARIF, or live MCP answers.',
     artifact: 'ARCHITECTURE.md / .html / .json',
   },
 ] as const;

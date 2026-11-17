@@ -17,7 +17,34 @@ export interface RoadmapItem {
 }
 
 export const ROADMAP_ITEMS: readonly RoadmapItem[] = [
-  // Shipped Foundation (v0.8.0 – v0.9.0)
+  // Shipped Foundation (through v1.1.0)
+  {
+    id: 'di-resolved-and-service-calls',
+    horizon: 'shipped',
+    area: 'Engine',
+    title: 'DI-Resolved DbContext Edges & Direct Service-Call Tracking',
+    summary:
+      'Handlers injecting DbContext abstractions resolve through DI registrations to concrete contexts, and direct method calls on injected services emit `serviceCallEdges` JSON, flow and sequence steps, and MCP `trace_request_impact` edges.',
+    deliverable: 'Shipped in v1.1.0',
+  },
+  {
+    id: 'per-request-sequence-diagrams',
+    horizon: 'shipped',
+    area: 'Visualization',
+    title: 'Per-Request Sequence Diagrams & Standalone Mermaid Export',
+    summary:
+      'Generates endpoint → mediator → registered behaviors → handler → service calls / DbContext → notifications sequence diagrams per handled request, plus `--export-mermaid <dir>` and sequence SVGs in `--export-svg`.',
+    deliverable: 'Shipped in v1.0.0',
+  },
+  {
+    id: 'agent-verification-mcp-suite',
+    horizon: 'shipped',
+    area: 'Agents & IDE',
+    title: '7-Tool Read-Only MCP Layer & Claim Verification',
+    summary:
+      'Adds fail-closed `verify_claim`, `trace_request_impact`, `diff_architecture`, structured `trace_slice`, and filtered/project-grouped `check_architecture` alongside the Noctua console identity and `--ascii` mode.',
+    deliverable: 'Shipped in v1.0.0',
+  },
   {
     id: 'flow-behavior-diagrams',
     horizon: 'shipped',
@@ -42,7 +69,7 @@ export const ROADMAP_ITEMS: readonly RoadmapItem[] = [
     area: 'Agents & IDE',
     title: 'Built-in MCP Server & Token-Packed Agent Format',
     summary:
-      'Live stdio Model Context Protocol server (`--mcp`) with 4 structural query tools plus `--format agent` single-file DNA export.',
+      'Live stdio Model Context Protocol server (`--mcp`) originally launched with 4 tools (expanded to 7 in v1.0.0) plus `--format agent` single-file DNA export.',
     deliverable: 'Shipped in v0.8.0',
   },
   {

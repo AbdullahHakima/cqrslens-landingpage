@@ -46,9 +46,9 @@ Slices (24 total):
   },
   {
     name: 'trace_slice',
-    signature: 'trace_slice(query: string, limit?)',
+    signature: 'trace_slice(query: string, limit?, format?, path?, analysis?)',
     purpose:
-      'Traces a single Command or Query end-to-end with exact File:Line coordinates across endpoint dispatch, validator, pipeline behaviors, handler, EF Core DbSets, and published domain events.',
+      'Traces a single Command or Query end-to-end with exact File:Line coordinates across endpoint dispatch, validator, pipeline behaviors, handler, EF Core DbSets, and published domain events. Set format: "json" for structured typed slice data.',
     whenAgentCallsIt:
       'Before modifying an existing feature slice, instead of grepping and reading files across folders.',
     sampleResponse: `Slice: CreateOrderCommand : IRequest<Guid>
@@ -62,7 +62,7 @@ Slices (24 total):
   },
   {
     name: 'trace_entity_impact',
-    signature: 'trace_entity_impact(entity: string, match?, limit?)',
+    signature: 'trace_entity_impact(entity: string, match?, limit?, path?, analysis?)',
     purpose:
       'Traces an EF Core entity or DbSet across the architecture: its schema (PKs, FKs, properties, relationships) and every Command, Query, Handler, and API Endpoint that reads, writes, or depends on it. Entity matching is exact by default, so Order never matches OrderItem.',
     whenAgentCallsIt:
@@ -79,16 +79,72 @@ Slices (24 total):
     - GetDailyRevenueReportQueryHandler [AsNoTracking]`,
   },
   {
-    name: 'check_architecture',
-    signature: 'check_architecture(path?, analysis?)',
+    name: 'trace_request_impact',
+    signature: 'trace_request_impact(request: string, match?, limit?, path?, analysis?)',
     purpose:
-      'Runs the CqrsLens static architecture rules and returns all active findings with File:Line locations.',
+      'Traces everything one request touches and everything that references it: handler, validators, pipeline behaviors in registered order, dispatching endpoints, published notifications and handlers, DI-resolved DbContext edges, direct service calls, and reverse reach.',
+    whenAgentCallsIt:
+      'When assessing the blast radius of changing a Command, Query, handler dependency, or service interface.',
+    sampleResponse: `# CqrsLens Request Impact Trace — \`CreateOrderCommand\` (\`OrderingService\`)
+
+## [Command] \`CreateOrderCommand\` → \`Guid\` (\`src/Ordering.Application/Orders/CreateOrderCommand.cs:9\`) [Ordering.Application]
+- Handlers: 1 · Validators: 1 · Published notifications: 1 · Endpoints: 1 · DbContext edges: 1 · Reverse reach: 1
+
+### DbContext edges (1)
+- \`handlerToDbContext\` \`CreateOrderCommandHandler\` → \`OrderingDbContext\` (resolved through DI via \`IOrderingDbContext\`) (\`src/Ordering.Application/Orders/CreateOrderCommandHandler.cs:14\`)
+
+### Service calls (1)
+- \`Add\` via \`IOrderRepository\` → \`SqlOrderRepository\` (\`src/Ordering.Application/Orders/CreateOrderCommandHandler.cs:27\`)`,
+  },
+  {
+    name: 'check_architecture',
+    signature: 'check_architecture(rules?, severity?, target?, groupBy?, limit?, path?, analysis?)',
+    purpose:
+      'Runs the 11 CqrsLens static architecture rules and returns active findings with File:Line locations. Filter by rule codes, severity, or target scope, or set groupBy: "project" to see per-module counts first.',
     whenAgentCallsIt:
       'Immediately after generating a new vertical slice so the agent self-corrects missing validators, orphan notifications, or layer violations before finishing.',
-    sampleResponse: `Architecture checks: 0 error(s), 1 warning(s)
-  [Warning] CommandWithoutValidator
-    Command \`RefundOrderCommand\` has no validator.
-    src/Ordering.Application/Refunds/RefundOrderCommand.cs:6`,
+    sampleResponse: `# CqrsLens Architecture Checks — \`OrderingService\`
+- **Filters**: severity=warning
+- **Matching findings**: 1
+- **Showing**: 1
+
+- **[WARN] \`CommandWithoutValidator\`**: Command \`RefundOrderCommand\` has no validator. (\`src/Ordering.Application/Refunds/RefundOrderCommand.cs:6\`)`,
+  },
+  {
+    name: 'verify_claim',
+    signature: 'verify_claim(subject: string, relation: string, object?, path?, analysis?)',
+    purpose:
+      'Verifies a structured design claim (for example has handler, has validator, publishes, uses DbContext, depends on, belongs to layer, dispatched by, or their absence forms) and fails closed as supported, not supported, or not determinable.',
+    whenAgentCallsIt:
+      'Before stating an architectural fact in a PR review, design note, or refactoring plan so every claim is backed by scan evidence.',
+    sampleResponse: `verdict: supported
+claim: subject="CreateOrderCommand" relation="uses DbContext" object="OrderingDbContext"
+basis: the scan model records direct DbContext use
+evidence: 2 fact(s)
+- request \`CreateOrderCommand\` (\`src/Ordering.Application/Orders/CreateOrderCommand.cs:9\`) owner handler(s): \`CreateOrderCommandHandler\`
+- DbContext \`OrderingDbContext\` (\`src/Ordering.Infrastructure/OrderingDbContext.cs:8\`) is named by a handler dependency or flow edge`,
+  },
+  {
+    name: 'diff_architecture',
+    signature: 'diff_architecture(base: string, limit?, path?, analysis?)',
+    purpose:
+      'Diffs the current scan against a saved ARCHITECTURE.json snapshot or a base solution folder using the exact --diff semantics: counts first, then baseline-keyed findings delta, then paged item lists.',
+    whenAgentCallsIt:
+      'After implementing a feature branch to verify exactly which requests, endpoints, DbContexts, and check findings were added or resolved.',
+    sampleResponse: `# CqrsLens Architecture Diff — \`OrderingService\` (base \`base-architecture.json\`)
+
+- **Base**: \`base-architecture.json\` (\`OrderingService\`) · saved snapshot JSON
+- **Head**: \`.\` (\`OrderingService\`)
+- **Changed**: yes
+
+## Shape delta
+- **Requests**: +1 added · -0 removed · =23 unchanged · ~0 modified
+- **Handlers**: +1 added · -0 removed · =23 unchanged
+- **Endpoints**: +1 added · -0 removed · =18 unchanged
+
+## Findings delta
+- **New findings**: 0
+- **Resolved findings**: 1`,
   },
 ] as const;
 
@@ -117,7 +173,7 @@ claude mcp add cqrslens -- ${BRAND.cliBinary} . --mcp
     name: 'Cursor',
     configPath: '.cursor/mcp.json',
     summary:
-      'Commit a workspace MCP configuration in .cursor/mcp.json so Composer and Agent mode automatically load all four topology tools.',
+      'Commit a workspace MCP configuration in .cursor/mcp.json so Composer and Agent mode automatically load all seven read-only architecture tools.',
     snippet: `{
   "mcpServers": {
     "cqrslens": {

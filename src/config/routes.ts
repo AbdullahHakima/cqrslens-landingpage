@@ -28,7 +28,7 @@ export const ROUTES: readonly RouteMeta[] = [
     label: 'Features',
     title: `Features & Comparison — ${BRAND.name}`,
     description:
-      'Explore zero-build text and Roslyn static engines, vertical-slice and EF Core DbContext cartography, deterministic SVG/Mermaid/SARIF outputs, and comparisons with NetArchTest, ArchUnitNET, and NDepend.',
+      'Explore zero-build text and Roslyn static engines, vertical-slice, DI-resolved DbContext and service-call cartography, sequence diagrams, deterministic SVG/Mermaid/SARIF outputs, and comparisons with NetArchTest, ArchUnitNET, and NDepend.',
     showInHeader: true,
   },
   {
@@ -84,7 +84,7 @@ export const ROUTES: readonly RouteMeta[] = [
     label: 'Roadmap',
     title: `Roadmap — ${BRAND.name} Architecture Direction`,
     description:
-      'Upcoming capabilities in active design and exploration: incremental watch mode, MassTransit/NServiceBus message tracing, Modular Monolith boundary checks, and community requests.',
+      'Mirrors ROADMAP.md in the CqrsLens repository: shipped milestones through v1.1.0 and unscheduled ideas such as F# project support.',
     showInHeader: true,
   },
 ] as const;
@@ -110,7 +110,7 @@ export const DOC_SECTION_ROUTES: ReadonlyArray<{
     slug: 'cli-reference',
     title: `CLI Flags & Arguments — ${BRAND.name} Docs`,
     description:
-      'Complete reference for cqrslens command-line options: --format, --render, --slice, --analysis, --strict, --diff, --baseline, and --mcp.',
+      'Complete reference for cqrslens command-line options: --format, --render, --slice, --analysis, --export-svg, --export-mermaid, --strict, --diff, --baseline, --ascii, and --mcp.',
   },
   {
     slug: 'configuration',
@@ -122,7 +122,7 @@ export const DOC_SECTION_ROUTES: ReadonlyArray<{
     slug: 'output-formats',
     title: `Output Formats & Schemas — ${BRAND.name} Docs`,
     description:
-      'Detailed specification for ARCHITECTURE.md (Mermaid), zero-JS ARCHITECTURE.html (--render svg), ARCHITECTURE.json, agent DNA, and SARIF 2.1.0.',
+      'Detailed specification for ARCHITECTURE.md (Mermaid & sequence diagrams), zero-JS ARCHITECTURE.html (--render svg), ARCHITECTURE.json, standalone SVG/Mermaid exports, agent DNA, and SARIF 2.1.0.',
   },
   {
     slug: 'analysis-engines',

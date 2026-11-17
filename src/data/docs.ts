@@ -65,9 +65,9 @@ export const DOC_CHAPTERS: readonly DocChapter[] = [
               col3: 'Request-to-Validator links, CommandWithoutValidator & OrphanValidator checks',
             },
             {
-              col1: 'Persistence',
-              col2: 'Entity Framework Core (DbContext, DbSet<T>, Fluent API, Attributes)',
-              col3: 'DbContext ER diagrams, per-slice DbSet read/write & AsNoTracking touches',
+              col1: 'Persistence & DI Services',
+              col2: 'Entity Framework Core (DbContext, DbSet<T>, Fluent API, Attributes) & DI registrations',
+              col3: 'DbContext ER diagrams, per-slice DbSet touches, DI-resolved DbContext edges (resolvedEdges), and direct service-call edges (serviceCallEdges)',
             },
             {
               col1: 'Dispatch Sites',
@@ -159,10 +159,11 @@ dotnet ${BRAND.cliBinary} . --strict`,
 # Common invocations
 ${BRAND.cliBinary} .
 ${BRAND.cliBinary} ./src --format html --render svg -o ARCHITECTURE.html
-${BRAND.cliBinary} ./src --format html --render svg --cqrs-map-split feature --export-svg diagrams -o ARCHITECTURE.html
+${BRAND.cliBinary} ./src --format html --render svg --cqrs-map-split feature --export-svg diagrams --export-mermaid diagrams-mmd -o ARCHITECTURE.html
 ${BRAND.cliBinary} . --slice CreateOrderCommand
 ${BRAND.cliBinary} . --strict --baseline cqrslens-baseline.json
 ${BRAND.cliBinary} . --strict --sarif results.sarif
+${BRAND.cliBinary} . --ascii --no-color
 ${BRAND.cliBinary} . --mcp`,
         },
       },
@@ -263,7 +264,12 @@ ${BRAND.cliBinary} . --mcp`,
             {
               col1: '--export-svg <dir>',
               col2: 'Output directory (created if missing)',
-              col3: 'Writes every diagram as a standalone .svg file. Additive; does not change the primary report. SVG only, no PNG.',
+              col3: 'Writes every diagram (including sequence-<Request>.svg per handled request) as a standalone .svg file. Additive; SVG only, no PNG.',
+            },
+            {
+              col1: '--export-mermaid <dir>',
+              col2: 'Output directory (created if missing)',
+              col3: 'Writes every diagram in the report as a standalone .mmd Mermaid file under the same names as SVG export.',
             },
             {
               col1: '--github-annotations',
@@ -298,7 +304,12 @@ ${BRAND.cliBinary} . --mcp`,
             {
               col1: '--color | --no-color',
               col2: 'Automatic (respects NO_COLOR)',
-              col3: 'Forces or disables ANSI 24-bit console colors.',
+              col3: 'Forces or disables ANSI 24-bit console colors. Also adapts to light terminals via COLORFGBG.',
+            },
+            {
+              col1: '--ascii | --unicode',
+              col2: 'Unicode default (respects CQRSLENS_ASCII=1)',
+              col3: 'Switches box-drawing, progress bars, and status glyphs to single-width ASCII for terminals with CJK fonts; --unicode restores the default.',
             },
             {
               col1: '--mcp',
@@ -371,7 +382,7 @@ ${BRAND.cliBinary} . --mcp`,
         paragraphs: [
           'Each of the 11 static checks accepts one of three values: "error" (fails --strict runs with exit code 4 on a complete scan), "warning" (reported in Markdown, HTML, SARIF, and PR comments without failing the build), or "off" (removes the finding from reports and strict evaluation).',
           'LayerViolation and ApplicationLayerViolation default to warning when no layer model is asserted. They escalate to error when you configure layers or the scanner finds a confident conventional layer layout; an explicit rules override always wins.',
-          'Promoting CommandWithoutValidator or UnreachableRequest from "warning" to "error" is a common milestone once legacy debt is captured in a baseline.',
+          'Promoting CommandWithoutValidator or UnreachableRequest from "warning" to "error" is a common milestone once legacy debt is captured in a baseline. (Note: the CLI validator accepts all 11 rule codes, while cqrslens.schema.json currently enumerates 9 rule keys.)',
         ],
       },
     ],
@@ -394,17 +405,17 @@ ${BRAND.cliBinary} . --mcp`,
             {
               col1: 'ARCHITECTURE.md',
               col2: '--format md',
-              col3: 'Committing to git; renders layer, flow, behavior-chain, slice, and ER diagrams natively on GitHub, GitLab, and Azure DevOps.',
+              col3: 'Committing to git; renders project/layer DAGs, Validation Coverage, flow diagrams, per-request sequences, API Endpoints, combined Data Model tables, Findings clusters, and DbContext ER diagrams natively on GitHub, GitLab, and Azure DevOps.',
             },
             {
               col1: 'ARCHITECTURE.html',
               col2: '--format html --render svg',
-              col3: 'Interactive offline architectural explorer with pre-compiled zero-JS inline SVGs—safe for locked-down CI artifact viewers.',
+              col3: 'Interactive offline architectural explorer (Mermaid 12.2.0 or pre-compiled zero-JS inline SVGs) with filterable CQRS request cards and findings clusters—safe for locked-down CI artifact viewers.',
             },
             {
               col1: 'ARCHITECTURE.json',
               col2: '--format json',
-              col3: 'Machine-readable schema containing projects, layer edges, slices, DbSets, flow edges, and findings for custom dashboards.',
+              col3: 'Schema-versioned graph with projects, requests, handlers, endpoints, flowEdges, DI-resolved DbContext resolvedEdges, serviceCallEdges, DbContexts, and findings.',
             },
             {
               col1: 'ARCHITECTURE.agent.md',
@@ -414,12 +425,17 @@ ${BRAND.cliBinary} . --mcp`,
             {
               col1: 'SARIF 2.1.0',
               col2: '--sarif results.sarif',
-              col3: 'GitHub Code Scanning security tab annotations and IDE SARIF viewers with exact File:Line locations. Additive to the primary report.',
+              col3: 'GitHub Code Scanning security tab annotations and IDE SARIF viewers with exact physical File:Line locations. Additive to the primary report.',
             },
             {
               col1: 'Standalone SVG diagrams',
               col2: '--export-svg diagrams',
-              col3: 'Writes every diagram as its own .svg document for docs and READMEs. Additive; SVG only, no PNG.',
+              col3: 'Writes every report diagram (including sequence-<Request>.svg per handled request) as its own .svg document. Additive; SVG only, no PNG.',
+            },
+            {
+              col1: 'Standalone Mermaid diagrams',
+              col2: '--export-mermaid diagrams',
+              col3: 'Writes every report diagram as a standalone .mmd file under matching diagram filenames. Additive to the primary report.',
             },
           ],
         },
@@ -563,6 +579,13 @@ ${BRAND.cliBinary} src --strict --baseline cqrslens-baseline.json`,
         heading: 'Coding agent says "cqrslens: command not found" in MCP stdio mode',
         paragraphs: [
           'GUI editors on macOS and Windows sometimes launch without ~/.dotnet/tools in their inherited PATH. Either pass the full binary path (~/.dotnet/tools/cqrslens on macOS/Linux or %USERPROFILE%\\.dotnet\\tools\\cqrslens.exe on Windows) in mcp_config.json, or invoke dotnet tool run cqrslens.',
+        ],
+      },
+      {
+        id: 'cjk-terminal-alignment',
+        heading: 'Terminal summary card or progress bar wraps or misaligns',
+        paragraphs: [
+          'Terminals configured with CJK fonts render Unicode box-drawing and half-block characters two cells wide, shearing the Noctua banner and summary card. Pass --ascii or set CQRSLENS_ASCII=1 to switch to single-width + - | chrome, or export COLUMNS to override detected terminal width.',
         ],
       },
     ],

@@ -2,7 +2,7 @@
 
 ## 1. Visual World & Direction
 - **Aesthetic Thesis:** A tactile Swiss architectural monograph printed on a deep lapis plate in warm papyrus ink, crossed with retro-digital bitmap printmaking. Built around a living 3D sculptural Little Owl (*Athene noctua*) rendered in real time through a 3-regime horizontal scanline and pixel-block halftone shader.
-- **Placeholder Brand Seam:** `src/config/brand.ts` owns the display brand identity (`Noctua` / `NOCTUA CODE MAP`) separately from the technical CLI & NuGet coordinates (`cqrslens` / `CqrsLens v0.9.0`).
+- **Placeholder Brand Seam:** `src/config/brand.ts` owns the display brand identity (`Noctua` / `NOCTUA CODE MAP`) separately from the technical CLI & NuGet coordinates (`cqrslens` / `CqrsLens v1.1.0`). (Note: CqrsLens 1.0.0+ also uses the Noctua owl lockup and lapis/papyrus/saffron palette in terminal output while keeping the `cqrslens` / `CqrsLens` package names.)
 
 ## 2. Two-Tier OKLCH Color System (`src/styles/tokens.css`)
 - **Tier 1 (Primitives):** The site-wide palette is the Egyptian lapis, papyrus, and saffron print ramp promoted from the footer engraving plate — deep lapis (`--lapis-600` through `--lapis-950`), warm papyrus cream (`--papyrus-100` through `--papyrus-500`), and a single saffron origin accent (`--saffron-400`). Five print-calibrated diagnostic ink ramps (`cobalt`, `teal`, `amber`, `crimson`, `forest`) remain reserved for data and state. Primitives are never consumed directly by components.

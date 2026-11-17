@@ -53,17 +53,17 @@ export const CORPUS_EXAMPLES: readonly CorpusExampleReport[] = [
     githubUrl: 'https://github.com/jasontaylordev/CleanArchitecture',
     architectureStyle: '4-Layer Canonical Clean Architecture',
     mediatorStack: 'MediatR + FluentValidation + EF Core',
-    projects: 8,
-    requests: 12,
-    handlers: 12,
-    validators: 5,
+    projects: 13,
+    requests: 11,
+    handlers: 11,
+    validators: 6,
     behaviors: 4,
     dbContexts: 1,
-    findingsSummary: '0 errors / 9 warnings',
+    findingsSummary: '0 errors / 6 warnings',
     reportNote:
-      'Warning mix: 4 commands without validators, 2 unreachable template requests, unpublished and orphan notifications',
+      '3 commands without validators, 2 unreachable template requests, 1 unpublished notification',
     nodes: [
-      { id: 'web', label: 'WebUI', role: 'presentation', x: 40, y: 24, w: 185 },
+      { id: 'web', label: 'Web', role: 'presentation', x: 40, y: 24, w: 185 },
       { id: 'infra', label: 'Infrastructure', role: 'infrastructure', x: 295, y: 24, w: 225 },
       { id: 'app', label: 'Application', role: 'application', x: 155, y: 106, w: 215 },
       { id: 'domain', label: 'Domain', role: 'domain', x: 175, y: 184, w: 180 },
@@ -78,27 +78,25 @@ export const CORPUS_EXAMPLES: readonly CorpusExampleReport[] = [
     featuredSlice: {
       contract: 'CreateTodoItemCommand : IRequest<int>',
       kind: 'Command',
-      dispatch: 'POST /todoitems (inferred route) · WebUI/Controllers/TodoItemsController.cs:22',
-      validator:
-        'CreateTodoItemCommandValidator · Application/TodoItems/Commands/CreateTodoItem/CreateTodoItemCommandValidator.cs:5',
+      dispatch: 'POST /api/TodoItems (inferred) · Web.Endpoints.TodoItems.CreateTodoItem',
+      validator: 'CreateTodoItemCommandValidator',
       pipeline:
-        '4 behaviors in scan order — AuthorizationBehaviour, PerformanceBehaviour, UnhandledExceptionBehaviour, ValidationBehaviour (not execution order)',
-      handler:
-        'CreateTodoItemCommandHandler · Application/TodoItems/Commands/CreateTodoItem/CreateTodoItemCommand.cs:15',
-      persistence: 'IApplicationDbContext.TodoItems → TodoItem',
+        '4 behaviors in registered order — UnhandledExceptionBehaviour, AuthorizationBehaviour, ValidationBehaviour, PerformanceBehaviour (not execution order)',
+      handler: 'CreateTodoItemCommandHandler · Application',
+      persistence: 'ApplicationDbContext.TodoItems → TodoItem',
       diagnostic:
-        '[PASS] Handler, validator, and EF Core DbSet linked. Nine warnings remain across the solution.',
+        '[PASS] Endpoint, handler, validator, and 4 pipeline behaviors linked. Six warnings remain across the solution.',
       diagnosticTone: 'pass',
     },
-    markdownExcerpt: `# CleanArchitecture — CqrsLens 0.9.0 Snapshot
-- **Projects Scanned**: 8
-- **CQRS Requests**: 12 (12 handlers linked, 5 validators)
-- **Pipeline Behaviors**: 4 (recorded in scan order)
-- **EF Core Contexts**: ApplicationDbContext (TodoItems → TodoItem)
-- **Architecture Checks**: 0 errors / 9 warnings
-- **Warnings**: 4 CommandWithoutValidator · 2 UnreachableRequest · 2 UnpublishedNotification · 1 OrphanNotification
+    markdownExcerpt: `# CleanArchitecture — CqrsLens Validation Snapshot
+- **Projects Scanned**: 13
+- **CQRS Requests**: 11 (11 handlers linked, 6 validators)
+- **Pipeline Behaviors**: 4 (registered order)
+- **EF Core Contexts**: ApplicationDbContext (TodoLists → TodoList, TodoItems → TodoItem)
+- **Architecture Checks**: 0 errors / 6 warnings
+- **Warnings**: 3 CommandWithoutValidator · 2 UnreachableRequest · 1 UnpublishedNotification
 - **Reachability Note**: both UnreachableRequest findings are template requests with no production call site
-- **Snapshot**: text scanner · 2026-11-02`,
+- **Snapshot**: text scanner · 2026-11-07 (v1.0.0 corpus; counts unchanged in v1.1.0)`,
   },
   {
     id: 'kgrzybek-modular-monolith',
@@ -107,14 +105,14 @@ export const CORPUS_EXAMPLES: readonly CorpusExampleReport[] = [
     githubUrl: 'https://github.com/kgrzybek/modular-monolith-with-ddd',
     architectureStyle: 'DDD Modular Monolith (5 Bounded Contexts)',
     mediatorStack: 'MediatR + Custom ICommand / IQuery Markers + EF Core',
-    projects: 47,
+    projects: 46,
     requests: 105,
     handlers: 105,
     validators: 5,
     behaviors: 0,
     dbContexts: 4,
     findingsSummary: '0 errors / 205 warnings',
-    reportNote: 'Custom CommandBase hierarchy resolved across 47 projects without a build',
+    reportNote: 'Custom CommandBase hierarchy resolved across 46 projects without a build',
     nodes: [
       { id: 'api', label: 'CompanyMeetings.API', role: 'presentation', x: 185, y: 20, w: 180 },
       { id: 'meetings', label: 'Module: Meetings', role: 'application', x: 25, y: 104, w: 150 },
@@ -143,14 +141,14 @@ export const CORPUS_EXAMPLES: readonly CorpusExampleReport[] = [
         '[WARN] Custom CommandBase marker resolved; CommandWithoutValidator remains project debt.',
       diagnosticTone: 'warning',
     },
-    markdownExcerpt: `# modular-monolith-with-ddd — CqrsLens 0.9.0 Snapshot
-- **Projects Scanned**: 47
+    markdownExcerpt: `# modular-monolith-with-ddd — CqrsLens Validation Snapshot
+- **Projects Scanned**: 46
 - **CQRS Requests**: 105 (105 handlers linked via custom command/query markers)
 - **Pipeline Behaviors**: 0 registered
 - **EF Core Contexts**: 4 module DbContexts
 - **Architecture Checks**: 0 errors / 205 warnings
 - **Warnings**: 71 CommandWithoutValidator · 62 OrphanNotification · 54 UnreachableRequest · 18 UnpublishedNotification
-- **Snapshot**: text scanner · 2026-11-02`,
+- **Snapshot**: text scanner · 2026-11-07 (v1.0.0 corpus; counts unchanged in v1.1.0)`,
   },
   {
     id: 'ardalis-clean-arch',
@@ -193,15 +191,15 @@ export const CORPUS_EXAMPLES: readonly CorpusExampleReport[] = [
         '[WARN] Handler and dispatch linked. FastEndpoints validators target request DTOs, not the CQRS contract.',
       diagnosticTone: 'warning',
     },
-    markdownExcerpt: `# ardalis/CleanArchitecture — CqrsLens 0.9.0 Snapshot
+    markdownExcerpt: `# ardalis/CleanArchitecture — CqrsLens Validation Snapshot
 - **Projects Scanned**: 22
 - **CQRS Requests**: 23 (23 handlers linked)
 - **Validators**: 21 discovered — all 21 report OrphanValidator against CQRS contracts
-- **Pipeline Behaviors**: 3 (recorded in scan order)
+- **Pipeline Behaviors**: 3 (registered order)
 - **EF Core Contexts**: 3
 - **Architecture Checks**: 0 errors / 38 warnings
 - **Warnings**: 21 OrphanValidator · 13 CommandWithoutValidator · 4 UnpublishedNotification
-- **Snapshot**: text scanner · 2026-11-02`,
+- **Snapshot**: text scanner · 2026-11-07 (v1.0.0 corpus; counts unchanged in v1.1.0)`,
   },
   {
     id: 'martinothamar-mediator',
@@ -242,14 +240,14 @@ export const CORPUS_EXAMPLES: readonly CorpusExampleReport[] = [
         '[WARN] Handler and validator linked; Send(addTodo) uses a mapped local, so UnreachableRequest is reported.',
       diagnosticTone: 'warning',
     },
-    markdownExcerpt: `# martinothamar/Mediator (samples) — CqrsLens 0.9.0 Snapshot
+    markdownExcerpt: `# martinothamar/Mediator (samples) — CqrsLens Validation Snapshot
 - **Projects Scanned**: 24 sample applications
 - **CQRS Requests**: 15 (15 handlers linked, 1 validator)
-- **Pipeline Behaviors**: 9 (recorded in scan order)
+- **Pipeline Behaviors**: 9 (registered order)
 - **EF Core Contexts**: 0 discovered
 - **Architecture Checks**: 0 errors / 12 warnings
 - **Warnings**: 5 UnreachableRequest · 4 UnpublishedNotification · 2 CommandWithoutValidator · 1 OrphanNotification
 - **Reachability Note**: mapped locals passed to Send/Publish are not treated as proven dispatch call sites
-- **Snapshot**: text scanner · 2026-11-02`,
+- **Snapshot**: text scanner · 2026-11-07 (v1.0.0 corpus; counts unchanged in v1.1.0)`,
   },
 ] as const;

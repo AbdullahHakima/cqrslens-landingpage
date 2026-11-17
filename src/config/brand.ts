@@ -28,11 +28,11 @@ export const BRAND = {
   /** Active CLI & package coordinates from github.com/AbdullahHakima/cqrslens */
   cliBinary: 'cqrslens',
   nugetPackage: 'CqrsLens',
-  version: '0.9.0',
+  version: '1.1.0',
   installCommand: 'dotnet tool install -g CqrsLens',
 
   /** External & canonical links */
-  siteUrl: 'https://abdullahhakima.github.io/cqrslens',
+  siteUrl: 'https://noctua.is-a.dev',
   githubUrl: 'https://github.com/AbdullahHakima/cqrslens',
   githubDisplay: 'github.com/AbdullahHakima/cqrslens',
   githubReadmeUrl: 'https://github.com/AbdullahHakima/cqrslens#readme',

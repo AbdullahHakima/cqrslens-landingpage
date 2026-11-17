@@ -1,7 +1,7 @@
 /**
  * Editable Changelog Ledger for Noctua / CqrsLens CLI.
  *
- * Grounded in the tagged CqrsLens v0.9.0 CHANGELOG and its historical releases.
+ * Grounded in the tagged CqrsLens v1.1.0 CHANGELOG and its historical releases.
  * Update release dates or historical version groupings below to match exact GitHub tags.
  */
 
@@ -25,9 +25,67 @@ export interface ReleaseEntry {
 
 export const CHANGELOG_RELEASES: readonly ReleaseEntry[] = [
   {
+    version: '1.1.0',
+    dateLabel: '2026-11-13',
+    isLatest: true,
+    headline: 'DI-Resolved DbContext Edges, Direct Service Calls & Faster Resolve Phases',
+    summary:
+      'Resolves handlers injecting DbContext abstractions through DI to their concrete DbContext, tracks direct method calls on injected services across diagrams, JSON, and MCP, and speeds up Resolve phases with byte-identical reports.',
+    changes: [
+      {
+        tag: 'ADDED',
+        category: 'Engine',
+        text: 'Handlers depending on a `DbContext` abstraction (such as `IDbContext`) resolve through DI registrations to the concrete `DbContext`, emitting `resolvedEdges` in JSON and drawing the handler → DbContext hop in flow diagrams, per-request sequences, and MCP `trace_request_impact`.',
+      },
+      {
+        tag: 'ADDED',
+        category: 'Engine',
+        text: 'Direct service calls made by handlers on injected members (`repository.Add(...)`, `eventService.Publish(...)`) are extracted and resolved through DI registrations, appearing in JSON (`serviceCallEdges`), flow and sequence diagrams, and MCP `trace_request_impact`. Unresolvable calls are reported as unresolved rather than guessed.',
+      },
+      {
+        tag: 'IMPROVED',
+        category: 'Engine',
+        text: 'Service-resolution and service-call analysis share a single type hierarchy and memoize type-name resolution, cutting Resolve phase time roughly by a third on the largest benchmark codebase with byte-identical output.',
+      },
+    ],
+  },
+  {
+    version: '1.0.0',
+    dateLabel: '2026-11-07',
+    headline: 'Per-Request Sequence Diagrams, Verification MCP Tools & Noctua Console Identity',
+    summary:
+      'Introduces per-request sequence diagrams, read-only MCP claim verification and architecture-diff tools, standalone Mermaid export, complete design-doc report sections, and the lapis Noctua console identity with ASCII mode.',
+    changes: [
+      {
+        tag: 'ADDED',
+        category: 'Outputs',
+        text: 'Per-request sequence diagrams in Markdown and HTML reports (endpoint → mediator → pipeline behaviors in registered order → handler → DbContext → published notifications), each captioned with what it is built from.',
+      },
+      {
+        tag: 'ADDED',
+        category: 'MCP',
+        text: 'Expanded read-only MCP suite with `verify_claim` (`supported`, `not supported`, or `not determinable` with evidence), `trace_request_impact`, `diff_architecture`, `trace_slice` (`format: "json"`), and `check_architecture` filtering and `groupBy: "project"`.',
+      },
+      {
+        tag: 'ADDED',
+        category: 'Outputs',
+        text: 'Standalone Mermaid export (`--export-mermaid <directory>`) writes every report diagram as a `.mmd` file, and `--export-svg` now includes `sequence-<Request>.svg` per handled request.',
+      },
+      {
+        tag: 'ADDED',
+        category: 'Outputs',
+        text: '`--ascii` / `--unicode` flags (or `CQRSLENS_ASCII=1`) switch terminal box-drawing and bars to single-width ASCII for CJK terminal fonts; `--help` honors surrounding display flags and groups options by category.',
+      },
+      {
+        tag: 'IMPROVED',
+        category: 'Outputs',
+        text: 'Console identity rebuilt with the Noctua owl lockup, stepped-pixel wordmark, single-column lapis summary card, light-terminal `COLORFGBG` adaptation, and full report sections (Configuration & Conventions, Validation Coverage, API Endpoints, Data Model, and Findings clustering).',
+      },
+    ],
+  },
+  {
     version: '0.9.0',
     dateLabel: '2026-11-02',
-    isLatest: true,
     headline: 'Flow Diagrams, Behavior Chains & Standalone SVG Export',
     summary:
       'The reporting release: flow and behavior-chain diagrams now visualize dispatch data the scanner already collected, CQRS maps can be split by feature or project, and every diagram can be exported as its own SVG. JSON output is unchanged from 0.8.0.',

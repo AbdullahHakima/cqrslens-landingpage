@@ -4,15 +4,15 @@
 - **Placeholder Brand Name:** `NOCTUA` (Centralized in `src/config/brand.ts` — `CqrsLens` is strictly the development/CLI package codename and repository slug, not the final brand identity).
 - **Tagline:** Static architecture cartography for .NET & CQRS codebases.
 - **Repository:** `https://github.com/AbdullahHakima/cqrslens`
-- **Package / CLI (current technical artifact):** `dotnet tool install -g CqrsLens` (`v0.9.0` on NuGet).
+- **Package / CLI (current technical artifact):** `dotnet tool install -g CqrsLens` (`v1.1.0` on NuGet).
 
 ## Audience
 - Senior .NET backend engineers, software architects, tech leads inheriting unfamiliar MediatR / Mediator / Wolverine + Clean Architecture solutions, and engineering teams wiring AI coding agents (`--mcp`, `--format agent`) and strict CI architecture gates (`--strict`, `--diff`, SARIF).
 
 ## Core Value Proposition
 1. **Zero-Build Static Analysis:** Reads `.csproj` and `.cs` source files directly without `dotnet restore` or `dotnet build` — mapping incomplete or broken solutions without waiting for a compiler.
-2. **Full Vertical-Slice & Layer Cartography:** Maps Clean Architecture layers, project dependency graphs, endpoint → request → handler flows, pipeline behavior chains, Commands & Queries → Handlers → FluentValidation/FastEndpoints Validators → EF Core `DbContext` ER diagrams → Domain Event fan-out (`INotification` / `IDomainEvent`), and dispatch call sites.
-3. **Canonical Offline Reports & AI Agent DNA:** Outputs `ARCHITECTURE.md` (Mermaid), zero-JS offline `ARCHITECTURE.html` (`--render svg`), deterministic `ARCHITECTURE.json`, `--slice` vertical traces, `--format agent`, standalone SVG diagrams (`--export-svg`), and a live Model Context Protocol server (`--mcp`).
+2. **Full Vertical-Slice & Layer Cartography:** Maps Clean Architecture layers, project dependency graphs, endpoint → request → handler flows, per-request sequence diagrams, pipeline behavior chains (in registered order), Commands & Queries → Handlers → FluentValidation/FastEndpoints Validators → EF Core `DbContext` ER diagrams (including DI-resolved `IDbContext` abstractions and direct handler service calls) → Domain Event fan-out (`INotification` / `IDomainEvent`), and dispatch call sites.
+3. **Canonical Offline Reports & AI Agent DNA:** Outputs `ARCHITECTURE.md` (Mermaid), zero-JS offline `ARCHITECTURE.html` (`--render svg`), deterministic `ARCHITECTURE.json` (including `resolvedEdges` and `serviceCallEdges`), `--slice` vertical traces, `--format agent`, standalone SVG/Mermaid diagrams (`--export-svg`, `--export-mermaid`), and a 7-tool read-only Model Context Protocol server (`--mcp`: `get_architecture_dna`, `trace_slice`, `trace_entity_impact`, `trace_request_impact`, `check_architecture`, `verify_claim`, `diff_architecture`).
 4. **Deterministic CI Guardrails:** 11 architecture rules (`MissingHandler`, `MultipleHandlers`, `LayerViolation`, `ApplicationLayerViolation`, `CircularProjectDependency`, `CommandWithoutValidator`, `OrphanValidator`, `OrphanNotification`, `UnreachableRequest`, `UnpublishedNotification`, `AmbiguousProjectName`) with baselines, PR sticky diffs, and SARIF 2.1.0 export (`--sarif FILE`). Layer rules warn by default and become errors only when a layer model is asserted; explicit rule configuration always wins.
 
 ## Aesthetic & Brand Direction
