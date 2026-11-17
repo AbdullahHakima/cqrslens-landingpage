@@ -186,10 +186,15 @@ export const App: React.FC = () => {
       }
     };
 
-    scheduleNext();
+    /* Let the current page (including hero WebGL and low-priority footer engraving) finish
+       settling before speculatively prefetching secondary route chunks. */
+    const startDelayHandle = window.setTimeout(() => {
+      scheduleNext();
+    }, 1800);
 
     return () => {
       cancelled = true;
+      window.clearTimeout(startDelayHandle);
       if (idleHandle !== undefined) idleWindow.cancelIdleCallback?.(idleHandle);
       if (timeoutHandle !== undefined) window.clearTimeout(timeoutHandle);
     };

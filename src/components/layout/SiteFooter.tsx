@@ -1,14 +1,22 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { BRAND } from '../../config/brand';
 import { Link } from '../../lib/router';
-import footerEgyptDesktop1080 from '../../assets/footer-egypt-desktop-1080.webp';
-import footerEgyptDesktop1440 from '../../assets/footer-egypt-desktop-1440.webp';
-import footerEgyptDesktop2172 from '../../assets/footer-egypt-desktop-2172.webp';
-import footerEgyptTablet640 from '../../assets/footer-egypt-tablet-640.webp';
-import footerEgyptTablet1024 from '../../assets/footer-egypt-tablet-1024.webp';
-import footerEgyptTablet1536 from '../../assets/footer-egypt-tablet-1536.webp';
-import footerEgyptMobile560 from '../../assets/footer-egypt-mobile-560.webp';
-import footerEgyptMobile1122 from '../../assets/footer-egypt-mobile-1122.webp';
+import footerEgyptDesktop1080Avif from '../../assets/footer-egypt-desktop-1080.avif';
+import footerEgyptDesktop1440Avif from '../../assets/footer-egypt-desktop-1440.avif';
+import footerEgyptDesktop2172Avif from '../../assets/footer-egypt-desktop-2172.avif';
+import footerEgyptDesktop1080Webp from '../../assets/footer-egypt-desktop-1080.webp';
+import footerEgyptDesktop1440Webp from '../../assets/footer-egypt-desktop-1440.webp';
+import footerEgyptDesktop2172Webp from '../../assets/footer-egypt-desktop-2172.webp';
+import footerEgyptTablet640Avif from '../../assets/footer-egypt-tablet-640.avif';
+import footerEgyptTablet1024Avif from '../../assets/footer-egypt-tablet-1024.avif';
+import footerEgyptTablet1536Avif from '../../assets/footer-egypt-tablet-1536.avif';
+import footerEgyptTablet640Webp from '../../assets/footer-egypt-tablet-640.webp';
+import footerEgyptTablet1024Webp from '../../assets/footer-egypt-tablet-1024.webp';
+import footerEgyptTablet1536Webp from '../../assets/footer-egypt-tablet-1536.webp';
+import footerEgyptMobile560Avif from '../../assets/footer-egypt-mobile-560.avif';
+import footerEgyptMobile1122Avif from '../../assets/footer-egypt-mobile-1122.avif';
+import footerEgyptMobile560Webp from '../../assets/footer-egypt-mobile-560.webp';
+import footerEgyptMobile1122Webp from '../../assets/footer-egypt-mobile-1122.webp';
 import { BrandMark } from '../brand/BrandMark';
 import { PixelWordmark } from '../brand/PixelWordmark';
 import {
@@ -142,10 +150,35 @@ const FooterLinkItem: React.FC<{ link: FooterLink }> = ({ link }) => (
 
 export const SiteFooter: React.FC = () => {
   const [copyStatus, setCopyStatus] = useState<CopyStatus>('idle');
+  const [plateReady, setPlateReady] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
   const timerRef = useRef<number>(0);
 
   useEffect(() => {
     return () => window.clearTimeout(timerRef.current);
+  }, []);
+
+  useEffect(() => {
+    const img = imgRef.current;
+    if (!img || !img.complete || img.naturalWidth === 0) return;
+
+    let cancelled = false;
+    if (typeof img.decode === 'function') {
+      img.decode().then(
+        () => {
+          if (!cancelled) setPlateReady(true);
+        },
+        () => {
+          if (!cancelled) setPlateReady(true);
+        }
+      );
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    setPlateReady(true);
+    return undefined;
   }, []);
 
   const handleCopyInstall = async () => {
@@ -365,7 +398,8 @@ export const SiteFooter: React.FC = () => {
         </div>
       </div>
 
-      {/* Full-bleed Nile horizon: transparent engraved plate selected by art direction */}
+      {/* Full-bleed Nile horizon: transparent engraved plate (AVIF with WebP fallback) warmed
+          at low fetch priority so it is decoded before scroll reaches the bottom. */}
       <div
         aria-hidden="true"
         className="relative mt-7 aspect-[1122/375] w-full select-none overflow-hidden sm:mt-9 md:aspect-[1536/429] xl:aspect-[2172/400]"
@@ -373,26 +407,58 @@ export const SiteFooter: React.FC = () => {
         <picture>
           <source
             media="(min-width: 1280px)"
+            type="image/avif"
+            sizes="100vw"
+            srcSet={`${footerEgyptDesktop1080Avif} 1080w, ${footerEgyptDesktop1440Avif} 1440w, ${footerEgyptDesktop2172Avif} 2172w`}
+          />
+          <source
+            media="(min-width: 1280px)"
             type="image/webp"
             sizes="100vw"
-            srcSet={`${footerEgyptDesktop1080} 1080w, ${footerEgyptDesktop1440} 1440w, ${footerEgyptDesktop2172} 2172w`}
+            srcSet={`${footerEgyptDesktop1080Webp} 1080w, ${footerEgyptDesktop1440Webp} 1440w, ${footerEgyptDesktop2172Webp} 2172w`}
+          />
+          <source
+            media="(min-width: 768px)"
+            type="image/avif"
+            sizes="100vw"
+            srcSet={`${footerEgyptTablet640Avif} 640w, ${footerEgyptTablet1024Avif} 1024w, ${footerEgyptTablet1536Avif} 1536w`}
           />
           <source
             media="(min-width: 768px)"
             type="image/webp"
             sizes="100vw"
-            srcSet={`${footerEgyptTablet640} 640w, ${footerEgyptTablet1024} 1024w, ${footerEgyptTablet1536} 1536w`}
+            srcSet={`${footerEgyptTablet640Webp} 640w, ${footerEgyptTablet1024Webp} 1024w, ${footerEgyptTablet1536Webp} 1536w`}
+          />
+          <source
+            type="image/avif"
+            sizes="100vw"
+            srcSet={`${footerEgyptMobile560Avif} 560w, ${footerEgyptMobile1122Avif} 1122w`}
           />
           <img
-            src={footerEgyptMobile1122}
-            srcSet={`${footerEgyptMobile560} 560w, ${footerEgyptMobile1122} 1122w`}
+            ref={imgRef}
+            src={footerEgyptMobile560Webp}
+            srcSet={`${footerEgyptMobile560Webp} 560w, ${footerEgyptMobile1122Webp} 1122w`}
             sizes="100vw"
             alt=""
             width={1122}
             height={375}
-            loading="lazy"
+            loading="eager"
+            fetchPriority="low"
             decoding="async"
-            className="absolute inset-0 block h-full w-full object-contain object-bottom"
+            onLoad={(e) => {
+              const el = e.currentTarget;
+              if (typeof el.decode === 'function') {
+                el.decode().then(
+                  () => setPlateReady(true),
+                  () => setPlateReady(true)
+                );
+              } else {
+                setPlateReady(true);
+              }
+            }}
+            className={`absolute inset-0 block h-full w-full object-contain object-bottom transition-opacity duration-200 ease-[var(--ease-out)] motion-reduce:transition-none ${
+              plateReady ? 'opacity-100' : 'opacity-0'
+            }`}
           />
         </picture>
       </div>
