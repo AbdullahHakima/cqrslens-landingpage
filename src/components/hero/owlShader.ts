@@ -34,6 +34,7 @@ export function createOwlHalftoneMaterial(): ShaderMaterial {
       uFootY: { value: 0.2 },
       uRowPitch: { value: 7.0 },
       uColPitch: { value: 4.5 },
+      uSonarMaskLeft: { value: 1.0 },
     },
     vertexShader: /* glsl */ `
       varying vec2 vUv;
@@ -58,6 +59,7 @@ export function createOwlHalftoneMaterial(): ShaderMaterial {
       uniform float uFootY;
       uniform float uRowPitch;
       uniform float uColPitch;
+      uniform float uSonarMaskLeft;
 
       varying vec2 vUv;
 
@@ -86,13 +88,14 @@ export function createOwlHalftoneMaterial(): ShaderMaterial {
       }
 
       void main() {
+        /* The shader paints the whole hero surface (one continuous paper field) while the
+           3D owl lives in a stage sub-rectangle. Remap hero UV -> stage UV and early-exit
+           every pixel outside the stage so hero typography costs zero FBO/trig work. */
+        vec2 stageUv = (vUv - uStageRect.xy) / uStageRect.zw;
         vec2 cssPos = vUv * uResolutionCss;
         float yTop = uResolutionCss.y - cssPos.y;
 
         float rowIdx = floor(yTop / uRowPitch);
-        float rowLocal = yTop - rowIdx * uRowPitch;
-        float distFromRowCenter = abs(rowLocal - uRowPitch * 0.5);
-
         float colIdx = floor(cssPos.x / uColPitch);
 
         vec2 cellCssCenter = vec2(
@@ -100,14 +103,18 @@ export function createOwlHalftoneMaterial(): ShaderMaterial {
           uResolutionCss.y - (rowIdx + 0.5) * uRowPitch
         );
         vec2 cellUv = clamp(cellCssCenter / uResolutionCss, vec2(0.001), vec2(0.999));
-
-        /* The shader paints the whole hero surface (one continuous paper field) while the
-           3D owl lives in a stage sub-rectangle. Remap hero UV -> stage UV and treat
-           everything outside the stage as empty paper, so there is no panel seam. */
-        vec2 stageUv = (vUv - uStageRect.xy) / uStageRect.zw;
         vec2 qUv = (cellUv - uStageRect.xy) / uStageRect.zw;
+
         bool inStage = all(greaterThanEqual(stageUv, vec2(0.0))) && all(lessThanEqual(stageUv, vec2(1.0)));
         bool cellInStage = all(greaterThanEqual(qUv, vec2(0.0))) && all(lessThanEqual(qUv, vec2(1.0)));
+        if (!inStage && !cellInStage) {
+          gl_FragColor = vec4(uPaperColor, 1.0);
+          return;
+        }
+
+        float rowLocal = yTop - rowIdx * uRowPitch;
+        float distFromRowCenter = abs(rowLocal - uRowPitch * 0.5);
+
         qUv = clamp(qUv, vec2(0.001), vec2(0.999));
         float stageAspect = (uResolutionCss.x * uStageRect.z) / max(uResolutionCss.y * uStageRect.w, 1.0);
 
@@ -120,13 +127,17 @@ export function createOwlHalftoneMaterial(): ShaderMaterial {
         float smoothLum = dot(smoothSample.rgb, vec3(0.299, 0.587, 0.114));
         float cellLum = dot(cellSample.rgb, vec3(0.299, 0.587, 0.114));
 
-        float owlFootY = uFootY;
         float floorShadow = (cellSample.a > 0.005 && cellSample.a <= 0.55)
           ? clamp((1.0 - cellLum) * 1.05, 0.0, 0.44)
           : 0.0;
-        float gobo = cellInStage ? backdropGobo(qUv, uTime, owlFootY) : 0.0;
+        float gobo = cellInStage ? backdropGobo(qUv, uTime, uFootY) : 0.0;
+        /* Softly feather gobo and cast floor shadow before the outer stage boundary so
+           neither container padding nor the right scrollbar ever clips horizontal lines cleanly. */
+        float stageRightFeather = 1.0 - smoothstep(0.86, 0.99, qUv.x);
+        floorShadow *= stageRightFeather;
+        gobo *= stageRightFeather;
 
-        /* Active sonar scan wave ripple */
+        /* Active dual-ring architectural sonar scan wave with smooth stage fade */
         float scanRipple = 0.0;
         if (cellInStage && uScanWave >= 0.0 && uScanWave <= 1.25) {
           vec2 aspectVec = vec2(
@@ -136,10 +147,10 @@ export function createOwlHalftoneMaterial(): ShaderMaterial {
           float radialDist = length(aspectVec);
           float waveFront = uScanWave * 1.15;
           float ring = exp(-pow((radialDist - waveFront) / 0.052, 2.0));
+          float echo = exp(-pow((radialDist - max(0.0, waveFront - 0.14)) / 0.036, 2.0)) * 0.42;
           float fadeOut = 1.0 - smoothstep(0.75, 1.25, uScanWave);
-          if (qUv.x > 0.20) {
-            scanRipple = ring * 0.32 * fadeOut;
-          }
+          float leftFade = mix(1.0, smoothstep(0.06, 0.28, qUv.x), uSonarMaskLeft);
+          scanRipple = (ring + echo) * 0.32 * fadeOut * leftFade;
         }
 
         /* Preserve crisp white corneal catchlights inside the obsidian eyes */
@@ -156,9 +167,11 @@ export function createOwlHalftoneMaterial(): ShaderMaterial {
           : max(floorShadow, gobo);
         darkness = max(darkness, scanRipple);
 
-        /* Stepped printer-tick edge breakup on faintest outer fringes */
-        float jitter = (cellHash(vec2(colIdx, rowIdx)) - 0.5) * 0.065;
-        float effDark = darkness + (darkness > 0.02 && darkness < 0.22 ? jitter : 0.0);
+        /* Stepped printer-tick edge breakup only on faintest fringe cells */
+        float effDark = darkness;
+        if (darkness > 0.02 && darkness < 0.22) {
+          effDark += (cellHash(vec2(colIdx, rowIdx)) - 0.5) * 0.065;
+        }
 
         float inkMask = 0.0;
 

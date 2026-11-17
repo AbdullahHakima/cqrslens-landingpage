@@ -3,7 +3,7 @@ import {
   LinearFilter,
   Mesh,
   OrthographicCamera,
-  PCFSoftShadowMap,
+  PCFShadowMap,
   PlaneGeometry,
   RGBAFormat,
   SRGBColorSpace,
@@ -17,7 +17,7 @@ import { createOwlHalftoneMaterial } from './owlShader';
 import { createOwlSceneController, OwlInteractionState } from './owlRig';
 
 export interface OwlHeroCanvasHandle {
-  triggerScan: () => void;
+  triggerScan: (aimX?: number, aimY?: number) => void;
 }
 
 interface OwlHeroCanvasProps {
@@ -121,13 +121,13 @@ export const OwlHeroCanvas = forwardRef<OwlHeroCanvasHandle, OwlHeroCanvasProps>
     const containerRef = useRef<HTMLDivElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const inspectingRef = useRef(inspectingCta);
-    const triggerFnRef = useRef<(() => void) | null>(null);
+    const triggerFnRef = useRef<((aimX?: number, aimY?: number) => void) | null>(null);
 
     inspectingRef.current = inspectingCta;
 
     useImperativeHandle(ref, () => ({
-      triggerScan: () => {
-        triggerFnRef.current?.();
+      triggerScan: (aimX?: number, aimY?: number) => {
+        triggerFnRef.current?.(aimX, aimY);
       },
     }));
 
@@ -156,6 +156,9 @@ export const OwlHeroCanvas = forwardRef<OwlHeroCanvasHandle, OwlHeroCanvasProps>
             canvas,
             antialias: false,
             alpha: false,
+            powerPreference: 'high-performance',
+            stencil: false,
+            preserveDrawingBuffer: false,
           });
         } catch {
           return;
@@ -163,9 +166,18 @@ export const OwlHeroCanvas = forwardRef<OwlHeroCanvasHandle, OwlHeroCanvasProps>
 
         renderer.outputColorSpace = SRGBColorSpace;
         renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = PCFSoftShadowMap;
+        renderer.shadowMap.type = PCFShadowMap;
 
-        const owlController = createOwlSceneController();
+        const initialVw = window.innerWidth || 1024;
+        const isCompactDevice =
+          initialVw < 768 ||
+          (typeof navigator !== 'undefined' &&
+            typeof navigator.hardwareConcurrency === 'number' &&
+            navigator.hardwareConcurrency <= 4);
+
+        const owlController = createOwlSceneController({
+          compactDetail: isCompactDevice,
+        });
         const postMaterial = createOwlHalftoneMaterial();
 
         /* Sync shader palette byte-for-byte with the active owl-palette OKLCH tokens */
@@ -185,14 +197,22 @@ export const OwlHeroCanvas = forwardRef<OwlHeroCanvasHandle, OwlHeroCanvasProps>
         const quadMesh = new Mesh(quadGeo, postMaterial);
         postScene.add(quadMesh);
 
+        const msaaSamples = renderer.capabilities.isWebGL2 && !isCompactDevice ? 2 : 0;
         const renderTarget = new WebGLRenderTarget(800, 720, {
           minFilter: LinearFilter,
           magFilter: LinearFilter,
           format: RGBAFormat,
           type: UnsignedByteType,
-          samples: 2,
+          samples: msaaSamples,
         });
         postMaterial.uniforms.tScene.value = renderTarget.texture;
+
+        type QualityTier = 'high' | 'balanced' | 'eco';
+        let qualityTier: QualityTier = 'high';
+        let shadowInterval = 1;
+        let activeFrameCount = 0;
+        let avgFrameMs = 16.7;
+        let slowStreak = 0;
 
         const groundProbe = new Vector3();
         let cssW = 1;
@@ -202,17 +222,21 @@ export const OwlHeroCanvas = forwardRef<OwlHeroCanvasHandle, OwlHeroCanvasProps>
         let stageDocTop = 0;
         let stageW = 1;
         let stageH = 1;
+        let lastCanvasW = 0;
+        let lastCanvasH = 0;
+        let lastDpr = 0;
+        let lastRtW = 0;
+        let lastRtH = 0;
 
         const updateSize = () => {
+          /* Batch all layout reads before any canvas/uniform writes */
           const rect = container.getBoundingClientRect();
+          const stageEl = stageRef.current;
+          const sRect = stageEl ? stageEl.getBoundingClientRect() : rect;
+
           cssW = Math.max(16, Math.round(rect.width));
           cssH = Math.max(16, Math.round(rect.height));
 
-          /* The stage anchor is a layout element, so CSS alone decides where the owl
-             stands at every breakpoint (right half on desktop, below the copy when stacked).
-             Falls back to the whole surface if the anchor is not mounted. */
-          const stageEl = stageRef.current;
-          const sRect = stageEl ? stageEl.getBoundingClientRect() : rect;
           const sx = Math.min(Math.max(sRect.left - rect.left, 0), cssW - 16);
           const sy = Math.min(Math.max(sRect.top - rect.top, 0), cssH - 16);
           stageW = Math.max(16, Math.min(Math.round(sRect.width), cssW - sx));
@@ -220,24 +244,53 @@ export const OwlHeroCanvas = forwardRef<OwlHeroCanvasHandle, OwlHeroCanvasProps>
           stageDocLeft = sRect.left + window.scrollX;
           stageDocTop = sRect.top + window.scrollY;
 
-          const dpr = Math.min(window.devicePixelRatio || 1, 2);
-          /* Pass 1 feeds the quantized halftone shader; 1.25x DPR + 2x MSAA cuts
-             offscreen GPU fill-rate by up to 8x while Pass 2 renders at full Retina DPR.
-             Pass 1 only covers the stage, so a full-bleed hero costs no more than a split one. */
-          const rtDpr = Math.min(dpr, 1.25);
+          const nativeDpr = window.devicePixelRatio || 1;
+          const canvasCap =
+            qualityTier === 'eco'
+              ? 1.0
+              : qualityTier === 'balanced'
+                ? 1.25
+                : isCompactDevice
+                  ? 1.6
+                  : 2.0;
+          const rtCap =
+            qualityTier === 'eco'
+              ? 0.72
+              : qualityTier === 'balanced'
+                ? 0.85
+                : isCompactDevice
+                  ? 1.0
+                  : 1.25;
 
-          renderer.setPixelRatio(dpr);
-          renderer.setSize(cssW, cssH, false);
+          const dpr = Math.min(nativeDpr, canvasCap);
+          const rtDpr = Math.min(nativeDpr, rtCap);
 
-          renderTarget.setSize(Math.round(stageW * rtDpr), Math.round(stageH * rtDpr));
+          if (cssW !== lastCanvasW || cssH !== lastCanvasH || dpr !== lastDpr) {
+            renderer.setPixelRatio(dpr);
+            renderer.setSize(cssW, cssH, false);
+            lastCanvasW = cssW;
+            lastCanvasH = cssH;
+            lastDpr = dpr;
+          }
+
+          const rtW = Math.max(16, Math.round(stageW * rtDpr));
+          const rtH = Math.max(16, Math.round(stageH * rtDpr));
+          if (rtW !== lastRtW || rtH !== lastRtH) {
+            renderTarget.setSize(rtW, rtH);
+            lastRtW = rtW;
+            lastRtH = rtH;
+          }
 
           const aspect = stageW / Math.max(1, stageH);
           owlController.camera.aspect = aspect;
 
-          /* Responsive framing tied to layout mode (stacked < 1024px vs side-by-side >= 1024px).
+          /* Responsive framing tied directly to stage geometry across phones, tablets,
+             short landscape phones, laptops & ultrawides.
              Visible height at distance d is 2 * d * tan(15deg) ~= 0.536 * d. */
           const vw = window.innerWidth || cssW;
-          const isStackedStage = vw < 1024;
+          const vh = window.innerHeight || cssH;
+          const isStackedStage = stageW > vw * 0.76;
+          const isShortLandscapeSide = !isStackedStage && vh < 520;
           const VIS_PER_Z = 0.536;
           let baseZ: number;
           let offsetX: number;
@@ -245,20 +298,29 @@ export const OwlHeroCanvas = forwardRef<OwlHeroCanvasHandle, OwlHeroCanvasProps>
           let lookY: number;
 
           if (isStackedStage) {
-            /* Owl-first framing: height-fit the whole owl and let its floor shadow bleed off the
-               right edge. Narrow stages tighten to the owl's own width so it stays large. */
-            baseZ = Math.max(3.8 / VIS_PER_Z, 2.9 / (aspect * VIS_PER_Z));
-            offsetX = 0.08;
-            camY = -0.02;
-            lookY = -0.06;
+            baseZ = Math.max(3.8 / VIS_PER_Z, 2.95 / (aspect * VIS_PER_Z));
+            offsetX = 0.04;
+            camY = 0.02;
+            lookY = -0.02;
+            postMaterial.uniforms.uSonarMaskLeft.value = 0.0;
+          } else if (isShortLandscapeSide) {
+            /* Landscape mobile split (50vw..100vw, locked below 72px header inside 100dvh fold):
+               height-fit the whole owl cleanly from tufts to talons inside the visible fold */
+            baseZ = Math.max(8.2, 4.15 / VIS_PER_Z, 3.25 / (aspect * VIS_PER_Z));
+            offsetX = -0.06;
+            camY = 0.04;
+            lookY = -0.02;
+            postMaterial.uniforms.uSonarMaskLeft.value = 1.0;
           } else {
             const isCompactSideStage = vw < 1220;
-            baseZ = isCompactSideStage ? 9.3 : 8.6;
-            /* Guard very tall / narrow stages (portrait iPad Pro) against horizontal crop */
-            baseZ = Math.max(baseZ, 3.9 / (aspect * VIS_PER_Z));
-            offsetX = isCompactSideStage ? -0.38 : -0.30;
-            camY = 0.08;
-            lookY = -0.04;
+            baseZ = isCompactSideStage ? 9.45 : 9.10;
+            /* Guard tall/narrow side stages (e.g. portrait iPad Pro) against horizontal crop */
+            baseZ = Math.max(baseZ, 3.95 / (aspect * VIS_PER_Z));
+            /* Clear left wordmark ("NOCTUA CODE MAP") + sticky header ear-tuft margin cleanly */
+            offsetX = isCompactSideStage ? -0.46 : vw >= 1680 ? -0.46 : -0.42;
+            camY = 0.22;
+            lookY = 0.12;
+            postMaterial.uniforms.uSonarMaskLeft.value = 1.0;
           }
 
           owlController.camera.position.set(offsetX, camY, baseZ);
@@ -279,8 +341,8 @@ export const OwlHeroCanvas = forwardRef<OwlHeroCanvasHandle, OwlHeroCanvasProps>
             stageW / cssW,
             stageH / cssH
           );
-          postMaterial.uniforms.uRowPitch.value = cssW < 540 ? 6.0 : 7.0;
-          postMaterial.uniforms.uColPitch.value = cssW < 540 ? 4.0 : 4.5;
+          postMaterial.uniforms.uRowPitch.value = cssW < 540 ? 5.8 : vw >= 1800 ? 7.5 : 7.0;
+          postMaterial.uniforms.uColPitch.value = cssW < 540 ? 3.8 : vw >= 1800 ? 4.8 : 4.5;
         };
 
         updateSize();
@@ -306,35 +368,91 @@ export const OwlHeroCanvas = forwardRef<OwlHeroCanvasHandle, OwlHeroCanvasProps>
           }, 2600);
         };
 
+        const clearPointerFocus = () => {
+          interaction.pointerActive = false;
+        };
+
         const clockStart = performance.now();
+        const REDUCED_POSE_SEC = 3.2;
         let prevNow = clockStart;
         let lastRenderMs = 0;
         let revealed = false;
         let rafId = 0;
+        let resizeRaf = 0;
+        let reducedPulseTimer = 0;
+        let reducedScanOverride: number | null = null;
         let isRunning = false;
         let inViewport = true;
         let contextLost = false;
+
+        const scheduleResize = () => {
+          if (resizeRaf || disposed) return;
+          resizeRaf = window.requestAnimationFrame(() => {
+            resizeRaf = 0;
+            if (disposed || contextLost) return;
+            updateSize();
+            if (!isRunning) {
+              renderFrameAt(performance.now());
+            }
+          });
+        };
 
         const renderFrameAt = (nowMs: number) => {
           if (contextLost) return;
           const elapsedSec = (nowMs - clockStart) / 1000;
           const dt = Math.min(0.05, Math.max(0.001, (nowMs - prevNow) / 1000));
+          const frameDelta = lastRenderMs > 0 ? nowMs - lastRenderMs : 16.7;
           prevNow = nowMs;
           lastRenderMs = nowMs;
 
           interaction.inspectingCta = inspectingRef.current;
 
+          /* Track sustained slow frames to auto-step down render target DPR & shadow cadence */
+          if (!prefersReducedMotion && isRunning && frameDelta < 120) {
+            activeFrameCount++;
+            if (activeFrameCount > 15) {
+              avgFrameMs = avgFrameMs * 0.9 + frameDelta * 0.1;
+              if (qualityTier === 'high' && avgFrameMs > 28) {
+                slowStreak++;
+                if (slowStreak >= 18) {
+                  qualityTier = 'balanced';
+                  shadowInterval = 2;
+                  slowStreak = 0;
+                  scheduleResize();
+                }
+              } else if (qualityTier === 'balanced' && avgFrameMs > 40) {
+                slowStreak++;
+                if (slowStreak >= 18) {
+                  qualityTier = 'eco';
+                  shadowInterval = 3;
+                  slowStreak = 0;
+                  scheduleResize();
+                }
+              } else {
+                slowStreak = Math.max(0, slowStreak - 1);
+              }
+            }
+          }
+
+          if (shadowInterval > 1) {
+            renderer.shadowMap.autoUpdate = false;
+            renderer.shadowMap.needsUpdate = activeFrameCount % shadowInterval === 0;
+          } else {
+            renderer.shadowMap.autoUpdate = true;
+          }
+
           const { scanWave, owlScreenPos } = owlController.update(
-            prefersReducedMotion ? 3.2 : elapsedSec,
+            prefersReducedMotion ? REDUCED_POSE_SEC : elapsedSec,
             prefersReducedMotion ? 0.016 : dt,
             interaction
           );
 
-          postMaterial.uniforms.uTime.value = prefersReducedMotion ? 3.2 : elapsedSec;
-          postMaterial.uniforms.uScanWave.value = scanWave;
+          postMaterial.uniforms.uTime.value = prefersReducedMotion ? REDUCED_POSE_SEC : elapsedSec;
+          postMaterial.uniforms.uScanWave.value =
+            reducedScanOverride !== null ? reducedScanOverride : scanWave;
           postMaterial.uniforms.uOwlScreenPos.value.copy(owlScreenPos);
 
-          /* Pass 1: Render 3D sculpted Owl + directional floor shadow into MSAA target */
+          /* Pass 1: Render 3D sculpted Owl + directional floor shadow into offscreen target */
           renderer.setRenderTarget(renderTarget);
           renderer.setClearColor(0xffffff, 0.0);
           renderer.clear(true, true, false);
@@ -363,7 +481,7 @@ export const OwlHeroCanvas = forwardRef<OwlHeroCanvasHandle, OwlHeroCanvasProps>
           if (prefersReducedMotion) {
             /* Pre-warm spring solver for 20 steps so the static pose settles naturally */
             for (let i = 0; i < 20; i++) {
-              owlController.update(3.2, 0.03, interaction);
+              owlController.update(REDUCED_POSE_SEC, 0.03, interaction);
             }
             renderFrameAt(performance.now());
             return;
@@ -383,20 +501,29 @@ export const OwlHeroCanvas = forwardRef<OwlHeroCanvasHandle, OwlHeroCanvasProps>
           window.cancelAnimationFrame(rafId);
         };
 
-        triggerFnRef.current = () => {
+        triggerFnRef.current = (aimX?: number, aimY?: number) => {
           const tSec = (performance.now() - clockStart) / 1000;
-          owlController.triggerScanHop(tSec);
+          owlController.triggerScanHop(tSec, aimX, aimY);
           if (prefersReducedMotion) {
+            /* Display a calm static sonar ring snapshot without rapid strobing */
+            window.clearTimeout(reducedPulseTimer);
+            reducedScanOverride = 0.44;
+            for (let i = 0; i < 6; i++) {
+              owlController.update(REDUCED_POSE_SEC, 0.03, interaction);
+            }
             renderFrameAt(performance.now());
+            reducedPulseTimer = window.setTimeout(() => {
+              if (disposed || contextLost) return;
+              reducedScanOverride = null;
+              for (let i = 0; i < 12; i++) {
+                owlController.update(REDUCED_POSE_SEC, 0.03, interaction);
+              }
+              renderFrameAt(performance.now());
+            }, 950);
           }
         };
 
-        const resizeObserver = new ResizeObserver(() => {
-          updateSize();
-          if (!isRunning) {
-            renderFrameAt(performance.now());
-          }
-        });
+        const resizeObserver = new ResizeObserver(scheduleResize);
         resizeObserver.observe(container);
         if (stageRef.current) resizeObserver.observe(stageRef.current);
 
@@ -423,12 +550,16 @@ export const OwlHeroCanvas = forwardRef<OwlHeroCanvasHandle, OwlHeroCanvasProps>
 
         const onContextRestored = () => {
           contextLost = false;
+          lastCanvasW = 0;
+          lastRtW = 0;
           syncPaletteFromTokens();
           updateSize();
           startLoop();
         };
 
         window.addEventListener('pointermove', onPointerMove, { passive: true });
+        window.addEventListener('blur', clearPointerFocus);
+        document.documentElement.addEventListener('pointerleave', clearPointerFocus);
         document.addEventListener('visibilitychange', onVisibilityChange);
         canvas.addEventListener('webglcontextlost', onContextLost);
         canvas.addEventListener('webglcontextrestored', onContextRestored);
@@ -437,11 +568,15 @@ export const OwlHeroCanvas = forwardRef<OwlHeroCanvasHandle, OwlHeroCanvasProps>
 
         teardown = () => {
           stopLoop();
+          window.cancelAnimationFrame(resizeRaf);
           window.clearTimeout(pointerIdleTimer);
+          window.clearTimeout(reducedPulseTimer);
           triggerFnRef.current = null;
           resizeObserver.disconnect();
           intersectionObserver.disconnect();
           window.removeEventListener('pointermove', onPointerMove);
+          window.removeEventListener('blur', clearPointerFocus);
+          document.documentElement.removeEventListener('pointerleave', clearPointerFocus);
           document.removeEventListener('visibilitychange', onVisibilityChange);
           canvas.removeEventListener('webglcontextlost', onContextLost);
           canvas.removeEventListener('webglcontextrestored', onContextRestored);
@@ -467,10 +602,12 @@ export const OwlHeroCanvas = forwardRef<OwlHeroCanvasHandle, OwlHeroCanvasProps>
         onClick={(e) => {
           const stage = stageRef.current;
           if (!stage) return;
-          /* The canvas is full-bleed; only clicks that land on the owl stage pulse the scan */
+          /* The canvas is full-bleed; only clicks on the owl stage pulse and aim the gaze */
           const r = stage.getBoundingClientRect();
           if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) {
-            triggerFnRef.current?.();
+            const aimX = ((e.clientX - r.left) / Math.max(r.width, 1) - 0.5) * 2;
+            const aimY = -((e.clientY - r.top) / Math.max(r.height, 1) - 0.5) * 2;
+            triggerFnRef.current?.(aimX, aimY);
           }
         }}
         className="relative h-full w-full touch-pan-y select-none"

@@ -38,11 +38,11 @@ export const HeroSection: React.FC = () => {
       </div>
 
       {/* Layer 1 - wordmark, copy and CTAs overlaid on the owl: headline top, actions bottom */}
-      <div className="pointer-events-none relative z-[var(--z-hero-copy)] mx-auto flex min-h-dvh lg:static w-full max-w-[1440px] flex-1 flex-col px-4 pt-22 pb-5 sm:px-8 sm:pt-26 sm:pb-7 lg:px-12 lg:pt-[15dvh] lg:pb-[8dvh]">
+      <div className="hero-shell-landscape pointer-events-none relative z-[var(--z-hero-copy)] mx-auto flex min-h-dvh lg:static w-full max-w-[1440px] flex-1 flex-col px-4 pt-22 pb-5 sm:px-8 sm:pt-26 sm:pb-7 lg:px-12 lg:pt-[15dvh] lg:pb-[8dvh]">
         <h1
           id="hero-heading"
           aria-label={`${BRAND.name} Code Map: ${BRAND.heroSummary}`}
-          className="pointer-events-auto m-0 w-full max-w-full lg:max-w-[43vw] xl:max-w-[48vw]"
+          className="hero-heading-landscape pointer-events-auto m-0 w-full max-w-full lg:max-w-[43vw] xl:max-w-[48vw]"
         >
           <span className="sr-only">
             {BRAND.name} Code Map: {BRAND.heroSummary}
@@ -56,16 +56,15 @@ export const HeroSection: React.FC = () => {
         </h1>
 
         {/* Owl stage anchor - invisible box that tells the canvas where the owl stands.
-            Stacked: it takes the space between headline and actions and overlaps both by a
-            few rem, so the owl is the centrepiece and the copy sits on top of it.
-            Desktop (lg): the wrapper is static, so this resolves against the whole hero and
-            lets the owl reach under the right end of the wordmark. */}
+            Stacked: extends edge-to-edge horizontally (-mx-4 sm:-mx-8) between headline
+            and actions so ground shadows never clip against inner container padding.
+            Desktop (lg) & short landscape: absolute split pane on the right. */}
         <div
           ref={stageRef}
           aria-hidden="true"
-          className="pointer-events-none relative mt-2 -mb-8 min-h-[250px] flex-1 lg:absolute lg:inset-y-0 lg:right-0 lg:left-[30vw] lg:m-0 lg:min-h-0 lg:flex-none"
+          className="hero-stage-landscape pointer-events-none relative mt-2 -mx-4 -mb-8 min-h-[250px] flex-1 sm:-mx-8 lg:mx-0 lg:absolute lg:inset-y-0 lg:right-0 lg:left-[30vw] lg:m-0 lg:min-h-0 lg:flex-none"
         />
-        <div className="pointer-events-auto mt-auto pt-10 lg:mt-[clamp(3rem,8.5dvh,5.5rem)] lg:pt-0">
+        <div className="hero-cta-landscape pointer-events-auto mt-auto pt-10 lg:mt-[clamp(3rem,8.5dvh,5.5rem)] lg:pt-0">
           <p className="m-0 max-w-[36ch] font-editorial-mono text-sm leading-[1.6] text-pretty text-[var(--color-text-primary)] sm:max-w-[39ch] sm:text-base lg:max-w-[36ch] xl:max-w-[39ch]">
             {BRAND.heroSummary}
           </p>

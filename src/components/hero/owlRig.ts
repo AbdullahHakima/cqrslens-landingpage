@@ -1,6 +1,14 @@
 import * as THREE from 'three';
 
 /**
+ * Smooth Hermite interpolation clamped to [0, 1].
+ */
+function smoothstep(edge0: number, edge1: number, x: number): number {
+  const t = THREE.MathUtils.clamp((x - edge0) / (edge1 - edge0), 0, 1);
+  return t * t * (3 - 2 * t);
+}
+
+/**
  * Second-order damped spring for organic, interruptible bird kinematics.
  */
 class DampedSpring {
@@ -40,6 +48,11 @@ export interface OwlInteractionState {
   inspectingCta: boolean;
 }
 
+export interface OwlControllerOptions {
+  /** Uses lighter sphere/capsule subdivisions & 256px shadow map for mobile/compact GPUs. */
+  compactDetail?: boolean;
+}
+
 export interface OwlSceneController {
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
@@ -47,7 +60,7 @@ export interface OwlSceneController {
     scanWave: number;
     owlScreenPos: THREE.Vector2;
   };
-  triggerScanHop: (timeSec: number) => void;
+  triggerScanHop: (timeSec: number, aimX?: number, aimY?: number) => void;
   dispose: () => void;
 }
 
@@ -56,7 +69,10 @@ export interface OwlSceneController {
  * architectural studio lighting, ground shadow catcher, and 5-act behavioral
  * spring-physics animation director.
  */
-export function createOwlSceneController(): OwlSceneController {
+export function createOwlSceneController(
+  options: OwlControllerOptions = {}
+): OwlSceneController {
+  const compact = Boolean(options.compactDetail);
   const scene = new THREE.Scene();
 
   const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 40);
@@ -85,10 +101,11 @@ export function createOwlSceneController(): OwlSceneController {
   hemiLight.position.set(-2.5, 4, 1.5);
   scene.add(hemiLight);
 
+  const shadowSize = compact ? 256 : 512;
   const keyLight = new THREE.DirectionalLight(0xffffff, 1.88);
   keyLight.position.set(-6.4, 2.75, 1.95);
   keyLight.castShadow = true;
-  keyLight.shadow.mapSize.set(512, 512);
+  keyLight.shadow.mapSize.set(shadowSize, shadowSize);
   keyLight.shadow.camera.near = 1.0;
   keyLight.shadow.camera.far = 18.0;
   keyLight.shadow.camera.left = -3.5;
@@ -96,7 +113,7 @@ export function createOwlSceneController(): OwlSceneController {
   keyLight.shadow.camera.top = 3.5;
   keyLight.shadow.camera.bottom = -3.5;
   keyLight.shadow.bias = -0.0008;
-  keyLight.shadow.radius = 2.5;
+  keyLight.shadow.radius = compact ? 1.5 : 2.5;
   scene.add(keyLight);
 
   /* Soft right-side fill keeps shaded plumage inside airy Regime-2 scanlines */
@@ -178,7 +195,7 @@ export function createOwlSceneController(): OwlSceneController {
   bodyGroup.position.set(0, -0.62, 0);
   owlRoot.add(bodyGroup);
 
-  const torsoGeo = track(new THREE.SphereGeometry(0.82, 40, 30));
+  const torsoGeo = track(new THREE.SphereGeometry(0.82, compact ? 30 : 40, compact ? 22 : 30));
   {
     const pos = torsoGeo.attributes.position;
     const v = new THREE.Vector3();
@@ -209,7 +226,7 @@ export function createOwlSceneController(): OwlSceneController {
   bodyGroup.add(torsoMesh);
 
   /* Tail feathers tucked behind */
-  const tailGeo = track(new THREE.SphereGeometry(0.32, 18, 14));
+  const tailGeo = track(new THREE.SphereGeometry(0.32, compact ? 14 : 18, compact ? 10 : 14));
   tailGeo.scale(0.95, 0.55, 1.35);
   const tailMesh = new THREE.Mesh(tailGeo, porcelainMat);
   tailMesh.position.set(0, -0.52, -0.58);
@@ -222,7 +239,7 @@ export function createOwlSceneController(): OwlSceneController {
     const pivot = new THREE.Group();
     pivot.position.set(side * 0.70, 0.34, 0.02);
 
-    const wingGeo = track(new THREE.SphereGeometry(0.54, 28, 22));
+    const wingGeo = track(new THREE.SphereGeometry(0.54, compact ? 20 : 28, compact ? 16 : 22));
     const pos = wingGeo.attributes.position;
     const v = new THREE.Vector3();
     for (let i = 0; i < pos.count; i++) {
@@ -260,7 +277,7 @@ export function createOwlSceneController(): OwlSceneController {
   headGroup.position.set(0, 0.30, 0.04);
   owlRoot.add(headGroup);
 
-  const craniumGeo = track(new THREE.SphereGeometry(1.0, 48, 36));
+  const craniumGeo = track(new THREE.SphereGeometry(1.0, compact ? 34 : 48, compact ? 26 : 36));
   {
     const pos = craniumGeo.attributes.position;
     const v = new THREE.Vector3();
@@ -307,7 +324,7 @@ export function createOwlSceneController(): OwlSceneController {
     tuftPivot.rotation.z = side * -0.52;
     tuftPivot.rotation.x = 0.06;
 
-    const outerGeo = track(new THREE.SphereGeometry(0.24, 20, 16));
+    const outerGeo = track(new THREE.SphereGeometry(0.24, compact ? 14 : 20, compact ? 12 : 16));
     const pos = outerGeo.attributes.position;
     const v = new THREE.Vector3();
     for (let i = 0; i < pos.count; i++) {
@@ -328,7 +345,7 @@ export function createOwlSceneController(): OwlSceneController {
     tuftPivot.add(outerMesh);
 
     /* Subtle mid-tone feather crease (renders as thin scanlines, not a black triangle) */
-    const innerGeo = track(new THREE.SphereGeometry(0.11, 14, 10));
+    const innerGeo = track(new THREE.SphereGeometry(0.11, compact ? 10 : 14, compact ? 8 : 10));
     innerGeo.scale(0.85, 1.45, 0.35);
     innerGeo.translate(side * 0.02, 0.22, 0.09);
     const innerMesh = new THREE.Mesh(innerGeo, softCreaseMat);
@@ -349,10 +366,18 @@ export function createOwlSceneController(): OwlSceneController {
     lowerLid: THREE.Mesh;
   }
 
-  const sharedGlobeGeo = track(new THREE.SphereGeometry(0.215, 24, 18));
-  const sharedGlintGeo = track(new THREE.SphereGeometry(0.068, 12, 12));
+  const sharedGlobeGeo = track(new THREE.SphereGeometry(0.215, compact ? 18 : 24, compact ? 14 : 18));
+  const sharedGlintGeo = track(new THREE.SphereGeometry(0.068, compact ? 10 : 12, compact ? 8 : 12));
   const sharedLidGeo = track(
-    new THREE.SphereGeometry(0.232, 24, 16, 0, Math.PI * 2, 0, Math.PI * 0.52)
+    new THREE.SphereGeometry(
+      0.232,
+      compact ? 18 : 24,
+      compact ? 12 : 16,
+      0,
+      Math.PI * 2,
+      0,
+      Math.PI * 0.52
+    )
   );
 
   function buildEye(side: -1 | 1): EyeRig {
@@ -388,7 +413,7 @@ export function createOwlSceneController(): OwlSceneController {
   headGroup.add(leftEye.root, rightEye.root);
 
   /* 6. Compact Diamond Hooked Owl Beak (non-shadow-casting so chin stays clean white) */
-  const beakGeo = track(new THREE.ConeGeometry(0.076, 0.175, 16));
+  const beakGeo = track(new THREE.ConeGeometry(0.076, 0.175, compact ? 12 : 16));
   beakGeo.scale(0.84, 1.0, 0.90);
   const beakMesh = new THREE.Mesh(beakGeo, obsidianFeatureMat);
   beakMesh.position.set(0, 0.165, 0.875);
@@ -397,7 +422,7 @@ export function createOwlSceneController(): OwlSceneController {
   headGroup.add(beakMesh);
 
   /* 7. Articulated Feet & 3-Toed Talons */
-  const sharedToeGeo = track(new THREE.CapsuleGeometry(0.048, 0.14, 6, 10));
+  const sharedToeGeo = track(new THREE.CapsuleGeometry(0.048, 0.14, compact ? 4 : 6, compact ? 8 : 10));
 
   function buildFoot(side: -1 | 1): THREE.Group {
     const footGroup = new THREE.Group();
@@ -424,36 +449,65 @@ export function createOwlSceneController(): OwlSceneController {
   const headYaw = new DampedSpring(0, 185, 21);
   const headPitch = new DampedSpring(0, 175, 20);
   const headRoll = new DampedSpring(0, 155, 17); // Signature owl head-tilt!
-  const eyeYaw = new DampedSpring(0, 320, 26);
-  const eyePitch = new DampedSpring(0, 320, 26);
+  const eyeYaw = new DampedSpring(0, 340, 26);
+  const eyePitch = new DampedSpring(0, 340, 26);
+  const lidSquint = new DampedSpring(0, 155, 20);
 
   const bodyX = new DampedSpring(-0.08, 130, 18);
-  const bodyY = new DampedSpring(-0.04, 190, 19);
+  const bodyY = new DampedSpring(-0.04, 195, 19);
   const bodyYaw = new DampedSpring(-0.08, 120, 18);
+  const bodySquash = new DampedSpring(0, 240, 17);
   const chestPuff = new DampedSpring(1.0, 160, 15);
 
   const leftWingOpen = new DampedSpring(0, 180, 16);
   const rightWingOpen = new DampedSpring(0, 180, 16);
   const leftTuftPerk = new DampedSpring(0, 195, 14);
   const rightTuftPerk = new DampedSpring(0, 195, 14);
+  const tailPitch = new DampedSpring(0, 170, 16);
+  const tailYaw = new DampedSpring(0, 150, 16);
 
   let manualScanStart = -999;
-  let lastAutoScanCycle = -1;
+  let lastHopTriggerSec = -999;
+  let nextHopSign = 1;
+  let tapBiasTime = -999;
+  let tapAimX = 0;
+  let tapAimY = 0;
   const owlProjected = new THREE.Vector3();
   const owlScreenPos = new THREE.Vector2(0.46, 0.48);
 
-  function triggerScanHop(timeSec: number): void {
+  function triggerScanHop(timeSec: number, aimX?: number, aimY?: number): void {
+    const sinceLast = timeSec - lastHopTriggerSec;
+    lastHopTriggerSec = timeSec;
     manualScanStart = timeSec;
-    bodyY.impulse(2.35);
-    chestPuff.impulse(0.9);
-    leftWingOpen.impulse(3.2);
-    rightWingOpen.impulse(3.6);
-    leftTuftPerk.impulse(2.8);
-    rightTuftPerk.impulse(2.8);
-    headRoll.impulse((Math.random() > 0.5 ? 1 : -1) * 1.8);
+
+    const hasAim = typeof aimX === 'number' && typeof aimY === 'number';
+    if (hasAim) {
+      tapAimX = THREE.MathUtils.clamp(aimX, -1, 1);
+      tapAimY = THREE.MathUtils.clamp(aimY, -1, 1);
+      tapBiasTime = timeSec;
+    }
+
+    /* Soften stacked velocities when pulsing rapidly so rapid clicks stay springy */
+    const gain = sinceLast >= 0 && sinceLast < 0.32 ? 0.38 : 1.0;
+    nextHopSign =
+      hasAim && Math.abs(tapAimX) > 0.12 ? (tapAimX >= 0 ? -1 : 1) : -nextHopSign;
+
+    bodyY.velocity = Math.min(bodyY.velocity + 2.35 * gain, 3.3);
+    bodySquash.impulse(-0.42 * gain);
+    chestPuff.impulse(0.85 * gain);
+    leftWingOpen.velocity = Math.min(leftWingOpen.velocity + 3.0 * gain, 4.4);
+    rightWingOpen.velocity = Math.min(rightWingOpen.velocity + 3.4 * gain, 4.8);
+    leftTuftPerk.impulse(2.6 * gain);
+    rightTuftPerk.impulse(2.6 * gain);
+    tailPitch.impulse(-1.35 * gain);
+    headRoll.impulse(nextHopSign * 1.65 * gain);
+    if (hasAim) {
+      eyeYaw.impulse(tapAimX * 1.25 * gain);
+      eyePitch.impulse(tapAimY * 0.9 * gain);
+    }
   }
 
-  function computeBlinkAmount(t: number, cycleT: number): { blink: number; squint: number } {
+  function computeBlinkAmount(t: number, cycleT: number): number {
     /* Double-blink during Act 3 (cycleT ~ 9.1s) + periodic natural bird blinks */
     const pulse = (center: number, width: number): number => {
       const d = Math.abs(cycleT - center);
@@ -461,7 +515,7 @@ export function createOwlSceneController(): OwlSceneController {
     };
 
     let blink = Math.max(
-      pulse(1.65, 0.11),
+      pulse(1.68, 0.11),
       pulse(5.15, 0.10),
       pulse(9.05, 0.09),
       pulse(9.28, 0.09) // Rapid double-blink!
@@ -474,9 +528,7 @@ export function createOwlSceneController(): OwlSceneController {
       blink = Math.max(blink, Math.sin(local * Math.PI));
     }
 
-    /* Curious analytical lower-lid squint during Act 1 head-tilt */
-    const squint = cycleT >= 2.6 && cycleT <= 5.0 ? 0.36 : 0.0;
-    return { blink, squint };
+    return blink;
   }
 
   function update(
@@ -486,7 +538,7 @@ export function createOwlSceneController(): OwlSceneController {
   ): { scanWave: number; owlScreenPos: THREE.Vector2 } {
     const LOOP_LEN = 12.6;
     const cycleT = timeSec % LOOP_LEN;
-    const cycleIndex = Math.floor(timeSec / LOOP_LEN);
+    const breath = Math.sin(timeSec * 2.25);
 
     /* Base targets before behavioral act overrides */
     let tgtHeadYaw = 0;
@@ -494,106 +546,142 @@ export function createOwlSceneController(): OwlSceneController {
     let tgtHeadRoll = 0;
     let tgtEyeYaw = 0;
     let tgtEyePitch = 0;
+    let tgtSquint = 0;
     let tgtBodyX = -0.08;
     let tgtBodyY = -0.04;
     let tgtBodyYaw = -0.08;
-    let tgtPuff = 1.0 + Math.sin(timeSec * 2.35) * 0.016; // Calm breathing
-    let tgtLWing = 0;
-    let tgtRWing = 0;
+    let tgtSquash = 0;
+    let tgtPuff = 1.0 + breath * 0.015; // Calm chest breathing
+    let tgtLWing = Math.max(0, breath) * 0.018;
+    let tgtRWing = Math.max(0, breath) * 0.018;
     let tgtLTuft = 0;
     let tgtRTuft = 0;
+    let tgtTailPitch = -breath * 0.03;
+    let tgtTailYaw = 0;
     let leftFootLift = 0;
     let rightFootLift = 0;
 
     /* -------------------------------------------------------------------
-       5-Act Autonomous Owl Story Choreography
+       5-Act Autonomous Owl Story Choreography (C1/smooth transitions, zero
+       step snaps at act or loop boundaries)
        ------------------------------------------------------------------- */
     if (cycleT < 2.4) {
-      /* ACT 0: Charming 2-step owl sidestep hop & feather ruffle settle */
-      if (cycleT < 0.75) {
-        const p = cycleT / 0.75;
-        tgtBodyX = -0.22 + p * 0.08;
-        tgtBodyY = -0.04 + Math.sin(p * Math.PI) * 0.14;
-        leftFootLift = Math.sin(p * Math.PI) * 0.16;
-        tgtHeadRoll = -0.08;
-        tgtLWing = Math.sin(p * Math.PI) * 0.22;
-        tgtRWing = Math.sin(p * Math.PI) * 0.22;
-      } else if (cycleT < 1.45) {
-        const p = (cycleT - 0.75) / 0.7;
-        tgtBodyX = -0.14 + p * 0.06;
-        tgtBodyY = -0.04 + Math.sin(p * Math.PI) * 0.11;
-        rightFootLift = Math.sin(p * Math.PI) * 0.14;
-        tgtHeadRoll = 0.07;
-        tgtLWing = Math.sin(p * Math.PI) * 0.18;
-        tgtRWing = Math.sin(p * Math.PI) * 0.18;
+      /* ACT 0: Seamless anticipation crouch -> 2-step sidestep hop -> ruffle */
+      if (cycleT < 0.18) {
+        const p = cycleT / 0.18;
+        const dip = smoothstep(0, 1, p);
+        tgtBodyY = -0.04 - dip * 0.042;
+        tgtSquash = dip * 0.065;
+        tgtHeadPitch = dip * 0.05;
+        tgtTailPitch = -dip * 0.08;
+      } else if (cycleT < 0.85) {
+        const p = (cycleT - 0.18) / 0.67;
+        const arc = Math.sin(p * Math.PI);
+        tgtBodyX = THREE.MathUtils.lerp(-0.08, 0.02, smoothstep(0, 1, p));
+        tgtBodyY = -0.04 + arc * 0.145;
+        leftFootLift = arc * 0.16;
+        tgtHeadRoll = -0.09 * arc;
+        tgtLWing += arc * 0.22;
+        tgtRWing += arc * 0.22;
+        tgtTailPitch = 0.22 * arc;
+        tgtSquash = p > 0.82 ? ((p - 0.82) / 0.18) * 0.055 : -0.03 * arc;
+      } else if (cycleT < 1.52) {
+        const p = (cycleT - 0.85) / 0.67;
+        const arc = Math.sin(p * Math.PI);
+        tgtBodyX = THREE.MathUtils.lerp(0.02, -0.08, smoothstep(0, 1, p));
+        tgtBodyY = -0.04 + arc * 0.12;
+        rightFootLift = arc * 0.145;
+        tgtHeadRoll = 0.08 * arc;
+        tgtLWing += arc * 0.19;
+        tgtRWing += arc * 0.19;
+        tgtTailPitch = 0.18 * arc;
+        tgtSquash = p > 0.82 ? ((p - 0.82) / 0.18) * 0.065 : -0.025 * arc;
       } else {
-        /* Feather ruffle flutter & chest settle */
-        const settleT = cycleT - 1.45;
-        const flutter = Math.exp(-settleT * 3.8) * Math.sin(settleT * 36.0);
-        tgtLWing = Math.max(0, flutter * 0.24);
-        tgtRWing = Math.max(0, -flutter * 0.24);
-        tgtPuff += Math.exp(-settleT * 2.5) * 0.045;
-        tgtLTuft = 0.12;
-        tgtRTuft = 0.12;
+        /* Landing cushion & feather ruffle settle */
+        const settleT = cycleT - 1.52;
+        const fadeOut = 1 - smoothstep(2.05, 2.4, cycleT);
+        const flutter = Math.exp(-settleT * 4.0) * Math.sin(settleT * 34.0);
+        tgtSquash = Math.exp(-settleT * 9.0) * 0.075;
+        tgtLWing += Math.max(0, flutter * 0.24);
+        tgtRWing += Math.max(0, -flutter * 0.24);
+        tgtPuff += Math.exp(-settleT * 2.6) * 0.042;
+        tgtLTuft = 0.12 * fadeOut;
+        tgtRTuft = 0.12 * fadeOut;
       }
     } else if (cycleT < 5.2) {
-      /* ACT 1: Signature 26° Curious Owl Head-Tilt ("Inspecting a Command") */
-      tgtEyeYaw = 0.14;
-      tgtEyePitch = 0.06;
-      tgtHeadYaw = 0.12;
-      tgtHeadPitch = -0.04;
-      tgtHeadRoll = 0.44; // ~25.2 deg owl head cock!
-      tgtLTuft = 0.22;
-      tgtRTuft = 0.34;
+      /* ACT 1: Signature ~25° Curious Owl Head-Tilt + Smooth Analytical Squint */
+      const env = smoothstep(2.4, 2.74, cycleT) * (1 - smoothstep(4.85, 5.2, cycleT));
+      const microSearch = Math.sin((cycleT - 2.6) * 2.6) * 0.024;
+      tgtEyeYaw = 0.14 * env;
+      tgtEyePitch = 0.06 * env;
+      tgtHeadYaw = 0.12 * env + microSearch * env;
+      tgtHeadPitch = -0.04 * env;
+      tgtHeadRoll = 0.44 * env; // ~25.2 deg owl head cock!
+      tgtLTuft = 0.22 * env;
+      tgtRTuft = 0.34 * env;
+      tgtSquint = 0.36 * smoothstep(2.55, 2.88, cycleT) * (1 - smoothstep(4.75, 5.15, cycleT));
       /* Micro ear-tuft radar twitch */
       if (cycleT > 3.7 && cycleT < 4.1) {
         tgtRTuft += Math.sin((cycleT - 3.7) * 24.0) * 0.14;
       }
     } else if (cycleT < 8.5) {
-      /* ACT 2: 18ms Architectural Sonar Sweep + Expressive Right-Wing Gesture */
-      if (cycleT > 5.75 && lastAutoScanCycle !== cycleIndex) {
-        lastAutoScanCycle = cycleIndex;
-      }
-      /* 3-stop bird saccade across the solution graph */
-      if (cycleT < 6.3) {
-        tgtHeadYaw = -0.28;
-        tgtEyeYaw = -0.16;
-      } else if (cycleT < 7.3) {
-        tgtHeadYaw = 0.06;
-        tgtEyeYaw = 0.08;
-      } else {
-        tgtHeadYaw = 0.32;
-        tgtEyeYaw = 0.18;
-      }
-      tgtHeadPitch = 0.04;
-      tgtHeadRoll = -0.10;
-      tgtBodyYaw = -0.02;
-      /* Right wing lifts outward like a conductor / architect tracing a flow */
-      const wingWindow = Math.sin(
-        Math.min(1, Math.max(0, (cycleT - 5.4) / 2.8)) * Math.PI
-      );
-      tgtRWing = wingWindow * 0.56;
-      tgtLTuft = 0.28;
-      tgtRTuft = 0.28;
+      /* ACT 2: Architectural Sonar Sweep + Eye-Leads-Head Bird Saccades */
+      const entry = smoothstep(5.2, 5.5, cycleT);
+      const exit = 1 - smoothstep(8.1, 8.5, cycleT);
+      const actEnv = entry * exit;
+
+      /* Smooth saccade stops with eyes leading head by ~120ms */
+      const s12 = smoothstep(6.22, 6.46, cycleT);
+      const s23 = smoothstep(7.22, 7.46, cycleT);
+      const stopYaw = THREE.MathUtils.lerp(-0.28, THREE.MathUtils.lerp(0.06, 0.32, s23), s12);
+      const eLead12 = smoothstep(6.10, 6.32, cycleT);
+      const eLead23 = smoothstep(7.10, 7.32, cycleT);
+      const stopEye = THREE.MathUtils.lerp(-0.17, THREE.MathUtils.lerp(0.09, 0.20, eLead23), eLead12);
+
+      tgtHeadYaw = stopYaw * actEnv;
+      tgtEyeYaw = stopEye * actEnv;
+      tgtHeadPitch = 0.04 * actEnv;
+      tgtHeadRoll = -0.10 * actEnv;
+      tgtBodyYaw = THREE.MathUtils.lerp(-0.08, -0.02, actEnv);
+
+      /* Right wing sweeps outward while tail & left wing counterbalance */
+      const wingWindow =
+        smoothstep(5.35, 6.1, cycleT) * (1 - smoothstep(7.7, 8.45, cycleT));
+      tgtRWing += wingWindow * 0.54;
+      tgtLWing += wingWindow * 0.08;
+      tgtTailYaw = -0.14 * wingWindow;
+      tgtPuff += 0.02 * wingWindow;
+      tgtLTuft = 0.28 * actEnv;
+      tgtRTuft = 0.28 * actEnv;
     } else if (cycleT < 10.7) {
       /* ACT 3: Quick Bird Saccade Glance Left (Toward Headline & CTA) + Double-Blink */
-      tgtEyeYaw = -0.24;
-      tgtEyePitch = -0.06;
-      tgtHeadYaw = -0.36;
-      tgtHeadPitch = -0.06;
-      tgtHeadRoll = -0.18;
-      tgtBodyYaw = -0.16;
-      tgtLTuft = 0.20;
-      tgtRTuft = 0.14;
+      const env = smoothstep(8.5, 8.76, cycleT) * (1 - smoothstep(10.35, 10.7, cycleT));
+      const eyeEnv = smoothstep(8.46, 8.66, cycleT) * (1 - smoothstep(10.35, 10.7, cycleT));
+      tgtEyeYaw = -0.24 * eyeEnv;
+      tgtEyePitch = -0.06 * eyeEnv;
+      tgtHeadYaw = -0.36 * env;
+      tgtHeadPitch = -0.06 * env;
+      tgtHeadRoll = -0.18 * env;
+      tgtBodyYaw = THREE.MathUtils.lerp(-0.08, -0.16, env);
+      tgtTailYaw = 0.10 * env;
+      tgtLTuft = 0.20 * env;
+      tgtRTuft = 0.14 * env;
     } else {
-      /* ACT 4: Calm Attentive Perch */
-      tgtHeadYaw = Math.sin(timeSec * 0.9) * 0.04;
-      tgtHeadRoll = Math.sin(timeSec * 0.7) * 0.03;
+      /* ACT 4: Calm Attentive Perch with tapered neutral loop return */
+      const settleEnv = smoothstep(10.7, 11.1, cycleT) * (1 - smoothstep(12.2, 12.6, cycleT));
+      tgtHeadYaw = Math.sin(timeSec * 0.9) * 0.04 * settleEnv;
+      tgtHeadRoll = Math.sin(timeSec * 0.7) * 0.03 * settleEnv;
     }
 
     /* -------------------------------------------------------------------
-       Live User Interactivity Blending (Pointer Tracking & CTA Hover)
+       Live User Interactivity Blending (Pointer Tracking, Tap Aim & CTA Hover)
        ------------------------------------------------------------------- */
+    const sinceTap = timeSec - tapBiasTime;
+    const tapBlend =
+      sinceTap >= 0 && sinceTap < 1.25
+        ? Math.exp(-sinceTap * 2.1) * (1 - smoothstep(0.85, 1.25, sinceTap))
+        : 0;
+
     if (interaction.inspectingCta) {
       /* Owl turns attentively toward the left-side CTA / CLI command */
       tgtEyeYaw = -0.26;
@@ -602,9 +690,17 @@ export function createOwlSceneController(): OwlSceneController {
       tgtHeadPitch = -0.14;
       tgtHeadRoll = 0.28;
       tgtBodyYaw = -0.18;
+      tgtTailYaw = 0.12;
       tgtLTuft = 0.36;
       tgtRTuft = 0.36;
-      tgtLWing = 0.12;
+      tgtLWing = Math.max(tgtLWing, 0.12);
+      tgtSquint = Math.max(tgtSquint, 0.12);
+    } else if (tapBlend > 0.01) {
+      /* Brief turn toward where the user clicked/tapped on the owl stage */
+      tgtEyeYaw = THREE.MathUtils.lerp(tgtEyeYaw, tapAimX * 0.28, tapBlend * 0.85);
+      tgtEyePitch = THREE.MathUtils.lerp(tgtEyePitch, tapAimY * 0.22, tapBlend * 0.85);
+      tgtHeadYaw = THREE.MathUtils.lerp(tgtHeadYaw, tapAimX * 0.42, tapBlend * 0.75);
+      tgtHeadPitch = THREE.MathUtils.lerp(tgtHeadPitch, -tapAimY * 0.22, tapBlend * 0.75);
     } else if (interaction.pointerActive) {
       /* Blend 72% live cursor gaze with 28% autonomous owl personality */
       const lookX = THREE.MathUtils.clamp(interaction.pointerX - 0.18, -1.0, 1.0);
@@ -614,6 +710,7 @@ export function createOwlSceneController(): OwlSceneController {
       tgtHeadYaw = THREE.MathUtils.lerp(tgtHeadYaw, lookX * 0.46, 0.72);
       tgtHeadPitch = THREE.MathUtils.lerp(tgtHeadPitch, -lookY * 0.26, 0.72);
       tgtHeadRoll = THREE.MathUtils.lerp(tgtHeadRoll, -lookX * lookY * 0.32, 0.55);
+      tgtTailYaw = THREE.MathUtils.lerp(tgtTailYaw, -lookX * 0.08, 0.5);
       tgtLTuft = Math.max(tgtLTuft, 0.18);
       tgtRTuft = Math.max(tgtRTuft, 0.18);
     }
@@ -624,42 +721,56 @@ export function createOwlSceneController(): OwlSceneController {
     headRoll.target = tgtHeadRoll;
     eyeYaw.target = tgtEyeYaw;
     eyePitch.target = tgtEyePitch;
+    lidSquint.target = tgtSquint;
     bodyX.target = tgtBodyX;
     bodyY.target = tgtBodyY;
     bodyYaw.target = tgtBodyYaw;
+    bodySquash.target = tgtSquash;
     chestPuff.target = tgtPuff;
     leftWingOpen.target = tgtLWing;
     rightWingOpen.target = tgtRWing;
     leftTuftPerk.target = tgtLTuft;
     rightTuftPerk.target = tgtRTuft;
+    tailPitch.target = tgtTailPitch;
+    tailYaw.target = tgtTailYaw;
 
     const hYaw = headYaw.step(dt);
     const hPitch = headPitch.step(dt);
     const hRoll = headRoll.step(dt);
     const eYaw = eyeYaw.step(dt);
     const ePitch = eyePitch.step(dt);
+    const squint = Math.max(0, lidSquint.step(dt));
     const bX = bodyX.step(dt);
     const bY = bodyY.step(dt);
     const bYaw = bodyYaw.step(dt);
+    const squash = THREE.MathUtils.clamp(bodySquash.step(dt), -0.14, 0.16);
     const puff = chestPuff.step(dt);
     const lWing = leftWingOpen.step(dt);
     const rWing = rightWingOpen.step(dt);
     const lTuft = leftTuftPerk.step(dt);
     const rTuft = rightTuftPerk.step(dt);
+    const tPitch = tailPitch.step(dt);
+    const tYaw = tailYaw.step(dt);
 
-    /* Apply kinematics to 3D rig */
+    /* Apply kinematics to 3D rig (plus subtle pitch tilt from gaze) */
     owlRoot.position.x = bX;
     owlRoot.position.y = bY;
     owlRoot.rotation.y = bYaw;
+    owlRoot.rotation.x = THREE.MathUtils.clamp(-ePitch * 0.05, -0.035, 0.035);
 
-    torsoMesh.scale.set(puff, 2.0 - puff, puff);
+    const stretchX = puff * (1 + squash * 0.45);
+    const stretchY = (2.0 - puff) * (1 - squash);
+    torsoMesh.scale.set(stretchX, stretchY, stretchX);
+
+    tailMesh.rotation.x = -0.32 + tPitch;
+    tailMesh.rotation.y = tYaw;
 
     headGroup.rotation.set(hPitch, hYaw, hRoll, 'YXZ');
 
     leftEye.eyeball.rotation.set(-ePitch, eYaw, 0, 'YXZ');
     rightEye.eyeball.rotation.set(-ePitch, eYaw, 0, 'YXZ');
 
-    const { blink, squint } = computeBlinkAmount(timeSec, cycleT);
+    const blink = computeBlinkAmount(timeSec, cycleT);
     const interactiveWide = interaction.inspectingCta ? -0.08 : 0;
     leftEye.upperLid.rotation.x = THREE.MathUtils.lerp(-1.42 + interactiveWide, -0.02, blink);
     rightEye.upperLid.rotation.x = THREE.MathUtils.lerp(-1.42 + interactiveWide, -0.02, blink);

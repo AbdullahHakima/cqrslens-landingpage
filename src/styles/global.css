@@ -279,3 +279,45 @@
     transform: translateY(0);
   }
 }
+
+/* Short landscape phones (e.g. 844x390, 667x375): switch from vertical stack to a compact
+   side-by-side layout and lock the owl stage inside the visible fold below the 72px header. */
+@media (orientation: landscape) and (max-height: 520px) and (min-width: 600px) {
+  .hero-shell-landscape {
+    position: static;
+    padding-top: 5.15rem;
+    padding-bottom: 0.85rem;
+    justify-content: flex-start;
+  }
+
+  .hero-heading-landscape {
+    max-width: 48vw;
+  }
+
+  .hero-stage-landscape {
+    position: absolute;
+    top: 4.5rem;
+    bottom: auto;
+    height: calc(100dvh - 4.5rem);
+    right: 0;
+    left: 50vw;
+    margin: 0;
+    min-height: 0;
+    flex: none;
+  }
+
+  .hero-cta-landscape {
+    margin-top: 0.65rem;
+    padding-top: 0;
+    max-width: 48vw;
+  }
+
+  .hero-cta-landscape > div {
+    margin-top: 0.625rem;
+  }
+
+  .hero-cta-landscape p {
+    font-size: 0.8125rem;
+    line-height: 1.45;
+  }
+}
